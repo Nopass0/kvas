@@ -1,0 +1,66 @@
+{
+  "name": "Test: Meadow",
+  "start_scene": "scenes/main.scene.json",
+  "scripts_package": "test_meadow_scripts",
+  "kind": "3D",
+  "input": [
+    {
+      "name": "MoveForward",
+      "keys": [
+        "W",
+        "ArrowUp"
+      ]
+    },
+    {
+      "name": "MoveBack",
+      "keys": [
+        "S",
+        "ArrowDown"
+      ]
+    },
+    {
+      "name": "MoveLeft",
+      "keys": [
+        "A",
+        "ArrowLeft"
+      ]
+    },
+    {
+      "name": "MoveRight",
+      "keys": [
+        "D",
+        "ArrowRight"
+      ]
+    },
+    {
+      "name": "Jump",
+      "keys": [
+        "Space"
+      ]
+    },
+    {
+      "name": "Sprint",
+      "keys": [
+        "Shift"
+      ]
+    },
+    {
+      "name": "Interact",
+      "keys": [
+        "E"
+      ]
+    },
+    {
+      "name": "Fire",
+      "keys": [
+        "MouseLeft"
+      ]
+    },
+    {
+      "name": "AltFire",
+      "keys": [
+        "MouseRight"
+      ]
+    }
+  ]
+}

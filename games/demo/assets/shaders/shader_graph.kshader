@@ -1,0 +1,94 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "Shader output",
+      "pos": [
+        420.0,
+        80.0
+      ],
+      "inputs": [
+        {
+          "link": 2,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "id": 2,
+      "kind": "Color",
+      "pos": [
+        60.0,
+        60.0
+      ],
+      "inputs": [],
+      "params": [
+        0.8,
+        0.8,
+        0.8
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "textures": [
+    "",
+    "",
+    ""
+  ],
+  "next_id": 3,
+  "mode": "shader"
+}

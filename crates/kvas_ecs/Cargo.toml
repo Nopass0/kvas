@@ -1,0 +1,4 @@
+[package]
+name = "kvas_ecs"
+version.workspace = true
+edition.workspace = true

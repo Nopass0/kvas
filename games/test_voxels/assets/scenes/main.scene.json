@@ -1,0 +1,939 @@
+{
+  "settings": {
+    "ambient": [
+      0.25,
+      0.27,
+      0.32
+    ],
+    "sky": [
+      0.35,
+      0.5,
+      0.75
+    ],
+    "gravity": [
+      0.0,
+      -9.81,
+      0.0
+    ],
+    "toon_bands": 0,
+    "saturation": 1.0,
+    "contrast": 1.0,
+    "exposure": 1.0,
+    "atmosphere": {
+      "procedural": true,
+      "time": 16.8,
+      "speed": 0.12,
+      "clouds": 0.6,
+      "cloud_speed": 0.02,
+      "stars": 0.8
+    }
+  },
+  "entities": [
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Sun"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              20.0,
+              0.0
+            ],
+            "rotation": [
+              -30.0,
+              40.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Light",
+          "data": {
+            "angle": 35.0,
+            "color": [
+              1.0,
+              0.9599999785423279,
+              0.8999999761581421,
+              1.0
+            ],
+            "intensity": 1.0,
+            "kind": "Directional",
+            "range": 10.0,
+            "shadows": true,
+            "softness": 0.25
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Camera"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              4.0,
+              14.0
+            ],
+            "rotation": [
+              -8.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Camera",
+          "data": {
+            "far": 800.0,
+            "fov": 60.0,
+            "near": 0.10000000149011612,
+            "ortho_size": 10.0,
+            "orthographic": false,
+            "primary": true
+          }
+        },
+        {
+          "type": "Scripts",
+          "data": [
+            {
+              "name": "OrbitCamera",
+              "props": {
+                "center": [
+                  0.0,
+                  12.0,
+                  0.0
+                ],
+                "height": 3.0,
+                "radius": 30.0,
+                "speed": 5.0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Ground"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              -0.5,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              200.0,
+              1.0,
+              200.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.4000000059604645,
+              0.4399999976158142,
+              0.3400000035762787,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.8999999761581421,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Chimney 0"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -6.0,
+              0.6000000238418579,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.8999999761581421,
+              1.2000000476837158,
+              0.8999999761581421
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.4000000059604645,
+              0.2199999988079071,
+              0.18000000715255737,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.8999999761581421,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Cylinder",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Smoke 0"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -6.0,
+              1.2000000476837158,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.699999988079071,
+              0.699999988079071,
+              0.7200000286102295,
+              0.8999999761581421
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 1.0,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "VoxelSmoke",
+          "data": {
+            "cell": 0.2199999988079071,
+            "dissipation": 0.2800000011920929,
+            "emit": 3.5,
+            "grid": 20,
+            "rise": 3.0,
+            "seed": 3,
+            "threshold": 0.07000000029802322,
+            "turbulence": 2.200000047683716
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Chimney 1"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              0.6000000238418579,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.8999999761581421,
+              1.2000000476837158,
+              0.8999999761581421
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.4000000059604645,
+              0.2199999988079071,
+              0.18000000715255737,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.8999999761581421,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Cylinder",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Smoke 1"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              1.2000000476837158,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.949999988079071,
+              0.949999988079071,
+              0.9800000190734863,
+              0.8500000238418579
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 1.0,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "VoxelSmoke",
+          "data": {
+            "cell": 0.2199999988079071,
+            "dissipation": 0.2800000011920929,
+            "emit": 3.5,
+            "grid": 20,
+            "rise": 2.200000047683716,
+            "seed": 8,
+            "threshold": 0.07000000029802322,
+            "turbulence": 2.200000047683716
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Chimney 2"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              6.0,
+              0.6000000238418579,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.8999999761581421,
+              1.2000000476837158,
+              0.8999999761581421
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.4000000059604645,
+              0.2199999988079071,
+              0.18000000715255737,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.8999999761581421,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Cylinder",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Smoke 2"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              6.0,
+              1.2000000476837158,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.18000000715255737,
+              0.17000000178813934,
+              0.17000000178813934,
+              0.9200000166893005
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 1.0,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "VoxelSmoke",
+          "data": {
+            "cell": 0.2199999988079071,
+            "dissipation": 0.2800000011920929,
+            "emit": 3.5,
+            "grid": 20,
+            "rise": 3.5999999046325684,
+            "seed": 13,
+            "threshold": 0.07000000029802322,
+            "turbulence": 2.200000047683716
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Clouds (low)"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              32.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "VoxelClouds",
+          "data": {
+            "cell": 3.5,
+            "coverage": 0.36000001430511475,
+            "density": 0.800000011920929,
+            "drift": [
+              2.0,
+              0.0,
+              0.6000000238418579
+            ],
+            "refraction": 0.25,
+            "scale": 3.200000047683716,
+            "seed": 7,
+            "size": [
+              240.0,
+              36.0,
+              240.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Clouds (high)"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              40.0,
+              70.0,
+              -60.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "VoxelClouds",
+          "data": {
+            "cell": 8.0,
+            "coverage": 0.5,
+            "density": 0.800000011920929,
+            "drift": [
+              -2.0,
+              0.0,
+              0.5
+            ],
+            "refraction": 0.25,
+            "scale": 3.200000047683716,
+            "seed": 21,
+            "size": [
+              300.0,
+              24.0,
+              300.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Campfire"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              0.20000000298023224,
+              8.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.699999988079071,
+              0.4000000059604645,
+              0.699999988079071
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              1.0,
+              0.44999998807907104,
+              0.11999999731779099,
+              1.0
+            ],
+            "emissive": 1.399999976158142,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Fire light"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              1.0,
+              8.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Light",
+          "data": {
+            "angle": 35.0,
+            "color": [
+              1.0,
+              0.5,
+              0.20000000298023224,
+              1.0
+            ],
+            "intensity": 3.0,
+            "kind": "Point",
+            "range": 14.0,
+            "shadows": true,
+            "softness": 0.25
+          }
+        },
+        {
+          "type": "Scripts",
+          "data": [
+            {
+              "name": "Flicker",
+              "props": {}
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

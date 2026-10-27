@@ -1,0 +1,10 @@
+[package]
+name = "test_assets_scripts"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+kvas_engine.workspace = true

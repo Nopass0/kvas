@@ -1,0 +1,11 @@
+[package]
+name = "kvas_player"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+kvas_engine.workspace = true
+kvas_render.workspace = true
+kvas_audio.workspace = true
+glam.workspace = true
+eframe.workspace = true

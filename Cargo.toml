@@ -1,0 +1,50 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/kvas_ecs",
+    "crates/kvas_engine",
+    "crates/kvas_render",
+    "crates/kvas_editor",
+    "crates/kvas_audio",
+    "crates/kvas_player",
+    "games/demo/scripts",
+    "games/test_meadow/scripts",
+    "games/test_voxels/scripts",
+    "games/test_cloth/scripts",
+    "games/test_assets/scripts",
+    "games/test_fps/scripts",
+    "games/showcase/scripts",
+    "games/village/scripts",
+    "games/library_check/scripts",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
+[workspace.dependencies]
+glam = { version = "0.33", features = ["serde", "bytemuck"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+bytemuck = { version = "1", features = ["derive"] }
+rapier3d = "0.36"
+libloading = "0.9"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "hdr"] }
+gltf = { version = "1", features = ["KHR_materials_unlit", "KHR_materials_emissive_strength", "KHR_materials_ior", "KHR_materials_specular", "KHR_materials_transmission", "KHR_materials_volume", "KHR_materials_variants", "KHR_texture_transform", "KHR_lights_punctual", "KHR_materials_pbrSpecularGlossiness"] }
+eframe = { version = "0.37", default-features = false, features = ["wgpu", "default_fonts", "x11", "wayland"] }
+egui_dock = { path = "third_party/egui_dock" }
+kvas_ecs = { path = "crates/kvas_ecs" }
+kvas_engine = { path = "crates/kvas_engine" }
+kvas_render = { path = "crates/kvas_render" }
+kvas_audio = { path = "crates/kvas_audio" }
+
+[profile.dev]
+opt-level = 1
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 8
+strip = "debuginfo"

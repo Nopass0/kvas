@@ -1,0 +1,3325 @@
+{
+  "settings": {
+    "ambient": [
+      0.25,
+      0.27,
+      0.32
+    ],
+    "sky": [
+      0.35,
+      0.5,
+      0.75
+    ],
+    "gravity": [
+      0.0,
+      -9.81,
+      0.0
+    ],
+    "toon_bands": 0,
+    "saturation": 1.0,
+    "contrast": 1.0,
+    "exposure": 1.0,
+    "atmosphere": {
+      "procedural": true,
+      "time": 16.5,
+      "speed": 0.0,
+      "clouds": 0.5,
+      "cloud_speed": 0.02,
+      "stars": 0.8
+    }
+  },
+  "entities": [
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Sun"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              12.0,
+              0.0
+            ],
+            "rotation": [
+              -50.0,
+              -30.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Light",
+          "data": {
+            "angle": 35.0,
+            "color": [
+              1.0,
+              0.9599999785423279,
+              0.8999999761581421,
+              1.0
+            ],
+            "intensity": 1.149999976158142,
+            "kind": "Directional",
+            "range": 10.0,
+            "shadows": true,
+            "softness": 0.25
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Main Camera"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              7.0,
+              15.0
+            ],
+            "rotation": [
+              -20.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Camera",
+          "data": {
+            "far": 500.0,
+            "fov": 60.0,
+            "near": 0.10000000149011612,
+            "ortho_size": 10.0,
+            "orthographic": false,
+            "primary": true
+          }
+        },
+        {
+          "type": "Scripts",
+          "data": [
+            {
+              "name": "FollowCamera",
+              "props": {
+                "offset": [
+                  0.0,
+                  5.0,
+                  9.0
+                ],
+                "smoothing": 4.0,
+                "target": "Player"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Ground"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              -0.5,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              80.0,
+              1.0,
+              80.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.8500000238418579,
+              0.8999999761581421,
+              0.8500000238418579,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.8999999761581421,
+            "shader": "",
+            "texture": "textures/checker.png",
+            "tiling": 40.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Player"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              1.0,
+              6.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              1.0,
+              0.550000011920929,
+              0.15000000596046448,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:sphere",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.25,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.4000000059604645,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.4000000059604645,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Sphere",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Scripts",
+          "data": [
+            {
+              "name": "PlayerBall",
+              "props": {
+                "camera": "Main Camera",
+                "force": 22.0,
+                "jump": 6.5
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pyramid"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 4,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Box 0-0"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -8.100000381469727,
+              0.5,
+              -4.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.30000001192092896,
+              0.550000011920929,
+              0.8999999761581421,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 4,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Box 0-1"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -7.050000190734863,
+              0.5,
+              -4.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.30000001192092896,
+              0.550000011920929,
+              0.8999999761581421,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 4,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Box 0-2"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -6.0,
+              0.5,
+              -4.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.30000001192092896,
+              0.550000011920929,
+              0.8999999761581421,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 4,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Box 0-3"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -4.949999809265137,
+              0.5,
+              -4.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.30000001192092896,
+              0.550000011920929,
+              0.8999999761581421,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 4,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Box 0-4"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -3.9000000953674316,
+              0.5,
+              -4.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.30000001192092896,
+              0.550000011920929,
+              0.8999999761581421,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 4,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Box 1-0"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -7.574999809265137,
+              1.5,
+              -4.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.4399999976158142,
+              0.550000011920929,
+              0.7599999904632568,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 4,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Box 1-1"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -6.525000095367432,
+              1.5,
+              -4.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.4399999976158142,
+              0.550000011920929,
+              0.7599999904632568,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 4,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Box 1-2"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -5.474999904632568,
+              1.5,
+              -4.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.4399999976158142,
+              0.550000011920929,
+              0.7599999904632568,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 4,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Box 1-3"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -4.425000190734863,
+              1.5,
+              -4.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.4399999976158142,
+              0.550000011920929,
+              0.7599999904632568,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 4,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Box 2-0"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -7.050000190734863,
+              2.5,
+              -4.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.5800000429153442,
+              0.550000011920929,
+              0.6200000047683716,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 4,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Box 2-1"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -6.0,
+              2.5,
+              -4.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.5800000429153442,
+              0.550000011920929,
+              0.6200000047683716,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 4,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Box 2-2"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -4.949999809265137,
+              2.5,
+              -4.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.5800000429153442,
+              0.550000011920929,
+              0.6200000047683716,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 4,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Box 3-0"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -6.525000095367432,
+              3.5,
+              -4.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.7200000286102295,
+              0.550000011920929,
+              0.47999995946884155,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 4,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Box 3-1"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -5.474999904632568,
+              3.5,
+              -4.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.7200000286102295,
+              0.550000011920929,
+              0.47999995946884155,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 4,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Box 4-0"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -6.0,
+              4.5,
+              -4.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.8600000143051147,
+              0.550000011920929,
+              0.3399999737739563,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pendulum Weight"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              12.0,
+              8.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.399999976158142,
+              1.399999976158142,
+              1.399999976158142
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.75,
+              0.75,
+              0.800000011920929,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:sphere",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 6.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Sphere",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Joint",
+          "data": {
+            "anchor": [
+              -2.0,
+              0.0,
+              0.0
+            ],
+            "axis": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "damping": 5.0,
+            "kind": "Ball",
+            "limit_max": 45.0,
+            "limit_min": -45.0,
+            "rest_length": 1.0,
+            "stiffness": 50.0,
+            "target": "",
+            "use_limits": false
+          }
+        }
+      ]
+    },
+    {
+      "parent": 20,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Rod"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -1.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              90.0
+            ],
+            "scale": [
+              0.05000000074505806,
+              2.0,
+              0.05000000074505806
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.30000001192092896,
+              0.30000001192092896,
+              0.30000001192092896,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cylinder",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Chain 0"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -7.199999809265137,
+              9.0,
+              2.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.6000000238418579,
+              0.6000000238418579,
+              0.6000000238418579
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.8999999761581421,
+              0.800000011920929,
+              0.30000001192092896,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:sphere",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 0.5
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Sphere",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Joint",
+          "data": {
+            "anchor": [
+              -0.800000011920929,
+              0.0,
+              0.0
+            ],
+            "axis": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "damping": 5.0,
+            "kind": "Ball",
+            "limit_max": 45.0,
+            "limit_min": -45.0,
+            "rest_length": 1.0,
+            "stiffness": 50.0,
+            "target": "",
+            "use_limits": false
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Chain 1"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -6.399999618530273,
+              9.0,
+              2.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.6000000238418579,
+              0.6000000238418579,
+              0.6000000238418579
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.8999999761581421,
+              0.800000011920929,
+              0.30000001192092896,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:sphere",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 0.5
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Sphere",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Joint",
+          "data": {
+            "anchor": [
+              -0.800000011920929,
+              0.0,
+              0.0
+            ],
+            "axis": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "damping": 5.0,
+            "kind": "Ball",
+            "limit_max": 45.0,
+            "limit_min": -45.0,
+            "rest_length": 1.0,
+            "stiffness": 50.0,
+            "target": "Chain 0",
+            "use_limits": false
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Chain 2"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -5.599999904632568,
+              9.0,
+              2.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.6000000238418579,
+              0.6000000238418579,
+              0.6000000238418579
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.8999999761581421,
+              0.800000011920929,
+              0.30000001192092896,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:sphere",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 0.5
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Sphere",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Joint",
+          "data": {
+            "anchor": [
+              -0.800000011920929,
+              0.0,
+              0.0
+            ],
+            "axis": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "damping": 5.0,
+            "kind": "Ball",
+            "limit_max": 45.0,
+            "limit_min": -45.0,
+            "rest_length": 1.0,
+            "stiffness": 50.0,
+            "target": "Chain 1",
+            "use_limits": false
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Chain 3"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -4.799999713897705,
+              9.0,
+              2.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.6000000238418579,
+              0.6000000238418579,
+              0.6000000238418579
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.8999999761581421,
+              0.800000011920929,
+              0.30000001192092896,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:sphere",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 0.5
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Sphere",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Joint",
+          "data": {
+            "anchor": [
+              -0.800000011920929,
+              0.0,
+              0.0
+            ],
+            "axis": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "damping": 5.0,
+            "kind": "Ball",
+            "limit_max": 45.0,
+            "limit_min": -45.0,
+            "rest_length": 1.0,
+            "stiffness": 50.0,
+            "target": "Chain 2",
+            "use_limits": false
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Chain 4"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -3.999999761581421,
+              9.0,
+              2.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.6000000238418579,
+              0.6000000238418579,
+              0.6000000238418579
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.8999999761581421,
+              0.800000011920929,
+              0.30000001192092896,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:sphere",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 0.5
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Sphere",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Joint",
+          "data": {
+            "anchor": [
+              -0.800000011920929,
+              0.0,
+              0.0
+            ],
+            "axis": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "damping": 5.0,
+            "kind": "Ball",
+            "limit_max": 45.0,
+            "limit_min": -45.0,
+            "rest_length": 1.0,
+            "stiffness": 50.0,
+            "target": "Chain 3",
+            "use_limits": false
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Chain 5"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -3.1999998092651367,
+              9.0,
+              2.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.6000000238418579,
+              0.6000000238418579,
+              0.6000000238418579
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.8999999761581421,
+              0.800000011920929,
+              0.30000001192092896,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:sphere",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 0.5
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Sphere",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Joint",
+          "data": {
+            "anchor": [
+              -0.800000011920929,
+              0.0,
+              0.0
+            ],
+            "axis": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "damping": 5.0,
+            "kind": "Ball",
+            "limit_max": 45.0,
+            "limit_min": -45.0,
+            "rest_length": 1.0,
+            "stiffness": 50.0,
+            "target": "Chain 4",
+            "use_limits": false
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Door"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              3.0,
+              1.5,
+              -9.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              2.0,
+              3.0,
+              0.20000000298023224
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.6000000238418579,
+              0.3499999940395355,
+              0.20000000298023224,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 4.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Joint",
+          "data": {
+            "anchor": [
+              -0.5,
+              0.0,
+              0.0
+            ],
+            "axis": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "damping": 5.0,
+            "kind": "Hinge",
+            "limit_max": 100.0,
+            "limit_min": -100.0,
+            "rest_length": 1.0,
+            "stiffness": 50.0,
+            "target": "",
+            "use_limits": true
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Door Post"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              2.0,
+              1.600000023841858,
+              -9.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.25,
+              3.200000047683716,
+              0.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.25,
+              0.25,
+              0.2800000011920929,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cylinder",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Cylinder",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Spring Box"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -6.0,
+              3.0,
+              6.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.2000000476837158,
+              1.2000000476837158,
+              1.2000000476837158
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.8999999761581421,
+              0.30000001192092896,
+              0.4000000059604645,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Joint",
+          "data": {
+            "anchor": [
+              0.0,
+              3.0,
+              0.0
+            ],
+            "axis": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "damping": 3.0,
+            "kind": "Spring",
+            "limit_max": 45.0,
+            "limit_min": -45.0,
+            "rest_length": 2.0,
+            "stiffness": 80.0,
+            "target": "",
+            "use_limits": false
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Platform"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              8.0,
+              0.4000000059604645,
+              7.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              4.0,
+              0.4000000059604645,
+              3.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.3499999940395355,
+              0.4000000059604645,
+              0.5,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Kinematic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Scripts",
+          "data": [
+            {
+              "name": "Mover",
+              "props": {
+                "amplitude": 4.0,
+                "axis": [
+                  1.0,
+                  0.0,
+                  0.0
+                ],
+                "speed": 0.8
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Crate"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              8.0,
+              1.2999999523162842,
+              7.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.8999999761581421,
+              0.8999999761581421,
+              0.8999999761581421
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.800000011920929,
+              0.6000000238418579,
+              0.30000001192092896,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Barbell"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -12.0,
+              4.0,
+              -4.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              90.0
+            ],
+            "scale": [
+              0.20000000298023224,
+              3.0,
+              0.20000000298023224
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.5,
+              0.5,
+              0.550000011920929,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cylinder",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "RigidBody",
+          "data": {
+            "angular_damping": 0.05000000074505806,
+            "gravity_scale": 1.0,
+            "kind": "Dynamic",
+            "linear_damping": 0.05000000074505806,
+            "lock_rotation": false,
+            "mass": 3.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Cylinder",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 33,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Plate 0"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              -1.5,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              5.0,
+              0.33000001311302185,
+              5.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.20000000298023224,
+              0.20000000298023224,
+              0.25,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:sphere",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Sphere",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 33,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Plate 1"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              1.5,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              5.0,
+              0.33000001311302185,
+              5.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.20000000298023224,
+              0.20000000298023224,
+              0.25,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:sphere",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "restitution": 0.10000000149011612,
+            "shape": "Sphere",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Water"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              18.0,
+              0.07999999821186066,
+              -8.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              10.0,
+              1.0,
+              10.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.10000000149011612,
+              0.44999998807907104,
+              0.75,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:plane",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "shaders/wave.wgsl",
+            "texture": "",
+            "tiling": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Torus"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              6.0,
+              2.5,
+              4.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.800000011920929,
+              0.8999999761581421,
+              1.0,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "models/torus.obj",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "shaders/rim.wgsl",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "Scripts",
+          "data": [
+            {
+              "name": "Spinner",
+              "props": {
+                "speed": [
+                  30.0,
+                  60.0,
+                  0.0
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Marble"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -2.0,
+              2.200000047683716,
+              3.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.600000023841858,
+              1.600000023841858,
+              1.600000023841858
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:sphere",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.20000000298023224,
+            "shader": "",
+            "texture": "noise:Ridged:0,3,5,2,0.5,0.8,256,0.08,0.1,0.2,0.95,0.9,0.85",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "Spin",
+          "data": {
+            "speed": [
+              0.0,
+              20.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Bob",
+          "data": {
+            "amplitude": 0.3499999940395355,
+            "axis": [
+              0.0,
+              1.0,
+              0.0
+            ],
+            "phase": 0.0,
+            "speed": 0.4000000059604645
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Jelly"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              2.5,
+              2.0,
+              3.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.2000000476837158,
+              1.2000000476837158,
+              1.2000000476837158
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.8999999761581421,
+              0.30000001192092896,
+              0.6000000238418579,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cone",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        },
+        {
+          "type": "Pulse",
+          "data": {
+            "amount": 0.15000000596046448,
+            "speed": 1.0
+          }
+        },
+        {
+          "type": "Wobble",
+          "data": {
+            "amount": [
+              0.30000001192092896,
+              0.30000001192092896,
+              0.30000001192092896
+            ],
+            "frequency": 0.699999988079071,
+            "kind": "Perlin",
+            "seed": 1
+          }
+        },
+        {
+          "type": "ColorCycle",
+          "data": {
+            "saturation": 0.75,
+            "speed": 0.15000000596046448,
+            "value": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Glass Sphere"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -4.5,
+              1.0,
+              6.5
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              2.0,
+              2.0,
+              2.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": false,
+            "color": [
+              0.7799999713897705,
+              0.9200000166893005,
+              1.0,
+              0.1599999964237213
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:sphere",
+            "metallic": 0.0,
+            "reflectivity": 1.0,
+            "roughness": 0.029999999329447746,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Chrome Sphere"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -1.5,
+              1.0,
+              9.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              2.0,
+              2.0,
+              2.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.9200000166893005,
+              0.9200000166893005,
+              0.9599999785423279,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:sphere",
+            "metallic": 1.0,
+            "reflectivity": 1.0,
+            "roughness": 0.07999999821186066,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Spotlight"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -6.0,
+              7.0,
+              0.0
+            ],
+            "rotation": [
+              -72.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Light",
+          "data": {
+            "angle": 28.0,
+            "color": [
+              1.0,
+              0.8500000238418579,
+              0.6000000238418579,
+              1.0
+            ],
+            "intensity": 9.0,
+            "kind": "Spot",
+            "range": 22.0,
+            "shadows": false,
+            "softness": 0.44999998807907104
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Lamp"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -4.0,
+              3.0,
+              2.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Light",
+          "data": {
+            "angle": 35.0,
+            "color": [
+              1.0,
+              0.6000000238418579,
+              0.25,
+              1.0
+            ],
+            "intensity": 2.5,
+            "kind": "Point",
+            "range": 12.0,
+            "shadows": true,
+            "softness": 0.25
+          }
+        },
+        {
+          "type": "Scripts",
+          "data": [
+            {
+              "name": "Flicker",
+              "props": {
+                "amount": 0.35
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "parent": 43,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Lamp Bulb"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              4.0,
+              -3.0,
+              -2.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.25,
+              0.25,
+              0.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              1.0,
+              0.800000011920929,
+              0.4000000059604645,
+              1.0
+            ],
+            "emissive": 2.0,
+            "mesh": "primitive:sphere",
+            "metallic": 0.0,
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Spawner (press E)"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              10.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Scripts",
+          "data": [
+            {
+              "name": "BoxSpawner",
+              "props": {}
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

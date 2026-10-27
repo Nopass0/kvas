@@ -1,0 +1,16 @@
+[package]
+name = "kvas_render"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+kvas_ecs.workspace = true
+kvas_engine.workspace = true
+glam.workspace = true
+bytemuck.workspace = true
+eframe.workspace = true
+image.workspace = true
+pollster = "1"
+
+[dev-dependencies]
+naga = { version = "30", features = ["wgsl-in"] }

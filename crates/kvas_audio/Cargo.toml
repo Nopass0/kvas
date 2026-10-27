@@ -1,0 +1,9 @@
+[package]
+name = "kvas_audio"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+kvas_engine.workspace = true
+glam.workspace = true
+rodio = { version = "0.19", default-features = false, features = ["wav", "vorbis", "mp3", "flac", "symphonia-aac", "symphonia-isomp4"] }

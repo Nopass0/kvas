@@ -1,0 +1,16 @@
+[package]
+name = "kvas_engine"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+kvas_ecs.workspace = true
+glam.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rapier3d.workspace = true
+libloading.workspace = true
+image.workspace = true
+gltf.workspace = true
+bytemuck.workspace = true
+ufbx = "0.11"

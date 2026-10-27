@@ -1,0 +1,157 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "Output",
+      "pos": [
+        420.0,
+        80.0
+      ],
+      "inputs": [
+        {
+          "link": 2,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "link": 4,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "params": []
+    },
+    {
+      "id": 2,
+      "kind": "Color",
+      "pos": [
+        70.0,
+        109.0
+      ],
+      "inputs": [],
+      "params": [
+        0.827571,
+        0.2226918,
+        0.2226918
+      ]
+    },
+    {
+      "id": 4,
+      "kind": "Add",
+      "pos": [
+        134.0,
+        268.0
+      ],
+      "inputs": [
+        {
+          "link": 5,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "link": null,
+          "value": [
+            0.42,
+            0.42,
+            0.42
+          ]
+        }
+      ],
+      "params": []
+    },
+    {
+      "id": 5,
+      "kind": "Value",
+      "pos": [
+        -123.0,
+        235.0
+      ],
+      "inputs": [],
+      "params": [
+        0.5
+      ]
+    },
+    {
+      "id": 6,
+      "kind": "Gradient",
+      "pos": [
+        166.0,
+        640.0
+      ],
+      "inputs": [
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "params": []
+    }
+  ],
+  "textures": [
+    "",
+    "textures/checker.png",
+    "textures/checker.png"
+  ],
+  "next_id": 7
+}

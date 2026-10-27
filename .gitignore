@@ -1,0 +1,23 @@
+/target
+**/.kvas/
+**/build/
+/.test_assets/
+/tools/*.log
+/tools/*capture*.png
+/third_party/nvidia/
+**/target/
+**/*.dll
+**/*.pdb
+.env
+.env.*
+__pycache__/
+# Local import fixtures with licenses requiring separate source-asset distribution review.
+/games/test_fps/assets/models/
+/games/test_fps/assets/textures/
+/games/test_assets/assets/models/
+/games/village/assets/models/
+/games/village/assets/music/
+/games/village/assets/paint/
+/games/village/assets/sounds/
+/games/village/assets/textures/
+/games/showcase/assets/music/
