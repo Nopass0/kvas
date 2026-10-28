@@ -15,13 +15,13 @@ fn vs_main(v: VertexIn) -> VsOut {
     let dist = distance(world0.xz, globals.camera_pos.xz);
     // Far away, a growing share of blades shrinks to nothing; the rest keep their size.
     let fade = smoothstep(object.user0.z, object.user0.w, dist);
-    let keep = clamp((v.uv.x - fade) * 8.0 + 1.0, 0.0, 1.0);
+    let keep = clamp((fract(v.uv.x) - fade) * 8.0 + 1.0, 0.0, 1.0);
 
     let strength = object.user0.x;
     let speed = object.user0.y;
     let t = v.uv.y;
     let bend = t * t * keep;
-    let seed = v.uv.x * 6.2831;
+    let seed = fract(v.uv.x) * 6.2831;
     let time = globals.time.x;
     let sway = sin(time * speed + world0.x * 0.55 + world0.z * 0.35 + seed) * 0.5 + sin(time * speed * 2.1 + seed * 1.7) * 0.15;
     let gust = (gust_front(world0.xz) - 0.35) * 2.2;
@@ -53,14 +53,29 @@ fn fs_main(in: VsOut) -> @location(0) vec4<f32> {
     let mid = mix(base, tip, 0.5) * vec3<f32>(1.05, 1.0, 0.8);
     var albedo = mix(base, mid, smoothstep(0.0, 0.45, g));
     albedo = mix(albedo, tip, smoothstep(0.4, 1.0, g));
-    // Per-blade brightness, plus meadow-scale patches of dry and lush grass.
-    albedo *= 0.8 + 0.4 * fract(in.uv.x * 7.3);
+    // Per-blade brightness and a slight hue drift, plus meadow-scale patches of dry and lush grass.
+    let blade = fract(in.uv.x);
+    albedo *= 0.8 + 0.4 * fract(blade * 7.3);
+    albedo = mix(albedo, albedo * vec3<f32>(1.15, 1.0, 0.7), fract(blade * 13.7) * 0.35);
     let dry = smoothstep(0.55, 0.85, value_noise(in.world_pos.xz * 0.28));
     let lush = smoothstep(0.6, 0.9, value_noise(in.world_pos.xz * 0.9 + vec2<f32>(7.0, 3.0)));
     albedo = mix(albedo, albedo * vec3<f32>(1.4, 1.2, 0.5), dry * patchiness);
     albedo = mix(albedo, albedo * vec3<f32>(0.7, 0.95, 0.8), lush * patchiness * 0.6);
     // Gusts sweeping over the field lighten the blades they bend.
     albedo *= 1.0 + smoothstep(0.5, 0.95, gust_front(in.world_pos.xz)) * 0.25 * strength;
+    // Wild flowers: the top of a flower blade is a small bright head.
+    if (in.uv.x >= 2.0) {
+        let pick = fract(blade * 41.3);
+        var petal = vec3<f32>(0.95, 0.93, 0.86);
+        if (pick > 0.75) {
+            petal = vec3<f32>(0.98, 0.8, 0.16);
+        } else if (pick > 0.5) {
+            petal = vec3<f32>(0.62, 0.45, 0.92);
+        } else if (pick > 0.3) {
+            petal = vec3<f32>(0.96, 0.52, 0.72);
+        }
+        albedo = mix(albedo, pow(petal, vec3<f32>(2.2)) * 1.4, smoothstep(0.78, 0.86, g));
+    }
 
     // Soft, painterly light: wrapped diffuse from the sun, sky ambient darkened towards the roots.
     let up = vec3<f32>(0.0, 1.0, 0.0);

@@ -370,6 +370,146 @@ fn lib_triplanar(t: texture_2d<f32>, s: sampler, p: vec3<f32>, n: vec3<f32>, sha
     w = w / max(w.x + w.y + w.z, 0.0001);
     return textureSample(t, s, p.zy).rgb * w.x + textureSample(t, s, p.xz).rgb * w.y + textureSample(t, s, p.xy).rgb * w.z;
 }
+// ---- fourth wave: general maths, ramps, curves and texture generators with several outputs
+// op: 0 add, 1 subtract, 2 multiply, 3 divide, 4 power, 5 log, 6 sqrt, 7 abs, 8 min, 9 max,
+// 10 less than, 11 greater than, 12 round, 13 floor, 14 ceil, 15 fract, 16 modulo, 17 sine,
+// 18 cosine, 19 tangent, 20 atan2, 21 smooth min, 22 smooth max, 23 snap, 24 ping-pong, 25 multiply add.
+fn lib_math(a: vec3<f32>, b: vec3<f32>, c: vec3<f32>, op: f32) -> vec3<f32> {
+    let m = i32(floor(op + 0.5));
+    let e = vec3<f32>(0.00001);
+    switch m {
+        case 0: { return a + b; }
+        case 1: { return a - b; }
+        case 2: { return a * b; }
+        case 3: { return a / select(e, b, abs(b) > e); }
+        case 4: { return pow(max(a, vec3<f32>(0.0)), b); }
+        case 5: { return log(max(a, e)) / log(max(b, vec3<f32>(1.0001))); }
+        case 6: { return sqrt(max(a, vec3<f32>(0.0))); }
+        case 7: { return abs(a); }
+        case 8: { return min(a, b); }
+        case 9: { return max(a, b); }
+        case 10: { return select(vec3<f32>(0.0), vec3<f32>(1.0), a < b); }
+        case 11: { return select(vec3<f32>(0.0), vec3<f32>(1.0), a > b); }
+        case 12: { return round(a); }
+        case 13: { return floor(a); }
+        case 14: { return ceil(a); }
+        case 15: { return fract(a); }
+        case 16: { return a - b * floor(a / select(e, b, abs(b) > e)); }
+        case 17: { return sin(a); }
+        case 18: { return cos(a); }
+        case 19: { return tan(a); }
+        case 20: { return vec3<f32>(atan2(a.x, b.x), atan2(a.y, b.y), atan2(a.z, b.z)); }
+        case 21: {
+            let h = clamp(vec3<f32>(0.5) + 0.5 * (b - a) / max(c, e), vec3<f32>(0.0), vec3<f32>(1.0));
+            return mix(b, a, h) - c * h * (vec3<f32>(1.0) - h);
+        }
+        case 22: {
+            let h = clamp(vec3<f32>(0.5) - 0.5 * (b - a) / max(c, e), vec3<f32>(0.0), vec3<f32>(1.0));
+            return mix(b, a, h) + c * h * (vec3<f32>(1.0) - h);
+        }
+        case 23: { return floor(a / select(e, b, abs(b) > e)) * b; }
+        case 24: {
+            let t = fract((a / select(e, b, abs(b) > e)) * 0.5) * 2.0;
+            return (vec3<f32>(1.0) - abs(t - vec3<f32>(1.0))) * b;
+        }
+        case 25: { return a * b + c; }
+        default: { return a; }
+    }
+}
+// op: 0 add, 1 subtract, 2 multiply, 3 divide, 4 cross, 5 project, 6 reflect, 7 dot, 8 distance,
+// 9 length, 10 scale (A * B.x), 11 normalize, 12 absolute, 13 minimum, 14 maximum, 15 floor, 16 fraction.
+fn lib_vmath(a: vec3<f32>, b: vec3<f32>, op: f32) -> vec3<f32> {
+    let m = i32(floor(op + 0.5));
+    let e = vec3<f32>(0.00001);
+    switch m {
+        case 0: { return a + b; }
+        case 1: { return a - b; }
+        case 2: { return a * b; }
+        case 3: { return a / select(e, b, abs(b) > e); }
+        case 4: { return cross(a, b); }
+        case 5: { return b * (dot(a, b) / max(dot(b, b), 0.00001)); }
+        case 6: { return reflect(a, normalize(b + e)); }
+        case 7: { return vec3<f32>(dot(a, b)); }
+        case 8: { return vec3<f32>(distance(a, b)); }
+        case 9: { return vec3<f32>(length(a)); }
+        case 10: { return a * b.x; }
+        case 11: { return normalize(a + e); }
+        case 12: { return abs(a); }
+        case 13: { return min(a, b); }
+        case 14: { return max(a, b); }
+        case 15: { return floor(a); }
+        case 16: { return fract(a); }
+        default: { return a; }
+    }
+}
+// Factor between two ramp stops. mode: 0 linear, 1 constant, 2 smooth (ease).
+fn lib_ramp_k(t: f32, lo: f32, hi: f32, mode: f32) -> f32 {
+    let k = clamp((t - lo) / max(hi - lo, 0.0001), 0.0, 1.0);
+    if (mode > 1.5) { return k * k * (3.0 - 2.0 * k); }
+    if (mode > 0.5) { return step(1.0, k); }
+    return k;
+}
+// A smooth curve through five points at x = 0, 0.25, 0.5, 0.75, 1 (Catmull-Rom).
+fn lib_curve5(x: f32, y0: f32, y1: f32, y2: f32, y3: f32, y4: f32) -> f32 {
+    let t = clamp(x, 0.0, 1.0) * 4.0;
+    let i = min(floor(t), 3.0);
+    let f = t - i;
+    var p = array<f32, 7>(y0 - (y1 - y0), y0, y1, y2, y3, y4, y4 + (y4 - y3));
+    let k = i32(i);
+    let p0 = p[k];
+    let p1 = p[k + 1];
+    let p2 = p[k + 2];
+    let p3 = p[k + 3];
+    return 0.5 * ((2.0 * p1) + (-p0 + p2) * f + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * f * f + (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * f * f * f);
+}
+fn lib_curve_rgb(c: vec3<f32>, y0: f32, y1: f32, y2: f32, y3: f32, y4: f32) -> vec3<f32> {
+    return vec3<f32>(lib_curve5(c.x, y0, y1, y2, y3, y4), lib_curve5(c.y, y0, y1, y2, y3, y4), lib_curve5(c.z, y0, y1, y2, y3, y4));
+}
+// Bands or rings with a sine, saw or triangle profile; distortion bends them with noise.
+fn lib_wave(p: vec3<f32>, kind: f32, profile: f32, distortion: f32, detail: f32) -> f32 {
+    var x = p.x + p.y + p.z;
+    if (kind > 0.5) { x = length(p) * 1.5; }
+    if (distortion != 0.0) { x = x + distortion * (lib_fractal(p * 0.5, detail, 2.0, 0.5, 0.0) * 2.0 - 1.0); }
+    let s = x * 6.2831853;
+    if (profile > 1.5) { return 1.0 - abs(fract(x) * 2.0 - 1.0); }
+    if (profile > 0.5) { return fract(x); }
+    return 0.5 + 0.5 * sin(s);
+}
+// kind: 0 linear, 1 quadratic, 2 eased, 3 diagonal, 4 radial, 5 spherical, 6 quadratic sphere.
+fn lib_gradient(p: vec3<f32>, kind: f32) -> f32 {
+    let m = i32(floor(kind + 0.5));
+    let x = clamp(p.x, 0.0, 1.0);
+    switch m {
+        case 1: { return x * x; }
+        case 2: { return x * x * (3.0 - 2.0 * x); }
+        case 3: { return clamp((p.x + p.y) * 0.5, 0.0, 1.0); }
+        case 4: { return atan2(p.y - 0.5, p.x - 0.5) / 6.2831853 + 0.5; }
+        case 5: { return clamp(1.0 - length(p.xy - vec2<f32>(0.5)) * 2.0, 0.0, 1.0); }
+        case 6: { let r = clamp(1.0 - length(p.xy - vec2<f32>(0.5)) * 2.0, 0.0, 1.0); return r * r; }
+        default: { return x; }
+    }
+}
+// Bricks: x = brick mask (1 brick, 0 mortar), y = random value per brick, z = distance to the mortar edge.
+fn lib_brick(uv: vec2<f32>, scale: f32, ratio: f32, offset: f32, mortar: f32, smooth_edge: f32) -> vec3<f32> {
+    let p = uv * vec2<f32>(scale / max(ratio, 0.05), scale);
+    let row = floor(p.y);
+    let x = p.x + offset * (row - 2.0 * floor(row * 0.5));
+    let cell = vec2<f32>(floor(x), row);
+    let f = vec2<f32>(fract(x) * ratio, fract(p.y));
+    let d = min(min(f.x, ratio - f.x), min(f.y, 1.0 - f.y));
+    let mask = smoothstep(mortar, mortar + smooth_edge + 0.0001, d);
+    return vec3<f32>(mask, lib_hash21(cell + vec2<f32>(0.37, 1.71)), d);
+}
+// Location, rotation (turns around Z) and scale for texture coordinates.
+fn lib_mapping(v: vec3<f32>, loc: vec3<f32>, turns: f32, scale: vec3<f32>) -> vec3<f32> {
+    let r = lib_rot2(v.xy, turns * 6.2831853);
+    return vec3<f32>(r, v.z) * scale + loc;
+}
+// Coordinates with a little noise added (detail breaking for repeating patterns).
+fn lib_jitter(v: vec3<f32>, amount: f32, scale: f32) -> vec3<f32> {
+    let q = v * scale;
+    return v + amount * (vec3<f32>(lib_vnoise3(q), lib_vnoise3(q + vec3<f32>(7.1, 3.3, 1.9)), lib_vnoise3(q + vec3<f32>(2.7, 9.4, 5.6))) - vec3<f32>(0.5));
+}
 ";
 
 fn builtin(name: &str) -> Option<&'static str> {

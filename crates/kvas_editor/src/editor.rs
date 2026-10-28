@@ -32,6 +32,8 @@ pub struct Play {
     pub runtime: Runtime,
     pub paused: bool,
     pub step: bool,
+    /// Mouse captured by the game (Escape frees it, a click on the view takes it back).
+    pub mouse: shell::MouseCapture,
 }
 
 #[derive(Default)]
@@ -102,6 +104,8 @@ pub struct Editor {
     undo: Undo,
     started: Instant,
     pub play_center: Option<egui::Pos2>,
+    /// The cursor was hidden by a running game.
+    pub cursor_hidden: bool,
     /// Last valid viewport camera/physical dimensions, used for clean PNG export.
     pub last_view: Option<(kvas_render::View, [u32; 2])>,
     last_frame: Instant,
@@ -160,6 +164,7 @@ impl Editor {
             undo: Undo::default(),
             started: Instant::now(),
             play_center: None,
+            cursor_hidden: false,
             last_view: None,
             last_frame: Instant::now(),
             last_refresh: Instant::now(),
@@ -184,6 +189,14 @@ impl Editor {
     /// Loads the start scene and the scripts library of the current project.
     fn enter_project(&mut self) {
         self.last_view = None;
+        match crate::library::ensure_assets(&self.project.root) {
+            Ok(0) => {}
+            Ok(n) => {
+                self.console.info(crate::i18n::tf("Built-in materials and shaders added to the project: {}", &[&n.to_string()]));
+                self.reload_assets();
+            }
+            Err(e) => self.console.error(e),
+        }
         crate::hub::add_recent(&self.project.root);
         let log = self.console.sender();
         let auto_reload = self.scripts.auto_reload;
@@ -395,6 +408,10 @@ impl Editor {
     pub fn create_procedural(&mut self, kind: &str) {
         let (name, lift) = match kind {
             "grass" => ("Grass", 0.0),
+            "tree" => ("Tree", 0.0),
+            "tree_pine" => ("Pine", 0.0),
+            "tree_palm" => ("Palm", 0.0),
+            "bush" => ("Bush", 0.0),
             "cloth" => ("Cloth", 4.0),
             "smoke" => ("Voxel Smoke", 0.0),
             "water_voxel" => ("Voxel Water", 0.0),
@@ -404,6 +421,16 @@ impl Editor {
             _ => ("Voxel Clouds", 28.0),
         };
         let e = self.create_entity(name, |w, e| {
+            if kind.starts_with("tree") || kind == "bush" {
+                let tree = match kind {
+                    "tree_pine" => Tree { style: TreeStyle::Conifer, height: 7.5, trunk_radius: 0.2, levels: 2, branches: 9, branch_angle: 78.0, branch_length: 0.5, leaf_density: 10, leaf_size: 0.6, crookedness: 0.12, leaf_color: [0.02, 0.07, 0.03, 1.0], leaf_color_2: [0.04, 0.11, 0.04, 1.0], ..Default::default() },
+                    "tree_palm" => Tree { style: TreeStyle::Palm, height: 6.0, trunk_radius: 0.16, crookedness: 0.6, leaf_density: 6, leaf_size: 0.9, bark_color: [0.45, 0.36, 0.25, 1.0], ..Default::default() },
+                    "bush" => Tree { style: TreeStyle::Bush, height: 1.5, trunk_radius: 0.07, levels: 2, branches: 3, leaf_density: 12, leaf_size: 0.55, ..Default::default() },
+                    _ => Tree::default(),
+                };
+                w.insert(e, tree);
+                return;
+            }
             w.insert(e, MeshRenderer::default());
             match kind {
                 "grass" => w.insert(e, Grass::default()),
@@ -780,7 +807,9 @@ impl Editor {
                 runtime.scene.audio.master_volume = self.project.config.master_volume;
                 runtime.set_bindings(&self.project.config.binding_defs());
                 runtime.log.extend(warnings);
-                self.play = Some(Play { runtime, paused: false, step: false });
+                runtime.input.set_scene_path(self.scene_path.as_deref().unwrap_or(""));
+                self.play = Some(Play { runtime, paused: false, step: false, mouse: shell::MouseCapture::default() });
+                self.cursor_hidden = true;
                 self.selection = selected.and_then(|p| self.entity_at(p));
             }
             Err(e) => self.console.error(e),
@@ -862,6 +891,11 @@ impl Editor {
             }
         }
 
+        // The game hid the cursor; give it back once play stops.
+        if self.play.is_none() && self.cursor_hidden {
+            self.cursor_hidden = false;
+            ctx.send_viewport_cmd(egui::ViewportCommand::CursorVisible(true));
+        }
         let typing = ctx.egui_wants_keyboard_input();
         match &mut self.play {
             Some(p) => {
@@ -876,6 +910,12 @@ impl Editor {
                     p.step = false;
                 } else {
                     p.runtime.tick(dt);
+                }
+                let assets = self.assets.clone();
+                match p.runtime.apply_scene_request(&self.registry, |path| assets.read_string(path).map_err(|e| e.to_string())) {
+                    Some(Ok(path)) => self.console.info(format!("{}: {path}", crate::i18n::t("Scene loaded"))),
+                    Some(Err(e)) => self.console.error(e),
+                    None => {}
                 }
                 if self.audio.is_none() {
                     self.audio = kvas_audio::AudioEngine::new();

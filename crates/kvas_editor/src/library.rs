@@ -41,6 +41,37 @@ pub fn write_api_files(project_root: &Path) -> Result<(), String> {
     Ok(())
 }
 
+/// Copies the library's materials and shaders into a project the first time it is opened, so the
+/// built-in assets are in the Project panel without a manual install. A marker file remembers it,
+/// so materials the user deleted later do not come back. Scripts are not touched.
+pub fn ensure_assets(project_root: &Path) -> Result<usize, String> {
+    let marker = project_root.join("assets/materials/library/.kvas-library");
+    if marker.exists() {
+        return Ok(0);
+    }
+    let io = |e: std::io::Error| e.to_string();
+    let mut added = 0;
+    for (rel, src) in FILES.iter() {
+        let target = if let Some(r) = rel.strip_prefix("shaders/") {
+            project_root.join("assets/shaders/library").join(r)
+        } else if let Some(r) = rel.strip_prefix("materials/") {
+            project_root.join("assets/materials/library").join(r)
+        } else {
+            continue;
+        };
+        if target.exists() {
+            continue;
+        }
+        std::fs::create_dir_all(target.parent().unwrap()).map_err(io)?;
+        std::fs::write(&target, src).map_err(io)?;
+        added += 1;
+    }
+    std::fs::create_dir_all(marker.parent().unwrap()).map_err(io)?;
+    std::fs::write(&marker, "Built-in materials and shaders were copied here once. Delete this file to copy missing ones again.
+").map_err(io)?;
+    Ok(added)
+}
+
 /// Copies the library into a project. Existing files and already registered scripts are left alone.
 pub fn install(project_root: &Path) -> Result<Report, String> {
     let io = |e: std::io::Error| e.to_string();

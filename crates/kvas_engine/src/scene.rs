@@ -173,54 +173,17 @@ impl Scene {
         let file: SceneFile = serde_json::from_str(text).map_err(|e| format!("scene parse error: {e}"))?;
         let mut scene = Scene { settings: file.settings, ..Scene::default() };
         reg.register_world(&mut scene.world);
-        let mut warnings = Vec::new();
-        let spawned: Vec<Entity> = file.entities.iter().map(|_| scene.world.spawn()).collect();
-        let mut parents = Vec::new();
-        for (data, &e) in file.entities.into_iter().zip(&spawned) {
-            for c in data.components {
-                match reg.get(&c.kind) {
-                    Some(info) => {
-                        if let Err(err) = (info.from_json)(&mut scene.world, e, c.data) {
-                            warnings.push(err);
-                        }
-                    }
-                    None => warnings.push(format!("unknown component '{}'", c.kind)),
-                }
-            }
-            parents.push((e, data.parent));
-        }
-        // Resolve separately so validation is independent of entity/component order.
-        let mut groups: Vec<usize> = (0..spawned.len()).collect();
-        fn root(groups: &mut [usize], mut index: usize) -> usize {
-            while groups[index] != index {
-                groups[index] = groups[groups[index]];
-                index = groups[index];
-            }
-            index
-        }
-        // Each child has at most one parent. Joining an already-connected pair
-        // would close a directed cycle; union-find checks this without walking
-        // every ancestor of every node in a deeply nested imported scene.
-        for (child_index, (e, parent)) in parents.into_iter().enumerate() {
-            if let Some(index) = parent {
-                match spawned.get(index).copied() {
-                    Some(p) => {
-                        let child_root = root(&mut groups, child_index);
-                        let parent_root = root(&mut groups, index);
-                        if child_root == parent_root {
-                            warnings.push(format!("entity {}: cyclic parent {index} ignored", e.index()));
-                        } else {
-                            groups[child_root] = parent_root;
-                            scene.world.insert(e, Parent(p));
-                        }
-                    }
-                    None => warnings.push(format!("entity {}: invalid parent index {index} ignored", e.index())),
-                }
-            }
-        }
-        hierarchy::update_globals(&mut scene.world);
+        let warnings = load_entities(&mut scene, reg, file.entities);
         Ok((scene, warnings))
     }
+
+    /// Adds every object of a scene file to this scene (its settings are ignored). Returns the
+    /// warnings of the load; the new root objects keep their places.
+    pub fn add_json(&mut self, reg: &Registry, text: &str) -> Result<Vec<String>, String> {
+        let file: SceneFile = serde_json::from_str(text).map_err(|e| format!("scene parse error: {e}"))?;
+        Ok(load_entities(self, reg, file.entities))
+    }
+
 
     /// Loads a UTF-8 JSON scene from disk, preserving non-fatal component/hierarchy warnings.
     pub fn load(reg: &Registry, path: &Path) -> Result<(Scene, Vec<String>), String> {
@@ -288,6 +251,58 @@ impl Scene {
         hierarchy::despawn_recursive(&mut self.world, entity);
     }
 }
+
+/// Spawns serialized entities into a scene and links their parents.
+fn load_entities(scene: &mut Scene, reg: &Registry, entities: Vec<EntityData>) -> Vec<String> {
+    let mut warnings = Vec::new();
+    let spawned: Vec<Entity> = entities.iter().map(|_| scene.world.spawn()).collect();
+        let mut parents = Vec::new();
+        for (data, &e) in entities.into_iter().zip(&spawned) {
+            for c in data.components {
+                match reg.get(&c.kind) {
+                    Some(info) => {
+                        if let Err(err) = (info.from_json)(&mut scene.world, e, c.data) {
+                            warnings.push(err);
+                        }
+                    }
+                    None => warnings.push(format!("unknown component '{}'", c.kind)),
+                }
+            }
+            parents.push((e, data.parent));
+        }
+        // Resolve separately so validation is independent of entity/component order.
+        let mut groups: Vec<usize> = (0..spawned.len()).collect();
+        fn root(groups: &mut [usize], mut index: usize) -> usize {
+            while groups[index] != index {
+                groups[index] = groups[groups[index]];
+                index = groups[index];
+            }
+            index
+        }
+        // Each child has at most one parent. Joining an already-connected pair
+        // would close a directed cycle; union-find checks this without walking
+        // every ancestor of every node in a deeply nested imported scene.
+        for (child_index, (e, parent)) in parents.into_iter().enumerate() {
+            if let Some(index) = parent {
+                match spawned.get(index).copied() {
+                    Some(p) => {
+                        let child_root = root(&mut groups, child_index);
+                        let parent_root = root(&mut groups, index);
+                        if child_root == parent_root {
+                            warnings.push(format!("entity {}: cyclic parent {index} ignored", e.index()));
+                        } else {
+                            groups[child_root] = parent_root;
+                            scene.world.insert(e, Parent(p));
+                        }
+                    }
+                    None => warnings.push(format!("entity {}: invalid parent index {index} ignored", e.index())),
+                }
+            }
+        }
+    hierarchy::update_globals(&mut scene.world);
+    warnings
+}
+
 
 /// Deep-copies registered components of a non-transient subtree.
 /// The copy is a sibling of the original; only the root gets a ` (Copy)` suffix.

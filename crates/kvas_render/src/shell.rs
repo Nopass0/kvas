@@ -82,6 +82,50 @@ pub fn feed_input(input: &mut Input, i: &egui::InputState, center: Option<egui::
     input.update(keys, buttons, Vec2::new(d.x, d.y), i.smooth_scroll_delta.y);
 }
 
+/// Who holds the mouse while a game runs: it is captured (hidden and centred) when the game
+/// starts, Escape frees it, and a click on the game view captures it again. Scripts can still
+/// lock or free it themselves with `lock_cursor`.
+#[derive(Default)]
+pub struct MouseCapture {
+    started: bool,
+    freed: bool,
+}
+
+impl MouseCapture {
+    /// Call once per frame before `feed_input`; `over_view` is true while the pointer is over the game.
+    pub fn update(&mut self, ctx: &egui::Context, input: &Input, over_view: bool) {
+        if !self.started {
+            self.started = true;
+            input.lock_cursor(true);
+        }
+        let (escape, click, focused) = ctx.input(|i| (i.key_pressed(egui::Key::Escape), i.pointer.primary_pressed(), i.focused));
+        if !focused && input.cursor_locked() {
+            input.lock_cursor(false);
+            self.freed = true;
+        }
+        if escape && input.cursor_locked() {
+            input.lock_cursor(false);
+            self.freed = true;
+        } else if click && over_view && self.freed && !input.cursor_locked() {
+            input.lock_cursor(true);
+            self.freed = false;
+        }
+    }
+
+    /// The player pressed Escape (or the window lost focus) and has not clicked back yet.
+    pub fn freed(&self) -> bool {
+        self.freed
+    }
+}
+
+/// Small hint at the bottom of the game view about the mouse capture.
+pub fn draw_capture_hint(painter: &egui::Painter, rect: egui::Rect, text: &str) {
+    let galley = painter.layout_no_wrap(text.to_string(), egui::FontId::proportional(13.0), egui::Color32::from_white_alpha(235));
+    let pill = egui::Rect::from_center_size(egui::pos2(rect.center().x, rect.bottom() - 30.0), galley.size() + egui::vec2(24.0, 12.0));
+    painter.rect_filled(pill, 8.0, egui::Color32::from_black_alpha(150));
+    painter.galley(pill.center() - galley.size() * 0.5, galley, egui::Color32::WHITE);
+}
+
 /// Hides the cursor and re-centres it while the game has it locked; shows it again otherwise.
 pub fn apply_cursor(ctx: &egui::Context, input: &Input, center: egui::Pos2) {
     let locked = input.cursor_locked();

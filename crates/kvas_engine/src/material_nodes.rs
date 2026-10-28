@@ -182,5 +182,8 @@ pub fn help(kind: &str) -> &'static str {
 
 /// Help text in the requested language (new nodes have Russian text; the rest fall back to English).
 pub fn help_for(kind: &str, russian: bool) -> &'static str {
+    if let Some(h) = crate::material_nodes_v4::HELP.iter().find(|h| h.0 == kind) {
+        return if russian { h.2 } else { h.1 };
+    }
     crate::material_nodes_ext::help(kind, russian).unwrap_or_else(|| help(kind))
 }

@@ -232,6 +232,44 @@ impl Runtime {
 }
 
 impl Runtime {
+    /// Applies a scene change a script asked for during the last tick: `read` returns the text
+    /// of a scene asset. Returns `None` when nothing was asked, else the outcome (the running
+    /// scene stays as it was on error).
+    pub fn apply_scene_request(&mut self, reg: &crate::registry::Registry, read: impl Fn(&str) -> Result<String, String>) -> Option<Result<String, String>> {
+        let request = self.input.take_scene_request()?;
+        let current = self.input.scene_path();
+        Some(match request {
+            crate::input::SceneRequest::Load(path) => self.load_scene_text(reg, &path, read(&path)),
+            crate::input::SceneRequest::Reload if current.is_empty() => Err("reload_scene: the host did not say which scene is running".into()),
+            crate::input::SceneRequest::Reload => self.load_scene_text(reg, &current, read(&current)),
+            crate::input::SceneRequest::Add(path) => read(&path).and_then(|text| {
+                let warnings = self.scene.add_json(reg, &text)?;
+                self.log.extend(warnings);
+                Ok(path)
+            }),
+        })
+    }
+
+    fn load_scene_text(&mut self, reg: &crate::registry::Registry, path: &str, text: Result<String, String>) -> Result<String, String> {
+        let (scene, warnings) = Scene::from_json(reg, &text.map_err(|e| format!("{path}: {e}"))?).map_err(|e| format!("{path}: {e}"))?;
+        self.replace_scene(scene);
+        self.log.extend(warnings);
+        self.input.set_scene_path(path);
+        Ok(path.to_string())
+    }
+
+    /// Swaps the running scene for another: script instances and the physics world start over,
+    /// time, input bindings and the cursor state carry on.
+    pub fn replace_scene(&mut self, mut scene: Scene) {
+        hierarchy::update_globals(&mut scene.world);
+        let volume = self.scene.audio.master_volume;
+        self.scripts.restart_instances();
+        self.physics = Physics::new();
+        self.scene = scene;
+        self.scene.audio.master_volume = volume;
+        self.accumulator = 0.0;
+    }
+
     /// Racks the focus distance of the primary camera onto what is in the middle of the screen.
     fn update_autofocus(&mut self, dt: f32) {
         let world = &self.scene.world;
@@ -250,5 +288,41 @@ impl Drop for Runtime {
     fn drop(&mut self) {
         // Script instances reference code in the library; drop them first.
         self.scripts.set_host(None);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::input::SceneRequest;
+    use crate::registry::Registry;
+
+    #[test]
+    fn scripts_can_switch_add_and_reload_scenes() {
+        let reg = Registry::default();
+        let mut a = Scene::default();
+        a.spawn("Start");
+        let mut b = Scene::default();
+        b.spawn("Level 2");
+        let files = [("a.scene.json", a.to_json(&reg)), ("b.scene.json", b.to_json(&reg))];
+        let read = |p: &str| files.iter().find(|f| f.0 == p).map(|f| f.1.clone()).ok_or_else(|| format!("missing {p}"));
+        let mut rt = Runtime::new(Scene::from_json(&reg, &files[0].1).unwrap().0, None);
+        assert!(rt.apply_scene_request(&reg, read).is_none(), "nothing asked");
+        rt.input.request_scene(SceneRequest::Reload);
+        assert!(rt.apply_scene_request(&reg, read).unwrap().is_err(), "the host did not say which scene runs");
+        rt.input.set_scene_path("a.scene.json");
+        rt.input.request_scene(SceneRequest::Load("b.scene.json".into()));
+        assert_eq!(rt.apply_scene_request(&reg, read).unwrap().unwrap(), "b.scene.json");
+        assert!(rt.scene.find("Level 2").is_some() && rt.scene.find("Start").is_none());
+        assert_eq!(rt.input.scene_path(), "b.scene.json");
+        rt.input.request_scene(SceneRequest::Add("a.scene.json".into()));
+        rt.apply_scene_request(&reg, read).unwrap().unwrap();
+        assert!(rt.scene.find("Level 2").is_some() && rt.scene.find("Start").is_some());
+        rt.input.request_scene(SceneRequest::Reload);
+        rt.apply_scene_request(&reg, read).unwrap().unwrap();
+        assert!(rt.scene.find("Start").is_none(), "reload restores b only");
+        rt.input.request_scene(SceneRequest::Load("missing.scene.json".into()));
+        assert!(rt.apply_scene_request(&reg, read).unwrap().is_err());
+        assert!(rt.scene.find("Level 2").is_some(), "a failed load keeps the running scene");
     }
 }

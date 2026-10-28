@@ -214,25 +214,9 @@ fn wood(light: [f32; 3], dark: [f32; 3], planks: bool) -> MaterialGraph {
     b.g
 }
 
+/// Marble built from general nodes (see [`crate::material_presets_v4::marble`]).
 fn marble(base: [f32; 3], vein: [f32; 3], warp: f32) -> MaterialGraph {
-    let mut b = B::new();
-    let v = b.node("Marble veins", 0);
-    b.set(v, &[1.6, warp]);
-    let fine = b.fractal(9.0, 4.0, 0.0, 0);
-    let mix = b.node("Mix", 1);
-    b.value(mix, 0, base);
-    b.value(mix, 1, vein);
-    let sharp = b.node("Smoothstep", 1);
-    b.set(sharp, &[0.0, 0.25]);
-    b.link(v, sharp, 0);
-    let inv = b.node("One minus", 2);
-    b.link(sharp, inv, 0);
-    b.link(inv, mix, 2);
-    b.out(mix, BASE);
-    let r = b.map_range(fine, 0.12, 0.3, 2);
-    b.out_value(METAL, 0.0);
-    b.out(r, ROUGH);
-    b.g
+    crate::material_presets_v4::marble(base, vein, warp * 0.75, 1.6)
 }
 
 fn bricks(brick: [f32; 3], mortar: [f32; 3]) -> MaterialGraph {
@@ -766,6 +750,7 @@ pub fn library() -> Vec<Preset> {
         p("Stylized", "Cardboard", natural([[0.5, 0.36, 0.22], [0.6, 0.45, 0.28], [0.68, 0.52, 0.34], [0.74, 0.58, 0.4]], [0.0, 0.4, 0.7, 1.0], 20.0, 1.0, (0.9, 1.0), 0.0, 0.5)),
     ];
     extra(&mut v);
+    v.extend(crate::material_presets_v4::library());
     for preset in &mut v {
         preset.graph.next_id = preset.graph.nodes.iter().map(|n| n.id + 1).max().unwrap_or(1);
         for n in &mut preset.graph.nodes {

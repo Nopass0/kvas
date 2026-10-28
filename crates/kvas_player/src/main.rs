@@ -21,6 +21,8 @@ struct Player {
     started: Instant,
     audio: Option<kvas_audio::AudioEngine>,
     assets: Assets,
+    /// Mouse captured by the game; Escape frees it, a click takes it back.
+    mouse: shell::MouseCapture,
     /// Frames shown so far: the first ones show a loading screen before assets are decoded.
     frames: u32,
     smoke_frames: u32,
@@ -71,6 +73,7 @@ fn start(loaded: &Loaded) -> Result<Runtime, String> {
     rt.scene.audio.master_volume = loaded.config.master_volume;
     rt.set_bindings(&loaded.config.binding_defs());
     rt.log.extend(warnings);
+    rt.input.set_scene_path(&loaded.config.start_scene);
     Ok(rt)
 }
 
@@ -87,7 +90,7 @@ impl Player {
         kvas_engine::meshmod::set_assets(assets.clone());
         let args: Vec<_> = std::env::args().collect();
         let smoke_report = args.iter().position(|a| a == "--smoke-report").and_then(|i| args.get(i + 1)).map(PathBuf::from);
-        Self { runtime, renderer: Renderer::new(rs, assets.clone()), debug: DebugDraw::default(), status, started: Instant::now(), audio: kvas_audio::AudioEngine::new(), assets, frames: 0, smoke_frames: 0, smoke_errors: Vec::new(), smoke_report }
+        Self { runtime, renderer: Renderer::new(rs, assets.clone()), debug: DebugDraw::default(), status, started: Instant::now(), audio: kvas_audio::AudioEngine::new(), assets, mouse: shell::MouseCapture::default(), frames: 0, smoke_frames: 0, smoke_errors: Vec::new(), smoke_report }
     }
 }
 
@@ -106,9 +109,17 @@ impl eframe::App for Player {
         let (dt, ppp) = ctx.input(|i| (i.unstable_dt, i.pixels_per_point));
         if let Some(rt) = &mut self.runtime {
             let center = ctx.content_rect().center();
+            self.mouse.update(&ctx, &rt.input, true);
             ctx.input(|i| shell::feed_input(&mut rt.input, i, Some(center)));
             shell::apply_cursor(&ctx, &rt.input, center);
             rt.tick(dt);
+            // A script asked for another scene.
+            let assets = self.assets.clone();
+            match rt.apply_scene_request(&Registry::default(), |p| assets.read_string(p).map_err(|e| e.to_string())) {
+                Some(Ok(path)) => eprintln!("[game] scene {path}"),
+                Some(Err(e)) => eprintln!("[game] {e}"),
+                None => {}
+            }
             if let Some(audio) = &mut self.audio {
                 audio.update(&mut rt.scene, &self.assets);
                 for w in audio.warnings.drain(..) {

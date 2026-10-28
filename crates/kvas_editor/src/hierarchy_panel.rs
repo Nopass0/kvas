@@ -29,6 +29,9 @@ pub fn kind_icon(world: &World, e: Entity) -> (Icon, Color32) {
     if world.has::<Grass>(e) {
         return (Icon::Wind, Color32::from_rgb(120, 200, 90));
     }
+    if world.has::<Tree>(e) {
+        return (Icon::Mountain, Color32::from_rgb(90, 170, 80));
+    }
     if world.has::<VoxelSmoke>(e) {
         return (Icon::Flame, Color32::from_rgb(240, 150, 80));
     }
@@ -79,7 +82,7 @@ impl Editor {
             }
         });
         ui.menu_button(t("Effects"), |ui| {
-            for (kind, label) in [("grass", "Grass (wind)"), ("cloth", "Cloth"), ("smoke", "Voxel smoke"), ("clouds", "Voxel clouds"), ("water_voxel", "Voxel water"), ("water", "Water (smooth)"), ("water_real", "Water (realistic)"), ("paint_plane", "Painted surface")] {
+            for (kind, label) in [("grass", "Grass (wind)"), ("tree", "Tree (oak)"), ("tree_pine", "Tree (pine)"), ("tree_palm", "Tree (palm)"), ("bush", "Bush"), ("cloth", "Cloth"), ("smoke", "Voxel smoke"), ("clouds", "Voxel clouds"), ("water_voxel", "Voxel water"), ("water", "Water (smooth)"), ("water_real", "Water (realistic)"), ("paint_plane", "Painted surface")] {
                 if ui.button(t(label)).clicked() {
                     self.create_procedural(kind);
                     ui.close();

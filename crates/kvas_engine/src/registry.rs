@@ -98,6 +98,7 @@ impl Default for Registry {
                 info::<ColorCycle>(),
                 info::<Cloth>(),
                 info::<Grass>(),
+                info::<Tree>(),
                 info::<VoxelSmoke>(),
                 info::<VoxelClouds>(),
                 info::<VoxelWater>(),

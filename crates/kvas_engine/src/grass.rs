@@ -51,6 +51,10 @@ pub struct Grass {
     pub fade_end: f32,
     /// 0..1: patchy dry / lush colour variation across the meadow.
     pub patchiness: f32,
+    /// Fill an ellipse inside width x depth instead of the whole rectangle (soft, thinning edge).
+    pub round: bool,
+    /// Share of blades that carry a small wild flower, 0..0.3.
+    pub flowers: f32,
     #[serde(skip)]
     #[doc(hidden)]
     pub sig: u64,
@@ -75,6 +79,8 @@ impl Default for Grass {
             fade_start: 28.0,
             fade_end: 70.0,
             patchiness: 0.7,
+            round: false,
+            flowers: 0.0,
             sig: 0,
         }
     }
@@ -94,6 +100,8 @@ impl Component for Grass {
             Field::color("base_color", &mut self.base_color),
             Field::color("tip_color", &mut self.tip_color),
             Field::f32("patchiness", &mut self.patchiness),
+            Field::bool("round", &mut self.round),
+            Field::f32("flowers", &mut self.flowers),
             Field::f32("wind_strength", &mut self.wind_strength),
             Field::f32("wind_speed", &mut self.wind_speed),
             Field::f32("chunk_size", &mut self.chunk_size),
@@ -128,10 +136,27 @@ pub fn chunk_mesh(g: &Grass, ix: usize, iz: usize) -> (MeshData, Vec3) {
     for _ in 0..count {
         let (x, z) = ((rng.f32() - 0.5) * cw, (rng.f32() - 0.5) * cd);
         let yaw = rng.f32() * std::f32::consts::TAU;
-        let tint = rng.f32();
+        let mut tint = rng.f32();
         // A few tall tufts break the uniform look.
         let tuft = if rng.f32() > 0.93 { 1.7 } else { 1.0 };
-        let h = g.blade_height * tuft * (1.0 + g.height_variation * (rng.f32() * 2.0 - 1.0)).max(0.15);
+        let mut h = g.blade_height * tuft * (1.0 + g.height_variation * (rng.f32() * 2.0 - 1.0)).max(0.15);
+        let edge_roll = rng.f32();
+        let flower_roll = rng.f32();
+        if g.round {
+            // Inside the ellipse only; blades thin out and shorten over the outer fifth.
+            let (ex, ez) = ((center.x + x) / (g.width * 0.5).max(0.01), (center.z + z) / (g.depth * 0.5).max(0.01));
+            let r = (ex * ex + ez * ez).sqrt();
+            if r > 1.0 || (r > 0.8 && edge_roll < (r - 0.8) / 0.2) {
+                continue;
+            }
+            h *= 1.0 - ((r - 0.75) / 0.25).clamp(0.0, 1.0) * 0.55;
+        }
+        // Flower blades: taller and thinner, the shader paints their head (tint offset by 2).
+        let flower = flower_roll < g.flowers.clamp(0.0, 0.3);
+        if flower {
+            h *= 1.25;
+            tint += 2.0;
+        }
         let lean = g.lean * (0.3 + rng.f32());
         let (sin, cos) = yaw.sin_cos();
         let (right, forward) = (Vec3::new(cos, 0.0, -sin), Vec3::new(sin, 0.0, cos));
@@ -141,7 +166,7 @@ pub fn chunk_mesh(g: &Grass, ix: usize, iz: usize) -> (MeshData, Vec3) {
         for (t, width) in [(0.0f32, 0.85f32), (0.28, 1.0), (0.58, 0.72), (0.84, 0.38)] {
             let curve = lean * h * t * t;
             let center = root + Vec3::Y * (h * t * (1.0 - 0.12 * t)) + forward * curve;
-            let half = g.blade_width * 0.5 * width;
+            let half = g.blade_width * 0.5 * width * if flower { 0.6 } else { 1.0 };
             let normal = (Vec3::Y * 2.0 + forward * 0.5).normalize();
             for side in [-1.0f32, 1.0] {
                 m.vertices.push(Vertex { pos: (center + right * half * side).into(), normal: normal.into(), uv: [tint, t] });
@@ -183,6 +208,8 @@ pub fn update(world: &mut World) {
             g.lean.to_bits(),
             g.seed,
             g.chunk_size.to_bits(),
+            g.round,
+            g.flowers.to_bits(),
         ));
         let chunks: Vec<Entity> = hierarchy::children_all(world, e).into_iter().filter(|&c| world.has::<GrassChunk>(c)).collect();
         if world.get::<Grass>(e).unwrap().sig != sig || chunks.is_empty() {

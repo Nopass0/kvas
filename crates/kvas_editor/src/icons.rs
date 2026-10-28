@@ -98,6 +98,7 @@ icons! {
     Volume => "volume",
     Waves => "waves",
     Wind => "wind",
+    Keyboard => "keyboard",
 }
 
 pub fn install(ctx: &egui::Context) {

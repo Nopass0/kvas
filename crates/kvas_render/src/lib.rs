@@ -80,6 +80,8 @@ const LINES: &str = include_str!("shaders/lines.wgsl");
 const SKY: &str = include_str!("shaders/sky.wgsl");
 const SHADOW: &str = include_str!("shaders/shadow.wgsl");
 const GRASS: &str = include_str!("shaders/grass.wgsl");
+const FOLIAGE: &str = include_str!("shaders/foliage.wgsl");
+const BARK: &str = include_str!("shaders/bark.wgsl");
 const SMOKE: &str = include_str!("shaders/smoke.wgsl");
 const CLOUDS: &str = include_str!("shaders/clouds.wgsl");
 const WATER: &str = include_str!("shaders/water.wgsl");
@@ -151,6 +153,8 @@ struct GpuMesh {
     indices: wgpu::Buffer,
     index_count: u32,
     bounds: (Vec3, Vec3),
+    /// Positions and indices kept on the CPU for exact editor picking.
+    picking: std::sync::Arc<(Vec<Vec3>, Vec<u32>)>,
 }
 
 /// Geometry that changes at run time (cloth, smoke, ...): buffers are reused while they are big enough.
@@ -169,6 +173,10 @@ struct Targets {
     size: [u32; 2],
     color_msaa: wgpu::TextureView,
     depth: wgpu::TextureView,
+    depth_tex: wgpu::Texture,
+    /// Copy of the opaque depth, readable by transparent shaders (water foam, soft edges).
+    depth_copy_tex: wgpu::Texture,
+    depth_copy: wgpu::TextureView,
     resolve: wgpu::TextureView,
     /// Output of the post-processing pass (used only while effects are on).
     post_out: wgpu::TextureView,
@@ -241,6 +249,9 @@ pub struct Renderer {
     object_capacity: u64,
     texture_layout: wgpu::BindGroupLayout,
     mesh_layout: wgpu::PipelineLayout,
+    /// Group 3 of mesh shaders: the opaque scene depth (see `scene_depth_behind` in the prelude).
+    scene_depth_layout: wgpu::BindGroupLayout,
+    no_scene_depth: wgpu::BindGroup,
     sampler: wgpu::Sampler,
     white: wgpu::BindGroup,
     defaults: Defaults,
@@ -596,13 +607,28 @@ fn make_targets(device: &wgpu::Device, size: [u32; 2], full: Option<[u32; 2]>) -
             })
             .create_view(&Default::default())
     });
+    let depth_desc = |label, usage| wgpu::TextureDescriptor {
+        label: Some(label),
+        size: extent,
+        mip_level_count: 1,
+        sample_count: MSAA,
+        dimension: wgpu::TextureDimension::D2,
+        format: DEPTH_FORMAT,
+        usage,
+        view_formats: &[],
+    };
+    let depth_tex = device.create_texture(&depth_desc("depth", wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_SRC));
+    let depth_copy_tex = device.create_texture(&depth_desc("depth-copy", wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::RENDER_ATTACHMENT));
     Targets {
+        depth: depth_tex.create_view(&Default::default()),
+        depth_copy: depth_copy_tex.create_view(&Default::default()),
+        depth_tex,
+        depth_copy_tex,
         post_tmp: tex("color-post2", 1, COLOR_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_SRC),
         up_out,
         full,
         size,
         color_msaa: tex("color-msaa", MSAA, COLOR_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT),
-        depth: tex("depth", MSAA, DEPTH_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING),
         post_out: tex("color-post", 1, COLOR_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_SRC),
         resolve: tex(
             "color",
@@ -744,9 +770,18 @@ impl Renderer {
                 },
             ],
         });
+        let scene_depth_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("scene-depth"),
+            entries: &[wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Texture { sample_type: wgpu::TextureSampleType::Depth, view_dimension: wgpu::TextureViewDimension::D2, multisampled: true },
+                count: None,
+            }],
+        });
         let mesh_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("mesh"),
-            bind_group_layouts: &[Some(&globals_layout), Some(&object_layout), Some(&texture_layout)],
+            bind_group_layouts: &[Some(&globals_layout), Some(&object_layout), Some(&texture_layout), Some(&scene_depth_layout)],
             immediate_size: 0,
         });
 
@@ -864,6 +899,24 @@ impl Renderer {
             white: make_view(&device, &queue, 1, 1, &[255; 4], true),
         };
         let white = upload_texture(&device, &queue, &texture_layout, &sampler, &defaults, [1, 1], &[255, 255, 255, 255]);
+        // Opaque objects are drawn before the depth copy exists: they get a tiny empty one.
+        let no_depth = device
+            .create_texture(&wgpu::TextureDescriptor {
+                label: Some("no-scene-depth"),
+                size: wgpu::Extent3d { width: 1, height: 1, depth_or_array_layers: 1 },
+                mip_level_count: 1,
+                sample_count: MSAA,
+                dimension: wgpu::TextureDimension::D2,
+                format: DEPTH_FORMAT,
+                usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
+                view_formats: &[],
+            })
+            .create_view(&Default::default());
+        let no_scene_depth = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("no-scene-depth"),
+            layout: &scene_depth_layout,
+            entries: &[wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(&no_depth) }],
+        });
         let builtin = build_pipeline(&device, &mesh_layout, LIT, false).expect("built-in shader must compile");
         let builtin_t = build_pipeline(&device, &mesh_layout, LIT, true).expect("built-in shader must compile");
 
@@ -975,6 +1028,8 @@ impl Renderer {
             object_capacity: 256,
             texture_layout,
             mesh_layout,
+            scene_depth_layout,
+            no_scene_depth,
             sampler,
             white,
             defaults,
@@ -1044,6 +1099,18 @@ impl Renderer {
         let mut egui_renderer = self.rs.renderer.write();
         for id in self.thumbs.drain().filter_map(|(_, id)| id) {
             egui_renderer.free_texture(&id);
+        }
+    }
+
+    /// Drops the cached previews that draw `shader`, so they are rendered again from the file.
+    pub fn forget_thumbnails_of(&mut self, shader: &str) {
+        let needle = format!("|{shader}|");
+        let gone: Vec<String> = self.thumbs.keys().filter(|k| k.contains(&needle)).cloned().collect();
+        let mut egui_renderer = self.rs.renderer.write();
+        for key in gone {
+            if let Some(Some(id)) = self.thumbs.remove(&key) {
+                egui_renderer.free_texture(&id);
+            }
         }
     }
 
@@ -1130,6 +1197,53 @@ impl Renderer {
         }
         self.ensure_mesh(mesh);
         self.meshes.get(mesh).map(|m| m.bounds)
+    }
+
+    /// Distance along a local-space ray to the nearest triangle of a mesh (both faces count).
+    /// Used for picking: a click hits what is drawn, not the box around it.
+    pub fn mesh_ray(&mut self, mesh: &str, origin: Vec3, dir: Vec3) -> Option<f32> {
+        let (bmin, bmax) = self.mesh_bounds(mesh)?;
+        let inv = dir.recip();
+        let (t0, t1) = ((bmin - Vec3::splat(0.01) - origin) * inv, (bmax + Vec3::splat(0.01) - origin) * inv);
+        let (near, far) = (t0.min(t1).max_element(), t0.max(t1).min_element());
+        if near > far || far < 0.0 {
+            return None;
+        }
+        let tri_hit = |p: &[Vec3], idx: &[u32]| -> Option<f32> {
+            let mut best: Option<f32> = None;
+            for t in idx.chunks_exact(3) {
+                let (Some(a), Some(b), Some(c)) = (p.get(t[0] as usize), p.get(t[1] as usize), p.get(t[2] as usize)) else { continue };
+                let (e1, e2) = (*b - *a, *c - *a);
+                let h = dir.cross(e2);
+                let det = e1.dot(h);
+                if det.abs() < 1e-12 {
+                    continue;
+                }
+                let f = 1.0 / det;
+                let s = origin - *a;
+                let u = f * s.dot(h);
+                if !(0.0..=1.0).contains(&u) {
+                    continue;
+                }
+                let q = s.cross(e1);
+                let v = f * dir.dot(q);
+                if v < 0.0 || u + v > 1.0 {
+                    continue;
+                }
+                let d = f * e2.dot(q);
+                if d > 1e-5 && best.is_none_or(|b| d < b) {
+                    best = Some(d);
+                }
+            }
+            best
+        };
+        if mesh.starts_with("dyn:") {
+            let d = self.dynamic.get(mesh)?;
+            let pos: Vec<Vec3> = d.source.vertices.iter().map(|v| Vec3::from(v.pos)).collect();
+            return tri_hit(&pos, &d.source.indices);
+        }
+        let m = self.meshes.get(mesh)?;
+        tri_hit(&m.picking.0, &m.picking.1)
     }
 
     /// Vertex buffer, index buffer and index count of a static or dynamic mesh.
@@ -1251,6 +1365,7 @@ impl Renderer {
                     }),
                     index_count: data.indices.len() as u32,
                     bounds: data.bounds(),
+                    picking: std::sync::Arc::new((data.vertices.iter().map(|v| Vec3::from(v.pos)).collect(), data.indices.clone())),
                 },
                 data.dependencies,
             ))
@@ -1366,6 +1481,8 @@ impl Renderer {
         self.pipelines.load(&key, assets, &mut self.errors, || {
             let src = match shader {
                 "builtin:grass" => GRASS.to_string(),
+                "builtin:foliage" => FOLIAGE.to_string(),
+                "builtin:bark" => BARK.to_string(),
                 "builtin:smoke" => SMOKE.to_string(),
                 "builtin:clouds" => CLOUDS.to_string(),
                 "builtin:water" => WATER.to_string(),
@@ -1727,7 +1844,8 @@ impl Renderer {
                 continue;
             }
             let Some(gt) = scene.world.get::<GlobalTransform>(e) else { continue };
-            let transparent = mr.color[3] < 0.999;
+            // Water reads the depth of what is under it (foam at contacts), so it is drawn with the transparent objects.
+            let transparent = mr.color[3] < 0.999 || mr.shader == "builtin:water" || mr.shader.to_ascii_lowercase().contains("water");
             let mesh = kvas_engine::components::mesh_key(&scene.world, e).unwrap_or_default();
             // A node material brings its own images unless the object overrides them.
             let (mut texture, mut normal_map, mut orm_map) = (mr.texture.clone(), mr.normal_map.clone(), mr.orm_map.clone());
@@ -1935,21 +2053,39 @@ impl Renderer {
         }
 
         let clear = scene.settings.sky;
-        {
+        let any_transparent = items.iter().any(|it| it.visible && it.transparent);
+        let scene_depth = any_transparent.then(|| {
+            self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("scene-depth"),
+                layout: &self.scene_depth_layout,
+                entries: &[wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(&targets.depth_copy) }],
+            })
+        });
+        // Opaque objects first; then (when there are transparent ones) the depth is copied so
+        // that water and other transparent shaders can read what lies behind them.
+        for phase in 0..2 {
+            let last = phase == 1 || !any_transparent;
+            if phase == 1 {
+                if !any_transparent {
+                    break;
+                }
+                let size = wgpu::Extent3d { width: targets.size[0], height: targets.size[1], depth_or_array_layers: 1 };
+                encoder.copy_texture_to_texture(targets.depth_tex.as_image_copy(), targets.depth_copy_tex.as_image_copy(), size);
+            }
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("scene"),
+                label: Some(if phase == 0 { "scene" } else { "scene-transparent" }),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &targets.color_msaa,
                     depth_slice: None,
-                    resolve_target: Some(&targets.resolve),
+                    resolve_target: last.then_some(&targets.resolve),
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color { r: clear[0] as f64, g: clear[1] as f64, b: clear[2] as f64, a: 1.0 }),
-                        store: wgpu::StoreOp::Discard,
+                        load: if phase == 0 { wgpu::LoadOp::Clear(wgpu::Color { r: clear[0] as f64, g: clear[1] as f64, b: clear[2] as f64, a: 1.0 }) } else { wgpu::LoadOp::Load },
+                        store: if last { wgpu::StoreOp::Discard } else { wgpu::StoreOp::Store },
                     },
                 })],
                 depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                     view: &targets.depth,
-                    depth_ops: Some(wgpu::Operations { load: wgpu::LoadOp::Clear(1.0), store: wgpu::StoreOp::Discard }),
+                    depth_ops: Some(wgpu::Operations { load: if phase == 0 { wgpu::LoadOp::Clear(1.0) } else { wgpu::LoadOp::Load }, store: if last { wgpu::StoreOp::Discard } else { wgpu::StoreOp::Store } }),
                     stencil_ops: None,
                 }),
                 timestamp_writes: None,
@@ -1957,7 +2093,8 @@ impl Renderer {
                 multiview_mask: None,
             });
             pass.set_bind_group(0, &self.globals_bg, &[]);
-            if scene.settings.atmosphere.procedural || environment_ready {
+            pass.set_bind_group(3, if phase == 1 { scene_depth.as_ref().unwrap_or(&self.no_scene_depth) } else { &self.no_scene_depth }, &[]);
+            if phase == 0 && (scene.settings.atmosphere.procedural || environment_ready) {
                 pass.set_pipeline(&self.sky_pipeline);
                 pass.draw(0..3, 0..1);
             }
@@ -1972,7 +2109,7 @@ impl Renderer {
             }
             let mut current: Option<DrawState<'_>> = None;
             for (i, it) in items.iter().enumerate() {
-                if !it.visible {
+                if !it.visible || (any_transparent && it.transparent != (phase == 1)) {
                     continue;
                 }
                 let key = (it.shader.as_str(), it.mesh.as_str(), it.texture.as_str(), it.transparent);
@@ -2031,6 +2168,9 @@ impl Renderer {
                 stats.triangles += (index_count / 3) as u64;
             }
 
+            if !last {
+                continue;
+            }
             pass.set_bind_group(0, &self.lines_bg, &[]);
             pass.set_vertex_buffer(0, self.lines_buf.slice(..));
             if depth_lines > 0 {
@@ -2088,6 +2228,30 @@ mod tests {
                 let id = g.add_node(s.kind, [0.0, 0.0]);
                 g.connect(id, 1, 0);
                 let label = format!("{mode:?} {}", s.kind);
+                let body = to_wgsl(&g).unwrap();
+                if mode == GraphMode::Effect {
+                    std::fs::write(dir.join("t.kfx"), g.to_json()).unwrap();
+                    validate(&label, &post::custom_source(&assets, "t.kfx").unwrap());
+                } else {
+                    validate(&label, &format!("{PRELUDE}
+{}{}{}{}{body}", shader_lib::LIB_COLOR, shader_lib::LIB_NOISE, shader_lib::LIB_MATH, shader_lib::LIB_NODES));
+                }
+            }
+        }
+        // Every extra output of every node, and every conversion of a linked input.
+        for mode in [GraphMode::Material, GraphMode::Shader, GraphMode::Effect] {
+            for s in all_specs().filter(|s| !is_output(s.kind) && available(s.kind, mode)) {
+                let outs = kvas_engine::material_nodes_v4::outputs(s.kind).len().max(1);
+                let mut g = MaterialGraph::default_graph_for(mode);
+                let id = g.add_node(s.kind, [0.0, 0.0]);
+                let mix = g.add_node("Add", [0.0, 0.0]);
+                for k in 0..outs {
+                    let conv = (k % kvas_engine::material_nodes_v4::CONVERSIONS.len()) as u8;
+                    let target = if k == 0 { 1 } else { mix };
+                    g.connect_output(id, k as u8, target, if k == 0 { 0 } else { k % 2 }, conv);
+                }
+                g.connect_output(mix, 0, 1, if mode == GraphMode::Effect { 0 } else { 3 }, 0);
+                let label = format!("{mode:?} {} outputs", s.kind);
                 let body = to_wgsl(&g).unwrap();
                 if mode == GraphMode::Effect {
                     std::fs::write(dir.join("t.kfx"), g.to_json()).unwrap();
@@ -2189,7 +2353,7 @@ fn effect(uv: vec2<f32>, color: vec3<f32>, params: vec4<f32>, time: f32) -> vec3
     /// Every built-in shader (with the prelude) must parse and validate.
     #[test]
     fn builtin_shaders_validate() {
-        for (name, body) in [("lit", LIT), ("sky", SKY), ("grass", GRASS), ("smoke", SMOKE), ("clouds", CLOUDS), ("water", WATER), ("splat", SPLAT), ("particle", PARTICLE), ("fsr", FSR), ("post", POST)] {
+        for (name, body) in [("lit", LIT), ("sky", SKY), ("grass", GRASS), ("foliage", FOLIAGE), ("bark", BARK), ("smoke", SMOKE), ("clouds", CLOUDS), ("water", WATER), ("splat", SPLAT), ("particle", PARTICLE), ("fsr", FSR), ("post", POST)] {
             let src = if name == "fsr" || name == "post" { body.to_string() } else { format!("{PRELUDE}
 {body}") };
             let module = naga::front::wgsl::parse_str(&src).unwrap_or_else(|e| panic!("{name}: {}", e.emit_to_string(&src)));

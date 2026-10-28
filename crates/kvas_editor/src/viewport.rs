@@ -41,10 +41,6 @@ impl EditorCamera {
     }
 }
 
-fn ray_box(origin: Vec3, dir: Vec3, min: Vec3, max: Vec3) -> Option<f32> {
-    Aabb::new(min, max)?.ray_distance(Ray::new(origin, dir)?, f32::MAX)
-}
-
 fn ray_sphere(origin: Vec3, dir: Vec3, center: Vec3, radius: f32) -> Option<f32> {
     Ray::new(origin, dir)?.sphere_distance(center, radius)
 }
@@ -59,6 +55,15 @@ pub fn to_ndc(rect: egui::Rect, p: egui::Pos2) -> Vec2 {
 }
 
 const SELECT_COLOR: [f32; 4] = [1.0, 0.65, 0.1, 1.0];
+
+/// What a drag over the view changed for one frame, undone after rendering.
+struct DragPreview {
+    label: String,
+    target: Option<Entity>,
+    restore: Option<(Entity, Option<MeshRenderer>)>,
+    ghost: Option<Entity>,
+    at: egui::Pos2,
+}
 
 impl Editor {
     pub fn viewport_ui(&mut self, ui: &mut egui::Ui) {
@@ -90,10 +95,22 @@ impl Editor {
             self.paint_in_viewport(ui, &resp, rect, &view, &mut draw);
         }
 
-        if !playing && !gizmo_busy && !painting && !editing_mesh && resp.clicked_by(PointerButton::Primary) && !ui.input(|i| i.modifiers.alt) {
-            if let Some(pos) = resp.interact_pointer_pos() {
-                let picked = self.pick(&view, to_ndc(rect, pos));
-                self.select_entity(picked, ui.input(|i| i.modifiers), &[]);
+        // A click is a press and release close together. egui's own `clicked` drops presses that
+        // were held a little long or wobbled a few pixels, which felt like clicks going through objects.
+        let press_id = ui.scope_id().with("viewport-press");
+        let (pressed, released, pos_now, alt) = ui.input(|i| (i.pointer.primary_pressed(), i.pointer.primary_released(), i.pointer.interact_pos(), i.modifiers.alt));
+        if pressed && resp.hovered() && !gizmo_busy {
+            ui.data_mut(|d| d.insert_temp(press_id, pos_now));
+        }
+        if released {
+            let start: Option<Option<egui::Pos2>> = ui.data_mut(|d| d.remove_temp(press_id));
+            let start = start.flatten();
+            let still = matches!((start, pos_now), (Some(a), Some(b)) if (a - b).length() < 8.0);
+            if still && !playing && !gizmo_busy && !painting && !editing_mesh && !alt {
+                if let Some(pos) = pos_now.filter(|p| rect.contains(*p)) {
+                    let picked = self.pick(&view, to_ndc(rect, pos));
+                    self.select_entity(picked, ui.input(|i| i.modifiers), &[]);
+                }
             }
         }
         // While something is dragged over the scene, its edge pulses so the drop target is obvious.
@@ -119,11 +136,12 @@ impl Editor {
             if let Some(e) = target.filter(|_| self.apply_asset_to_ok(&asset.0)) {
                 self.apply_asset_to(e, &asset.0);
             } else if let Some(pos) = ui.input(|i| i.pointer.interact_pos()).filter(|p| rect.contains(*p)) {
-                let (o, d) = view.ray(to_ndc(rect, pos));
-                let at = if d.y < -0.01 { o + d * (-o.y / d.y).min(60.0) } else { o + d * 8.0 };
+                let at = self.drop_point(&view, to_ndc(rect, pos), &asset.0);
                 self.create_from_asset(&asset.0, at);
             }
         }
+
+        let preview = if playing { None } else { self.drag_preview_begin(ui, rect, &view) };
 
         let ppp = ui.ctx().pixels_per_point();
         self.last_view = Some((view, [(rect.width() * ppp) as u32, (rect.height() * ppp) as u32]));
@@ -134,13 +152,20 @@ impl Editor {
         };
         let texture = self.renderer.render(scene, &frame);
         ui.painter().image(texture, rect, egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)), Color32::WHITE);
+        if let Some(p) = preview {
+            self.drag_preview_end(ui, rect, p);
+        }
         if !playing {
             resp.context_menu(|ui| self.viewport_context_menu(ui));
         }
         self.play_center = self.play.as_ref().map(|_| rect.center());
-        if let Some(p) = &self.play {
+        if let Some(p) = &mut self.play {
+            p.mouse.update(ui.ctx(), &p.runtime.input, resp.hovered());
             kvas_render::shell::draw_hud(ui.painter(), rect, &p.runtime.input.hud());
             kvas_render::shell::apply_cursor(ui.ctx(), &p.runtime.input, rect.center());
+            if p.mouse.freed() {
+                kvas_render::shell::draw_capture_hint(ui.painter(), rect, crate::i18n::t("Click the game view to capture the mouse"));
+            }
         }
         if let Some(p) = &mut self.play {
             for (entity, channel) in kvas_render::shell::draw_game_ui(ui, &p.runtime.scene, rect, Some(&view), true) {
@@ -204,7 +229,7 @@ impl Editor {
         for (e, icon, color, pos, name) in items {
             let Some(at) = to_screen(view, rect, pos).filter(|p| rect.shrink(10.0).contains(*p)) else { continue };
             let badge = egui::Rect::from_center_size(at, egui::Vec2::splat(24.0));
-            let id = ui.id().with(("scene-icon", e.to_bits()));
+            let id = ui.scope_id().with(("scene-icon", e.to_bits()));
             let resp = ui.interact(badge, id, egui::Sense::click());
             let on = selected.contains(&e);
             let hover = crate::ui_kit::animate(ui, id.with("h"), resp.hovered());
@@ -376,7 +401,115 @@ impl Editor {
         self.camera.focus(center, radius);
     }
 
-    fn pick(&mut self, view: &View, ndc: Vec2) -> Option<Entity> {
+    pub fn pick(&mut self, view: &View, ndc: Vec2) -> Option<Entity> {
+        self.pick_hit(view, ndc).map(|(e, _)| e)
+    }
+
+    /// Where a dragged asset lands: on the surface under the pointer, else on the ground plane.
+    /// A model is lifted so that its lowest point sits on that spot.
+    fn drop_point(&mut self, view: &View, ndc: Vec2, asset: &str) -> Vec3 {
+        let (o, d) = view.ray(ndc);
+        let mut at = match self.pick_hit(view, ndc) {
+            Some((_, t)) if t.is_finite() => o + d * t,
+            _ if d.y < -0.01 => o + d * (-o.y / d.y).min(60.0),
+            _ => o + d * 8.0,
+        };
+        if let Some((min, _)) = self.renderer.mesh_bounds(asset) {
+            at.y -= min.y;
+        }
+        at
+    }
+
+    /// Shows a dragged asset in the scene before it is dropped: a material, shader or image on
+    /// the object under the pointer, a model as a ghost where it would land. The change is undone
+    /// by [`Self::drag_preview_end`] right after the frame is rendered, so nothing is recorded.
+    fn drag_preview_begin(&mut self, ui: &egui::Ui, rect: egui::Rect, view: &View) -> Option<DragPreview> {
+        let ctx = ui.ctx();
+        let pos = ctx.input(|i| i.pointer.hover_pos()).filter(|p| rect.contains(*p))?;
+        let ndc = to_ndc(rect, pos);
+        if let Some(script) = egui::DragAndDrop::payload::<crate::assets_panel::ScriptDrag>(ctx) {
+            let target = self.pick(view, ndc);
+            let label = match target {
+                Some(e) => format!("{} {}", crate::i18n::t("Drop to apply to"), hierarchy::name_of(&self.scene.world, e)),
+                None => crate::i18n::t("Drop the script on an object").to_string(),
+            };
+            return Some(DragPreview { label: format!("{}  ·  {label}", script.0), target, restore: None, ghost: None, at: pos });
+        }
+        let asset = egui::DragAndDrop::payload::<AssetDrag>(ctx)?.0.clone();
+        let lower = asset.to_ascii_lowercase();
+        let is_model = [".glb", ".gltf", ".obj", ".fbx"].iter().any(|x| lower.ends_with(x));
+        let name = asset.rsplit('/').next().unwrap_or(&asset).to_string();
+        if self.apply_asset_to_ok(&asset) {
+            let target = self.pick(view, ndc)?;
+            let world = &mut self.scene.world;
+            let old = world.get::<MeshRenderer>(target).cloned();
+            let mut m = old.clone().unwrap_or_default();
+            let is_image = [".png", ".jpg", ".jpeg"].iter().any(|x| lower.ends_with(x));
+            if is_image {
+                m.texture = asset.clone();
+            } else {
+                m.shader = asset.clone();
+            }
+            world.insert(target, m);
+            let label = format!("{name}  ·  {} {}", crate::i18n::t("Drop to apply to"), hierarchy::name_of(world, target));
+            return Some(DragPreview { label, target: Some(target), restore: Some((target, old)), ghost: None, at: pos });
+        }
+        if is_model {
+            let at = self.drop_point(view, ndc, &asset);
+            let world = &mut self.scene.world;
+            let ghost = world.spawn();
+            world.insert(ghost, Transform::at(at));
+            world.insert(ghost, GlobalTransform(Mat4::from_translation(at)));
+            world.insert(ghost, MeshRenderer { mesh: asset.clone(), color: [0.75, 0.9, 1.0, 1.0], ..Default::default() });
+            world.insert(ghost, Transient);
+            let label = format!("{name}  ·  {}", crate::i18n::t("Drop to place here"));
+            return Some(DragPreview { label, target: None, restore: None, ghost: Some(ghost), at: pos });
+        }
+        None
+    }
+
+    fn drag_preview_end(&mut self, ui: &egui::Ui, rect: egui::Rect, p: DragPreview) {
+        let world = &mut self.scene.world;
+        if let Some((e, old)) = p.restore {
+            match old {
+                Some(m) => world.insert(e, m),
+                None => {
+                    world.remove::<MeshRenderer>(e);
+                }
+            }
+        }
+        if let Some(g) = p.ghost {
+            world.despawn(g);
+        }
+        // Outline of the target and a label next to the pointer.
+        let painter = ui.painter_at(rect);
+        if let Some(e) = p.target {
+            if let Some(view) = self.last_view.map(|v| v.0) {
+                if let (Some(key), Some(g)) = (mesh_key(&self.scene.world, e), self.scene.world.get::<GlobalTransform>(e).map(|g| g.0)) {
+                    if let Some((min, max)) = self.renderer.mesh_bounds(&key) {
+                        let corners: Vec<egui::Pos2> = (0..8)
+                            .filter_map(|i| {
+                                let c = Vec3::new(if i & 1 == 0 { min.x } else { max.x }, if i & 2 == 0 { min.y } else { max.y }, if i & 4 == 0 { min.z } else { max.z });
+                                to_screen(&view, rect, g.transform_point3(c))
+                            })
+                            .collect();
+                        if corners.len() == 8 {
+                            let bb = egui::Rect::from_points(&corners).expand(4.0);
+                            painter.rect_stroke(bb, 6.0, egui::Stroke::new(2.0, crate::theme::ACCENT), egui::StrokeKind::Outside);
+                        }
+                    }
+                }
+            }
+        }
+        let galley = painter.layout_no_wrap(p.label, egui::FontId::proportional(12.5), Color32::WHITE);
+        let pill = egui::Rect::from_min_size(p.at + egui::vec2(18.0, 14.0), galley.size() + egui::vec2(18.0, 10.0));
+        painter.rect_filled(pill, 7.0, Color32::from_black_alpha(185));
+        painter.galley(pill.min + egui::vec2(9.0, 5.0), galley, Color32::WHITE);
+        ui.ctx().request_repaint();
+    }
+
+    /// The nearest object under a screen point and its distance along the view ray.
+    pub fn pick_hit(&mut self, view: &View, ndc: Vec2) -> Option<(Entity, f32)> {
         let (origin, dir) = view.ray(ndc);
         let items: Vec<(Entity, Mat4, Option<String>)> = self
             .active()
@@ -384,27 +517,35 @@ impl Editor {
             .iter::<GlobalTransform>()
             .map(|(e, g)| (e, g.0, mesh_key(&self.active().world, e)))
             .collect();
+        // Meshes are tested against their triangles; objects without a mesh (empty groups,
+        // markers) only catch a click right on their origin and never win over a surface.
         let mut best: Option<(f32, Entity)> = None;
+        let mut marker: Option<(f32, Entity)> = None;
         for (e, m, mesh) in items {
-            let hit = match mesh.and_then(|mesh| self.renderer.mesh_bounds(&mesh)) {
-                Some((min, max)) => {
+            match mesh {
+                Some(mesh) => {
                     let inv = m.inverse();
-                    let pad = Vec3::splat(0.01);
-                    ray_box(inv.transform_point3(origin), inv.transform_vector3(dir), min - pad, max + pad)
+                    let (lo, ld) = (inv.transform_point3(origin), inv.transform_vector3(dir));
+                    let Some(t) = self.renderer.mesh_ray(&mesh, lo, ld) else { continue };
+                    // `ld` is not unit length when the object is scaled; measure in world space.
+                    let world_t = (m.transform_point3(lo + ld * t) - origin).length();
+                    if best.is_none_or(|(bt, _)| world_t < bt) {
+                        best = Some((world_t, e));
+                    }
                 }
                 None => {
                     let pos = m.w_axis.truncate();
-                    ray_sphere(origin, dir, pos, (pos - view.eye).length() * 0.04 + 0.2)
-                }
-            };
-            if let Some(t) = hit {
-                if best.map_or(true, |(bt, _)| t < bt) {
-                    best = Some((t, e));
+                    if let Some(t) = ray_sphere(origin, dir, pos, (pos - view.eye).length() * 0.015 + 0.05) {
+                        if marker.is_none_or(|(bt, _)| t < bt) {
+                            marker = Some((t, e));
+                        }
+                    }
                 }
             }
         }
+        let best = best.or(marker);
         // Clicking a system-made piece (a grass chunk) selects the object that owns it.
-        best.map(|(_, e)| if self.active().world.has::<Transient>(e) { hierarchy::parent_of(&self.active().world, e).unwrap_or(e) } else { e })
+        best.map(|(t, e)| (if self.active().world.has::<Transient>(e) { hierarchy::parent_of(&self.active().world, e).unwrap_or(e) } else { e }, t))
     }
 
     fn build_debug(&mut self, view: &View, draw: &mut DebugDraw, playing: bool) {

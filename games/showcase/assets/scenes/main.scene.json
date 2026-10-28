@@ -377,31 +377,33 @@
           "type": "Grass",
           "data": {
             "base_color": [
-              0.03999999910593033,
-              0.20000000298023224,
-              0.10000000149011612,
+              0.02,
+              0.07,
+              0.02,
               1.0
             ],
-            "blade_height": 0.550000011920929,
-            "blade_width": 0.08500000089406967,
-            "chunk_size": 8.0,
-            "count": 40000,
-            "depth": 14.0,
+            "blade_height": 0.42,
+            "blade_width": 0.07,
+            "chunk_size": 6.0,
+            "count": 90000,
+            "depth": 19.0,
             "fade_end": 70.0,
             "fade_start": 28.0,
-            "height_variation": 0.6000000238418579,
+            "height_variation": 0.55,
             "lean": 0.30000001192092896,
-            "patchiness": 0.699999988079071,
+            "patchiness": 0.85,
             "seed": 1,
             "tip_color": [
-              0.7200000286102295,
-              0.8999999761581421,
-              0.30000001192092896,
+              0.42,
+              0.6,
+              0.22,
               1.0
             ],
-            "width": 18.0,
+            "width": 23.0,
             "wind_speed": 1.5,
-            "wind_strength": 0.5
+            "wind_strength": 0.45,
+            "round": true,
+            "flowers": 0.05
           }
         }
       ]
@@ -436,16 +438,16 @@
         {
           "type": "VoxelWater",
           "data": {
-            "cell": 0.75,
-            "cells": 110,
+            "cell": 1.4,
+            "cells": 150,
             "depth": 1.5,
             "direction": 30.0,
             "ripples": 0.5,
             "seed": 11,
             "speed": 1.0,
             "style": "Realistic",
-            "wave_height": 0.2800000011920929,
-            "wavelength": 9.0
+            "wave_height": 0.22,
+            "wavelength": 11.0
           }
         },
         {
@@ -1043,258 +1045,6 @@
               0.5,
               0.5,
               0.5
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "parent": null,
-      "components": [
-        {
-          "type": "Name",
-          "data": "tree-large"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              -9.0,
-              0.20000000298023224,
-              -6.0
-            ],
-            "rotation": [
-              0.0,
-              0.0,
-              0.0
-            ],
-            "scale": [
-              6.0,
-              6.0,
-              6.0
-            ]
-          }
-        },
-        {
-          "type": "MeshRenderer",
-          "data": {
-            "cast_shadows": false,
-            "color": [
-              1.0,
-              1.0,
-              1.0,
-              1.0
-            ],
-            "emissive": 0.0,
-            "mesh": "models/tree-large.glb",
-            "metallic": 0.0,
-            "normal_map": "",
-            "normal_strength": 1.0,
-            "orm_map": "",
-            "reflectivity": 0.0,
-            "roughness": 0.8999999761581421,
-            "shader": "",
-            "texture": "",
-            "tiling": 1.0,
-            "triplanar": 0.0,
-            "user": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "parent": null,
-      "components": [
-        {
-          "type": "Name",
-          "data": "tree-shrub"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              9.0,
-              0.20000000298023224,
-              6.5
-            ],
-            "rotation": [
-              0.0,
-              41.0,
-              0.0
-            ],
-            "scale": [
-              7.0,
-              7.0,
-              7.0
-            ]
-          }
-        },
-        {
-          "type": "MeshRenderer",
-          "data": {
-            "cast_shadows": false,
-            "color": [
-              1.0,
-              1.0,
-              1.0,
-              1.0
-            ],
-            "emissive": 0.0,
-            "mesh": "models/tree-shrub.glb",
-            "metallic": 0.0,
-            "normal_map": "",
-            "normal_strength": 1.0,
-            "orm_map": "",
-            "reflectivity": 0.0,
-            "roughness": 0.8999999761581421,
-            "shader": "",
-            "texture": "",
-            "tiling": 1.0,
-            "triplanar": 0.0,
-            "user": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "parent": null,
-      "components": [
-        {
-          "type": "Name",
-          "data": "tree-large"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              -10.5,
-              0.20000000298023224,
-              4.0
-            ],
-            "rotation": [
-              0.0,
-              82.0,
-              0.0
-            ],
-            "scale": [
-              8.0,
-              8.0,
-              8.0
-            ]
-          }
-        },
-        {
-          "type": "MeshRenderer",
-          "data": {
-            "cast_shadows": false,
-            "color": [
-              1.0,
-              1.0,
-              1.0,
-              1.0
-            ],
-            "emissive": 0.0,
-            "mesh": "models/tree-large.glb",
-            "metallic": 0.0,
-            "normal_map": "",
-            "normal_strength": 1.0,
-            "orm_map": "",
-            "reflectivity": 0.0,
-            "roughness": 0.8999999761581421,
-            "shader": "",
-            "texture": "",
-            "tiling": 1.0,
-            "triplanar": 0.0,
-            "user": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "parent": null,
-      "components": [
-        {
-          "type": "Name",
-          "data": "tree-shrub"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              11.0,
-              0.20000000298023224,
-              -4.5
-            ],
-            "rotation": [
-              0.0,
-              123.0,
-              0.0
-            ],
-            "scale": [
-              6.0,
-              6.0,
-              6.0
-            ]
-          }
-        },
-        {
-          "type": "MeshRenderer",
-          "data": {
-            "cast_shadows": false,
-            "color": [
-              1.0,
-              1.0,
-              1.0,
-              1.0
-            ],
-            "emissive": 0.0,
-            "mesh": "models/tree-shrub.glb",
-            "metallic": 0.0,
-            "normal_map": "",
-            "normal_strength": 1.0,
-            "orm_map": "",
-            "reflectivity": 0.0,
-            "roughness": 0.8999999761581421,
-            "shader": "",
-            "texture": "",
-            "tiling": 1.0,
-            "triplanar": 0.0,
-            "user": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
             ]
           }
         }
@@ -2628,6 +2378,582 @@
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Oak"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -9.0,
+              0.0,
+              -5.5
+            ],
+            "rotation": [
+              0.0,
+              10.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Tree",
+          "data": {
+            "style": "Broadleaf",
+            "height": 6.2,
+            "trunk_radius": 0.3,
+            "crookedness": 0.35,
+            "levels": 3,
+            "branches": 4,
+            "branch_length": 0.62,
+            "branch_angle": 42.0,
+            "leaf_density": 16,
+            "leaf_size": 0.75,
+            "bark_color": [
+              0.29,
+              0.22,
+              0.16,
+              1.0
+            ],
+            "leaf_color": [
+              0.05,
+              0.14,
+              0.03,
+              1.0
+            ],
+            "leaf_color_2": [
+              0.16,
+              0.24,
+              0.04,
+              1.0
+            ],
+            "wind": 1.0,
+            "seed": 3
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Oak 2"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -10.0,
+              0.0,
+              3.5
+            ],
+            "rotation": [
+              0.0,
+              80.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Tree",
+          "data": {
+            "style": "Broadleaf",
+            "height": 5.0,
+            "trunk_radius": 0.24,
+            "crookedness": 0.35,
+            "levels": 3,
+            "branches": 4,
+            "branch_length": 0.62,
+            "branch_angle": 42.0,
+            "leaf_density": 14,
+            "leaf_size": 0.75,
+            "bark_color": [
+              0.29,
+              0.22,
+              0.16,
+              1.0
+            ],
+            "leaf_color": [
+              0.06,
+              0.15,
+              0.03,
+              1.0
+            ],
+            "leaf_color_2": [
+              0.3,
+              0.26,
+              0.04,
+              1.0
+            ],
+            "wind": 1.0,
+            "seed": 8
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pine"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              9.5,
+              0.0,
+              -5.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Tree",
+          "data": {
+            "style": "Conifer",
+            "height": 8.5,
+            "trunk_radius": 0.22,
+            "crookedness": 0.12,
+            "levels": 2,
+            "branches": 9,
+            "branch_length": 0.5,
+            "branch_angle": 78.0,
+            "leaf_density": 10,
+            "leaf_size": 0.6,
+            "bark_color": [
+              0.25,
+              0.17,
+              0.12,
+              1.0
+            ],
+            "leaf_color": [
+              0.02,
+              0.07,
+              0.03,
+              1.0
+            ],
+            "leaf_color_2": [
+              0.04,
+              0.11,
+              0.04,
+              1.0
+            ],
+            "wind": 1.0,
+            "seed": 5
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pine 2"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              6.0,
+              0.0,
+              -9.0
+            ],
+            "rotation": [
+              0.0,
+              40.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Tree",
+          "data": {
+            "style": "Conifer",
+            "height": 6.5,
+            "trunk_radius": 0.18,
+            "crookedness": 0.1,
+            "levels": 2,
+            "branches": 8,
+            "branch_length": 0.5,
+            "branch_angle": 76.0,
+            "leaf_density": 10,
+            "leaf_size": 0.55,
+            "bark_color": [
+              0.25,
+              0.17,
+              0.12,
+              1.0
+            ],
+            "leaf_color": [
+              0.02,
+              0.07,
+              0.03,
+              1.0
+            ],
+            "leaf_color_2": [
+              0.04,
+              0.11,
+              0.04,
+              1.0
+            ],
+            "wind": 1.0,
+            "seed": 12
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Palm"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              10.5,
+              0.0,
+              5.5
+            ],
+            "rotation": [
+              0.0,
+              30.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Tree",
+          "data": {
+            "style": "Palm",
+            "height": 6.5,
+            "trunk_radius": 0.16,
+            "crookedness": 0.6,
+            "levels": 3,
+            "branches": 4,
+            "branch_length": 0.62,
+            "branch_angle": 42.0,
+            "leaf_density": 6,
+            "leaf_size": 0.9,
+            "bark_color": [
+              0.45,
+              0.36,
+              0.25,
+              1.0
+            ],
+            "leaf_color": [
+              0.06,
+              0.16,
+              0.03,
+              1.0
+            ],
+            "leaf_color_2": [
+              0.18,
+              0.26,
+              0.05,
+              1.0
+            ],
+            "wind": 1.0,
+            "seed": 2
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Palm 2"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -6.5,
+              0.0,
+              9.0
+            ],
+            "rotation": [
+              0.0,
+              200.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Tree",
+          "data": {
+            "style": "Palm",
+            "height": 5.5,
+            "trunk_radius": 0.15,
+            "crookedness": 0.8,
+            "levels": 3,
+            "branches": 4,
+            "branch_length": 0.62,
+            "branch_angle": 42.0,
+            "leaf_density": 6,
+            "leaf_size": 0.85,
+            "bark_color": [
+              0.45,
+              0.36,
+              0.25,
+              1.0
+            ],
+            "leaf_color": [
+              0.06,
+              0.16,
+              0.03,
+              1.0
+            ],
+            "leaf_color_2": [
+              0.18,
+              0.26,
+              0.05,
+              1.0
+            ],
+            "wind": 1.0,
+            "seed": 7
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Bush"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -4.0,
+              0.0,
+              -7.5
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Tree",
+          "data": {
+            "style": "Bush",
+            "height": 1.6,
+            "trunk_radius": 0.08,
+            "crookedness": 0.35,
+            "levels": 2,
+            "branches": 3,
+            "branch_length": 0.62,
+            "branch_angle": 42.0,
+            "leaf_density": 12,
+            "leaf_size": 0.55,
+            "bark_color": [
+              0.29,
+              0.22,
+              0.16,
+              1.0
+            ],
+            "leaf_color": [
+              0.05,
+              0.14,
+              0.03,
+              1.0
+            ],
+            "leaf_color_2": [
+              0.16,
+              0.24,
+              0.04,
+              1.0
+            ],
+            "wind": 1.0,
+            "seed": 4
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Bush 2"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              8.0,
+              0.0,
+              1.0
+            ],
+            "rotation": [
+              0.0,
+              60.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Tree",
+          "data": {
+            "style": "Bush",
+            "height": 1.3,
+            "trunk_radius": 0.07,
+            "crookedness": 0.35,
+            "levels": 2,
+            "branches": 3,
+            "branch_length": 0.62,
+            "branch_angle": 42.0,
+            "leaf_density": 12,
+            "leaf_size": 0.5,
+            "bark_color": [
+              0.29,
+              0.22,
+              0.16,
+              1.0
+            ],
+            "leaf_color": [
+              0.05,
+              0.12,
+              0.03,
+              1.0
+            ],
+            "leaf_color_2": [
+              0.26,
+              0.05,
+              0.07,
+              1.0
+            ],
+            "wind": 1.0,
+            "seed": 9
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Bush 3"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -11.0,
+              0.0,
+              -1.0
+            ],
+            "rotation": [
+              0.0,
+              120.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Tree",
+          "data": {
+            "style": "Bush",
+            "height": 1.5,
+            "trunk_radius": 0.07,
+            "crookedness": 0.35,
+            "levels": 2,
+            "branches": 3,
+            "branch_length": 0.62,
+            "branch_angle": 42.0,
+            "leaf_density": 12,
+            "leaf_size": 0.55,
+            "bark_color": [
+              0.29,
+              0.22,
+              0.16,
+              1.0
+            ],
+            "leaf_color": [
+              0.05,
+              0.14,
+              0.03,
+              1.0
+            ],
+            "leaf_color_2": [
+              0.16,
+              0.24,
+              0.04,
+              1.0
+            ],
+            "wind": 1.0,
+            "seed": 14
+          }
         }
       ]
     }

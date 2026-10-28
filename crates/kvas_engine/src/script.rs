@@ -681,6 +681,24 @@ impl Ctx<'_> {
     pub fn lock_cursor(&self, lock: bool) {
         self.input.lock_cursor(lock);
     }
+    /// Switches to another scene once this frame ends, e.g. `ctx.load_scene("scenes/level2.scene.json")`.
+    /// Objects and scripts of the current scene go away; the new scene starts with fresh scripts.
+    pub fn load_scene(&self, path: &str) {
+        self.input.request_scene(crate::input::SceneRequest::Load(path.to_string()));
+    }
+    /// Adds every object of another scene to this one once this frame ends (a level piece, a shared
+    /// menu...). Its scripts start on the next frame; the scene settings stay as they are.
+    pub fn add_scene(&self, path: &str) {
+        self.input.request_scene(crate::input::SceneRequest::Add(path.to_string()));
+    }
+    /// Starts the running scene again from its file once this frame ends (restart a level).
+    pub fn reload_scene(&self) {
+        self.input.request_scene(crate::input::SceneRequest::Reload);
+    }
+    /// Asset path of the running scene, e.g. `scenes/main.scene.json` (empty if unknown).
+    pub fn scene_path(&self) -> String {
+        self.input.scene_path()
+    }
     /// Shows the interaction hint on screen for this frame ("Press E to open").
     pub fn hud_prompt(&self, text: &str) {
         self.input.hud().prompt = text.to_string();

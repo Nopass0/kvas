@@ -130,6 +130,21 @@ pub struct Input {
     bindings: RefCell<Vec<Binding>>,
     cursor_lock: Cell<bool>,
     hud: RefCell<Hud>,
+    /// A scene change asked for by a script, applied by the host after the frame.
+    scene_request: RefCell<Option<SceneRequest>>,
+    /// Asset path of the running scene, kept by the host.
+    scene_path: RefCell<String>,
+}
+
+/// A scene change asked for by a script (see `ScriptCtx::load_scene`).
+#[derive(Clone, Debug, PartialEq)]
+pub enum SceneRequest {
+    /// Replace the running scene with this scene file.
+    Load(String),
+    /// Add every object of this scene file to the running scene.
+    Add(String),
+    /// Start the running scene again from its file.
+    Reload,
 }
 
 impl Input {
@@ -167,6 +182,22 @@ impl Input {
     /// Current cursor-lock request; the hosting shell is responsible for applying it.
     pub fn cursor_locked(&self) -> bool {
         self.cursor_lock.get()
+    }
+    /// Asks the host to change scenes after this frame. A later request in the same frame wins.
+    pub fn request_scene(&self, request: SceneRequest) {
+        *self.scene_request.borrow_mut() = Some(request);
+    }
+    /// Takes the pending scene change, if any (hosts call this after each tick).
+    pub fn take_scene_request(&self) -> Option<SceneRequest> {
+        self.scene_request.borrow_mut().take()
+    }
+    /// Asset path of the running scene (empty when the host did not say).
+    pub fn scene_path(&self) -> String {
+        self.scene_path.borrow().clone()
+    }
+    /// Records the asset path of the running scene (hosts call this).
+    pub fn set_scene_path(&self, path: &str) {
+        *self.scene_path.borrow_mut() = path.to_string();
     }
     /// Mutably borrows shell HUD state.
     ///

@@ -764,6 +764,7 @@ pub use crate::animation::TransformAnimation;
 pub use crate::cloth::Cloth;
 pub use crate::gameplay::{Lifetime, Tags, Visibility};
 pub use crate::grass::Grass;
+pub use crate::tree::{Tree, TreePart};
 pub use crate::interaction::{Slider, Switch};
 pub use crate::meshmod::{MeshModifiers, ModifierStateCell};
 pub use crate::paint::TexturePaint;
@@ -791,6 +792,8 @@ name_components!(
     Slider,
     Transient,
     GrassChunk,
+    Tree,
+    TreePart,
     DynamicMesh,
     Cloth,
     Grass,

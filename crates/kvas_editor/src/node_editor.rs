@@ -8,6 +8,7 @@ use crate::theme::{self, pal};
 use eframe::egui::{self, Color32, Key, Modifiers, Pos2, Rect, RichText, Sense, Stroke, Vec2};
 use kvas_engine::material_graph::{all_specs, available, is_output, spec, GraphMode, MatNode, MaterialGraph, NodeSpec};
 use kvas_engine::material_nodes_ext::CATEGORIES;
+use kvas_engine::material_nodes_v4::{self as v4, SocketType};
 use std::collections::{BTreeSet, HashMap};
 use std::time::{Duration, Instant};
 
@@ -17,7 +18,6 @@ const PREVIEW_H: f32 = 84.0;
 const RAMP_H: f32 = 30.0;
 const ROW_H: f32 = 24.0;
 const SOCKET_R: f32 = 5.5;
-const PREVIEW_FILE: &str = ".node_preview/preview";
 
 /// The "add node" popup.
 #[derive(Clone)]
@@ -27,8 +27,8 @@ pub struct AddMenu {
     /// Where the popup is drawn (screen).
     screen: Pos2,
     search: String,
-    /// A link was dropped on empty canvas: connect this node's output to the new node.
-    connect_from: Option<u32>,
+    /// A link was dropped on empty canvas: connect this node output to the new node.
+    connect_from: Option<(u32, u8)>,
     just_opened: bool,
     /// Category filter of the left column (`None` = all).
     category: Option<&'static str>,
@@ -44,8 +44,8 @@ pub struct MaterialEditor {
     pan: Vec2,
     zoom: f32,
     selected: BTreeSet<u32>,
-    /// A link being dragged from the output of this node.
-    link_from: Option<u32>,
+    /// A link being dragged from output `.1` of node `.0`.
+    link_from: Option<(u32, u8)>,
     dirty_since: Option<Instant>,
     error: String,
     /// Mesh used by the preview: `primitive:sphere` or any model of the project.
@@ -63,7 +63,6 @@ pub struct MaterialEditor {
     box_start: Option<Pos2>,
     /// Show only the selected node in the preview.
     preview_node: bool,
-    preview_json: String,
     editing_comment: Option<u32>,
     fit_next: bool,
     /// Bumped on every edit; the in-node previews follow it after a short pause.
@@ -73,7 +72,69 @@ pub struct MaterialEditor {
     /// Preview shader of every node that shows a preview: node id -> asset path.
     node_prev: HashMap<u32, String>,
     prev_files: u32,
+    /// When the previews were last regenerated (they follow edits live, a few times a second).
+    prev_at: Option<Instant>,
+    /// Ask the dock to bring the Nodes tab to the front (set when a graph is opened).
+    pub focus_request: bool,
+    /// The Nodes tab was drawn last frame; the Inspector then shows the preview and node settings.
+    pub visible: bool,
+    visible_now: bool,
+    /// Temporary copy of the graph drawn by the big preview, and what it was made from.
+    main_prev: String,
+    main_key: (u64, bool, Option<u32>),
+    /// Show the keyboard shortcut sheet over the canvas.
+    show_keys: bool,
 }
+
+impl MaterialEditor {
+    /// A graph or shader is open (the Nodes tab exists).
+    pub fn is_open(&self) -> bool {
+        self.open && (self.graph.is_some() || self.shader_mode)
+    }
+}
+
+/// Rows taken by named outputs (a node with a single output shows it in the header).
+fn out_rows(kind: &str) -> usize {
+    let n = v4::outputs(kind).len();
+    if n > 1 { n } else { 0 }
+}
+
+fn type_color(t: SocketType) -> Color32 {
+    match t {
+        SocketType::Float => Color32::from_rgb(0xA1, 0xA1, 0xA1),
+        SocketType::Colour => Color32::from_rgb(0xD6, 0xC2, 0x32),
+        SocketType::Vector => Color32::from_rgb(0x74, 0x6C, 0xE0),
+    }
+}
+
+/// Type of output `k` of a node.
+fn out_type(kind: &str, k: usize) -> SocketType {
+    v4::output_type(kind, spec(kind).map_or("", |s| s.category), k)
+}
+
+/// Lines of the shortcut sheet.
+const KEYS: &[(&str, &str)] = &[
+    ("Shift+A / double-click", "Add node"),
+    ("Drag from a socket", "Link (drop on empty space: add a connected node)"),
+    ("Right-click an input", "Conversion of the value (channel, luminance, length...)"),
+    ("Ctrl+C / Ctrl+V", "Copy / paste"),
+    ("Ctrl+D / Shift+D", "Duplicate"),
+    ("Delete / X", "Delete selected"),
+    ("Ctrl+A / Alt+A", "Select all / none"),
+    ("Ctrl+L", "Select everything feeding the selection"),
+    ("Alt+D", "Disconnect inputs of the selection"),
+    ("Ctrl+G", "Frame the selection in a comment"),
+    ("H", "Show / hide previews inside the selected nodes"),
+    ("P", "Preview only the selected node"),
+    ("Arrows (Shift: far)", "Nudge selected nodes"),
+    ("F / Home", "Fit the graph"),
+    ("1", "Zoom 100%"),
+    ("Ctrl+Z / Ctrl+Y", "Undo / redo"),
+    ("Ctrl+S", "Save now"),
+    ("Ctrl+E", "Export as WGSL"),
+    ("Wheel / middle drag / Space+drag", "Zoom / pan"),
+    ("K", "This sheet"),
+];
 
 fn category_color(category: &str) -> Color32 {
     match category {
@@ -104,8 +165,8 @@ fn parse_default(expr: &str) -> Option<[f32; 3]> {
     }
 }
 
-fn is_colour_input(name: &str) -> bool {
-    matches!(name, "Base color" | "Emission" | "Colour" | "From" | "To" | "Color" | "Tint" | "Low" | "Middle" | "High" | "Stop 1" | "Stop 2" | "Stop 3" | "Stop 4")
+fn is_colour_input(name: &str, default: &str) -> bool {
+    v4::input_type(name, default) == SocketType::Colour
 }
 
 /// Extra block under the header: a live preview, or the gradient strip of a colour ramp.
@@ -127,7 +188,7 @@ fn node_height(node: &MatNode, spec: &NodeSpec) -> f32 {
     } else {
         spec.params.len()
     };
-    let rows = (spec.inputs.len() + params).max(1);
+    let rows = (spec.inputs.len() + params).max(1) + out_rows(&node.kind);
     HEADER_H + block_h(node, spec) + rows as f32 * ROW_H + 8.0
 }
 
@@ -151,7 +212,11 @@ fn ramp_colour(node: &MatNode, spec: &NodeSpec, t: f32) -> [f32; 3] {
         if socket.override_default || socket.value != [0.0; 3] { socket.value } else { parse_default(spec.inputs[i + 1].1).unwrap_or([0.0; 3]) }
     };
     let p = |i: usize| node.params.get(i).copied().unwrap_or(0.0);
-    let k = |t: f32, lo: f32, hi: f32| ((t - lo) / (hi - lo).max(0.0001)).clamp(0.0, 1.0);
+    let mode = node.params.get(4).copied().unwrap_or(0.0);
+    let k = |t: f32, lo: f32, hi: f32| {
+        let k = ((t - lo) / (hi - lo).max(0.0001)).clamp(0.0, 1.0);
+        if mode > 1.5 { k * k * (3.0 - 2.0 * k) } else if mode > 0.5 { if k >= 1.0 { 1.0 } else { 0.0 } } else { k }
+    };
     let c = lerp3(stop(0), stop(1), k(t, p(0), p(1)));
     let c = lerp3(c, stop(2), k(t, p(1), p(2)));
     lerp3(c, stop(3), k(t, p(2), p(3)))
@@ -218,7 +283,7 @@ impl Editor {
         let preview_mesh = if self.mat.preview_mesh.is_empty() { "primitive:sphere".to_string() } else { self.mat.preview_mesh.clone() };
         if path.ends_with(".wgsl") {
             let code = self.assets.read_string(path).unwrap_or_default();
-            self.mat = MaterialEditor { open: true, path: path.to_string(), shader_mode: true, code, preview_mesh, zoom: 1.0, ..Default::default() };
+            self.mat = MaterialEditor { open: true, path: path.to_string(), shader_mode: true, code, preview_mesh, zoom: 1.0, focus_request: true, ..Default::default() };
             return;
         }
         let mode = GraphMode::from_path(path);
@@ -232,7 +297,7 @@ impl Editor {
                     }
                 }
                 let snapshot = serde_json::to_string(&g).unwrap_or_default();
-                self.mat = MaterialEditor { open: true, path: path.to_string(), graph: Some(g), pan: Vec2::new(20.0, 20.0), zoom: 1.0, preview_mesh, snapshot, fit_next: true, prev_rev: u64::MAX, ..Default::default() };
+                self.mat = MaterialEditor { open: true, path: path.to_string(), graph: Some(g), pan: Vec2::new(20.0, 20.0), zoom: 1.0, preview_mesh, snapshot, fit_next: true, prev_rev: u64::MAX, focus_request: true, main_key: (u64::MAX, false, None), ..Default::default() };
             }
             Err(e) => self.console.error(format!("{path}: {e}")),
         }
@@ -275,7 +340,8 @@ impl Editor {
             match std::fs::write(&full, &self.mat.code) {
                 Ok(()) => {
                     self.mat.dirty_since = None;
-                    self.renderer.clear_thumbnails();
+                    let path = self.mat.path.clone();
+                    self.renderer.forget_thumbnails_of(&path);
                 }
                 Err(e) => self.console.error(e.to_string()),
             }
@@ -286,7 +352,8 @@ impl Editor {
         match std::fs::write(&full, g.to_json()) {
             Ok(()) => {
                 self.mat.dirty_since = None;
-                self.renderer.clear_thumbnails();
+                let path = self.mat.path.clone();
+                self.renderer.forget_thumbnails_of(&path);
                 self.reload_assets();
             }
             Err(e) => self.console.error(e.to_string()),
@@ -333,30 +400,56 @@ impl Editor {
         }
     }
 
-    pub fn material_editor_ui(&mut self, ctx: &egui::Context) {
-        if !self.mat.open || (self.mat.graph.is_none() && !self.mat.shader_mode) {
-            return;
-        }
-        let mut close = false;
-        let mode = self.mat.graph.as_ref().map(|g| g.mode);
-        let kind = match mode {
+    /// Title of the Nodes tab: the kind of graph and its file.
+    pub fn node_tab_title(&self) -> String {
+        let kind = match self.mat.graph.as_ref().map(|g| g.mode) {
             Some(GraphMode::Shader) => t("Shader graph"),
             Some(GraphMode::Effect) => t("Camera effect graph"),
             Some(GraphMode::Material) => t("Material editor"),
             None => t("Shader editor"),
         };
-        let title = format!("{kind}  -  {}", self.mat.path);
-        egui::Window::new(title).id(egui::Id::unique("material-editor")).title_bar(false).default_size([1180.0, 720.0]).show(ctx, |ui| {
-            self.material_header(ui, kind, mode, &mut close);
-            egui::Panel::right("mat-side").exact_size(262.0).resizable(false).frame(egui::Frame::NONE.inner_margin(egui::Margin { left: 10, right: 0, top: 0, bottom: 0 })).show(ui, |ui| self.material_side(ui));
-            egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| {
-                if self.mat.shader_mode {
-                    self.shader_code_ui(ui);
-                } else {
-                    self.material_canvas(ui);
-                }
-            });
+        let name = self.mat.path.rsplit('/').next().unwrap_or("");
+        format!("{kind}: {name}{}", if self.mat.dirty_since.is_some() { " *" } else { "" })
+    }
+
+    /// Saves pending changes and closes the graph (the Nodes tab goes away).
+    pub fn close_node_editor(&mut self) {
+        if self.mat.dirty_since.is_some() {
+            self.save_material();
+        }
+        self.mat.open = false;
+        self.mat.menu = None;
+    }
+
+    /// Contents of the Nodes tab: a slim header and the canvas (or the code of a `.wgsl` shader).
+    /// The preview and the settings of the selected node live in the Inspector meanwhile.
+    pub fn node_editor_tab(&mut self, ui: &mut egui::Ui) {
+        if !self.mat.is_open() {
+            return;
+        }
+        self.mat.visible_now = true;
+        let mode = self.mat.graph.as_ref().map(|g| g.mode);
+        let mut close = false;
+        egui::Frame::NONE.inner_margin(egui::Margin::same(6)).show(ui, |ui| {
+            self.material_header(ui, mode, &mut close);
+            if self.mat.shader_mode {
+                self.shader_code_ui(ui);
+            } else {
+                self.material_canvas(ui);
+            }
         });
+        if close {
+            self.close_node_editor();
+        }
+    }
+
+    /// Per-frame work of the node editor that does not depend on the tab being visible:
+    /// the add-node popup, undo history, live previews and the delayed save.
+    pub fn material_editor_ui(&mut self, ctx: &egui::Context) {
+        self.mat.visible = std::mem::take(&mut self.mat.visible_now);
+        if !self.mat.is_open() {
+            return;
+        }
         self.add_menu_ui(ctx);
         self.track_changes();
         self.update_node_previews(ctx);
@@ -367,42 +460,34 @@ impl Editor {
                 ctx.request_repaint_after(Duration::from_millis(100));
             }
         }
-        if close {
-            if self.mat.dirty_since.is_some() {
-                self.save_material();
-            }
-            self.mat.open = false;
-        }
     }
 
-    /// One slim line: kind dot, title, file, save state and the close button.
-    fn material_header(&mut self, ui: &mut egui::Ui, kind: &str, mode: Option<GraphMode>, close: &mut bool) {
+    /// One slim line: kind dot, file, save state, shortcut sheet and the close button.
+    fn material_header(&mut self, ui: &mut egui::Ui, mode: Option<GraphMode>, close: &mut bool) {
         let accent = match mode {
             Some(GraphMode::Material) => category_color("Colour"),
             Some(GraphMode::Shader) => category_color("Noise"),
             Some(GraphMode::Effect) => category_color("Effect"),
             None => category_color("Math"),
         };
-        let name = self.mat.path.rsplit('/').next().unwrap_or("").to_string();
         let dirty = self.mat.dirty_since.is_some();
-        ui.allocate_ui_with_layout(egui::vec2(ui.available_width(), 20.0), egui::Layout::left_to_right(egui::Align::Center), |ui| {
+        ui.allocate_ui_with_layout(egui::vec2(ui.available_width(), 22.0), egui::Layout::left_to_right(egui::Align::Center), |ui| {
             ui.spacing_mut().item_spacing.x = 8.0;
             let (dot, _) = ui.allocate_exact_size(egui::vec2(10.0, 10.0), Sense::hover());
             ui.painter().rect_filled(dot, 3.0, accent);
-            ui.label(RichText::new(kind).family(theme::bold_family()).size(13.0));
-            ui.label(RichText::new(name).size(12.0).color(pal().text_dim)).on_hover_text(&self.mat.path);
+            ui.label(RichText::new(&self.mat.path).size(12.0).color(pal().text_dim));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.add(egui::Button::new(RichText::new("✕").size(12.0)).frame(false).min_size(egui::vec2(22.0, 18.0))).on_hover_text(t("Close")).clicked() {
+                if crate::icons::button(ui, crate::icons::Icon::X, t("Close"), false).clicked() {
                     *close = true;
+                }
+                if !self.mat.shader_mode && crate::icons::button(ui, crate::icons::Icon::Keyboard, &format!("{} (K)", t("Keyboard shortcuts")), self.mat.show_keys).clicked() {
+                    self.mat.show_keys = !self.mat.show_keys;
                 }
                 let (text, colour) = if dirty { (t("Saving..."), theme::ACCENT) } else { (t("Saved"), pal().text_dim) };
                 ui.label(RichText::new(text).size(11.0).color(colour));
             });
         });
-        ui.add_space(1.0);
-        let line = ui.available_rect_before_wrap();
-        ui.painter().hline(line.x_range(), line.top(), Stroke::new(1.0, pal().border_strong));
-        ui.add_space(5.0);
+        ui.add_space(4.0);
     }
 
     /// Writes (after a short pause) one tiny preview shader per node that shows a preview.
@@ -410,10 +495,12 @@ impl Editor {
         if self.mat.prev_rev == self.mat.rev {
             return;
         }
-        if self.mat.last_edit.is_some_and(|t| t.elapsed() < Duration::from_millis(250)) {
-            ctx.request_repaint_after(Duration::from_millis(120));
+        // Follow edits live (dragging a slider updates the previews), but not every frame.
+        if self.mat.prev_at.is_some_and(|t| t.elapsed() < Duration::from_millis(110)) {
+            ctx.request_repaint_after(Duration::from_millis(60));
             return;
         }
+        self.mat.prev_at = Some(Instant::now());
         let Some(g) = &self.mat.graph else { return };
         let ext = g.mode.extension();
         let ids: Vec<u32> = g.nodes.iter().filter(|n| n.preview).map(|n| n.id).take(24).collect();
@@ -440,12 +527,13 @@ impl Editor {
         // Old previews are garbage: free their GPU textures and files now and then.
         if self.mat.prev_files > 60 {
             self.mat.prev_files = 0;
-            self.renderer.clear_thumbnails();
-            let live: Vec<String> = self.mat.node_prev.values().filter_map(|p| p.rsplit('/').next().map(str::to_string)).collect();
+            let mut live: Vec<String> = self.mat.node_prev.values().filter_map(|p| p.rsplit('/').next().map(str::to_string)).collect();
+            live.extend(self.mat.main_prev.rsplit('/').next().map(str::to_string));
             if let Ok(entries) = std::fs::read_dir(&dir) {
                 for e in entries.flatten() {
                     let name = e.file_name().to_string_lossy().to_string();
-                    if name.starts_with('n') && !live.contains(&name) {
+                    if !live.contains(&name) {
+                        self.renderer.forget_thumbnails_of(&format!(".node_preview/{name}"));
                         let _ = std::fs::remove_file(e.path());
                     }
                 }
@@ -453,46 +541,50 @@ impl Editor {
         }
     }
 
-    /// The path the preview should draw: the graph itself, or a temporary graph that shows only the selected node.
+    /// The path the big preview draws: a temporary copy of the graph (or of only the selected node),
+    /// written whenever the graph changes, so the preview follows edits before they are saved.
     fn preview_path(&mut self) -> String {
         let real = self.mat.path.clone();
-        let (Some(g), true) = (&self.mat.graph, self.mat.preview_node) else { return real };
-        if g.mode == GraphMode::Effect || self.mat.selected.len() != 1 {
+        let Some(g) = &self.mat.graph else { return real };
+        if g.mode == GraphMode::Effect {
             return real;
         }
-        let id = *self.mat.selected.iter().next().unwrap();
-        let Some(node) = g.nodes.iter().find(|n| n.id == id) else { return real };
-        if is_output(&node.kind) || node.kind == "Comment" {
-            return real;
+        let solo = (self.mat.preview_node && self.mat.selected.len() == 1).then(|| *self.mat.selected.iter().next().unwrap());
+        let key = (self.mat.rev, self.mat.preview_node, solo);
+        if key == self.mat.main_key && !self.mat.main_prev.is_empty() {
+            return self.mat.main_prev.clone();
         }
-        let mut tmp = g.clone();
-        if let Some(out) = tmp.nodes.iter_mut().find(|n| is_output(&n.kind)) {
-            // Show the node as glowing colour on an otherwise black, unlit surface.
-            let (colour, glow, amount) = match g.mode {
-                GraphMode::Material => (0, 3, None),
-                _ => (0, 2, Some(3)),
-            };
-            out.inputs[colour].link = None;
-            out.inputs[colour].value = [0.0; 3];
-            out.inputs[colour].override_default = true;
-            out.inputs[glow].link = Some(id);
-            if let Some(a) = amount {
-                out.inputs[a].link = None;
-                out.inputs[a].value = [0.0; 3];
-                out.inputs[a].override_default = true;
-            }
+        // Do not compile a new preview on every frame of a slider drag.
+        if !self.mat.main_prev.is_empty() && self.mat.last_edit.is_some_and(|t| t.elapsed() < Duration::from_millis(90)) {
+            return self.mat.main_prev.clone();
         }
+        let tmp = match solo {
+            Some(id) => solo_graph(g, id).unwrap_or_else(|| g.clone()),
+            None => g.clone(),
+        };
         let json = tmp.to_json();
-        let rel = format!("{PREVIEW_FILE}.{}", g.mode.extension());
-        if json != self.mat.preview_json {
-            let full = self.project.assets_dir().join(&rel);
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        std::hash::Hash::hash(&json, &mut hasher);
+        let rel = format!(".node_preview/m_{:016x}.{}", std::hash::Hasher::finish(&hasher), g.mode.extension());
+        let full = self.project.assets_dir().join(&rel);
+        if !full.exists() {
             let _ = std::fs::create_dir_all(full.parent().unwrap());
-            if std::fs::write(&full, &json).is_ok() {
-                self.mat.preview_json = json;
-                self.renderer.clear_thumbnails();
+            if std::fs::write(&full, &json).is_err() {
+                return real;
             }
+            self.mat.prev_files += 1;
         }
+        self.mat.main_key = key;
+        self.mat.main_prev = rel.clone();
         rel
+    }
+
+    /// The Inspector while the Nodes tab is shown: the big preview, the settings of the selected
+    /// node and the material images.
+    pub fn material_inspector(&mut self, ui: &mut egui::Ui) {
+        egui::ScrollArea::vertical().auto_shrink(false).show(ui, |ui| {
+            self.material_side(ui);
+        });
     }
 
     fn material_side(&mut self, ui: &mut egui::Ui) {
@@ -559,7 +651,7 @@ impl Editor {
             return;
         }
         let Some(mode) = mode else { return };
-        egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
+        {
             ui.add_space(4.0);
             if mode != GraphMode::Effect {
                 ui.checkbox(&mut self.mat.preview_node, t("Preview only the selected node")).on_hover_text(t("Shows what the selected node outputs, as glowing colour"));
@@ -572,7 +664,17 @@ impl Editor {
                     let path = self.mat.path.clone();
                     self.drop_asset(None, &path);
                 }
+                if mode != GraphMode::Effect && ui.button(t("Apply to selected object")).on_hover_text(t("Uses this graph on the object selected in the scene")).clicked() {
+                    if let Some(e) = self.selection {
+                        let path = self.mat.path.clone();
+                        if self.mat.dirty_since.is_some() {
+                            self.save_material();
+                        }
+                        self.apply_asset_to(e, &path);
+                    }
+                }
             });
+            self.node_properties(ui);
             if mode != GraphMode::Effect {
                 ui.add_space(8.0);
                 ui.label(RichText::new(t("Images")).family(theme::bold_family()));
@@ -602,28 +704,149 @@ impl Editor {
                     });
                 }
             }
-            // Help for the selected node, then the controls.
             ui.add_space(8.0);
-            let selected_kind = (self.mat.selected.len() == 1).then(|| self.mat.selected.iter().next().copied()).flatten().and_then(|id| self.mat.graph.as_ref().and_then(|g| g.nodes.iter().find(|n| n.id == id)).map(|n| n.kind.clone()));
-            if let Some(kind) = selected_kind {
-                ui.label(RichText::new(td(&kind)).family(theme::bold_family()));
-                let help = kvas_engine::material_nodes::help_for(&kind, crate::i18n::current() == crate::i18n::Lang::Ru);
-                ui.label(RichText::new(if help.is_empty() { t("Connect its output to another node's input.") } else { help }).size(11.5).color(pal().text_dim));
+            ui.label(RichText::new(t("Keyboard shortcuts")).family(theme::bold_family()));
+            for (keys, what) in KEYS {
+                ui.horizontal_wrapped(|ui| {
+                    ui.label(RichText::new(*keys).size(11.0).monospace());
+                    ui.label(RichText::new(t(what)).size(11.0).color(pal().text_dim));
+                });
             }
-            ui.add_space(6.0);
-            ui.label(RichText::new(t("Controls")).family(theme::bold_family()));
-            for line in [
-                "Right-click: add node / comment / paste",
-                "Shift+A: search and add a node",
-                "Drag a socket onto empty space: add a connected node",
-                "Wheel: zoom, middle button or Space+drag: pan",
-                "Drag on empty canvas: box select (Shift adds)",
-                "Ctrl+C / V / D: copy, paste, duplicate",
-                "Ctrl+Z / Ctrl+Y: undo, redo; F: fit; Delete: remove",
-            ] {
-                ui.label(RichText::new(t(line)).size(11.0).color(pal().text_dim));
+        }
+    }
+
+    /// Every input and parameter of the selected node, with room for vectors and conversions.
+    fn node_properties(&mut self, ui: &mut egui::Ui) {
+        let Some(id) = (self.mat.selected.len() == 1).then(|| self.mat.selected.iter().next().copied()).flatten() else { return };
+        let images: Vec<String> = self.asset_list.iter().filter(|a| matches!(a.rsplit('.').next().map(str::to_ascii_lowercase).as_deref(), Some("png" | "jpg" | "jpeg"))).cloned().collect();
+        let Some(g) = &mut self.mat.graph else { return };
+        let names: HashMap<u32, String> = g.nodes.iter().map(|n| (n.id, td(&n.kind))).collect();
+        let kinds: HashMap<u32, String> = g.nodes.iter().map(|n| (n.id, n.kind.clone())).collect();
+        let mut pick_image: Option<String> = None;
+        let Some(node) = g.nodes.iter_mut().find(|n| n.id == id) else { return };
+        let Some(s) = spec(&node.kind) else { return };
+        ui.add_space(10.0);
+        ui.horizontal(|ui| {
+            let (dot, _) = ui.allocate_exact_size(egui::vec2(10.0, 10.0), Sense::hover());
+            ui.painter().rect_filled(dot, 3.0, category_color(s.category));
+            ui.label(RichText::new(td(&node.kind)).family(theme::bold_family()).size(14.0));
+        });
+        let help = kvas_engine::material_nodes::help_for(&node.kind, crate::i18n::current() == crate::i18n::Lang::Ru);
+        if !help.is_empty() {
+            ui.label(RichText::new(help).size(11.5).color(pal().text_dim));
+        }
+        if node.kind == "Comment" {
+            ui.text_edit_singleline(&mut node.text);
+            return;
+        }
+        if !is_output(&node.kind) && node.kind != "Reroute" {
+            ui.checkbox(&mut node.preview, t("Preview inside the node"));
+        }
+        let outs = v4::outputs(&node.kind);
+        if outs.len() > 1 {
+            ui.label(RichText::new(format!("{}: {}", t("Outputs"), outs.iter().map(|o| t(o.0)).collect::<Vec<_>>().join(", "))).size(11.0).color(pal().text_dim));
+        }
+        ui.add_space(4.0);
+        egui::Grid::new(("node-props", id)).num_columns(2).spacing([8.0, 6.0]).show(ui, |ui| {
+            for (i, (name, default)) in s.inputs.iter().enumerate() {
+                let ty = v4::input_type(name, default);
+                ui.horizontal(|ui| {
+                    let (dot, _) = ui.allocate_exact_size(egui::vec2(8.0, 8.0), Sense::hover());
+                    ui.painter().circle_filled(dot.center(), 4.0, type_color(ty));
+                    ui.label(td(name));
+                });
+                let socket = &mut node.inputs[i];
+                if let Some(from) = socket.link {
+                    ui.vertical(|ui| {
+                        let out_name = v4::outputs(kinds.get(&from).map_or("", |k| k.as_str())).get(socket.output as usize).map(|o| t(o.0).to_string());
+                        let src = match out_name {
+                            Some(o) => format!("← {} · {o}", names.get(&from).cloned().unwrap_or_default()),
+                            None => format!("← {}", names.get(&from).cloned().unwrap_or_default()),
+                        };
+                        ui.label(RichText::new(src).size(11.5));
+                        egui::ComboBox::from_id_salt(("conv", id, i)).width(150.0).selected_text(t(v4::CONVERSIONS.get(socket.convert as usize).map_or("Auto", |c| c.0))).show_ui(ui, |ui| {
+                            for (k, (cname, _)) in v4::CONVERSIONS.iter().enumerate() {
+                                ui.selectable_value(&mut socket.convert, k as u8, t(cname));
+                            }
+                        }).response.on_hover_text(t("How the incoming value is converted for this input"));
+                        if ui.small_button(t("Disconnect")).clicked() {
+                            socket.link = None;
+                            socket.output = 0;
+                            socket.convert = 0;
+                        }
+                    });
+                } else {
+                    let mut v = if socket.override_default || socket.value != [0.0; 3] { Some(socket.value) } else { parse_default(default) };
+                    match &mut v {
+                        Some(val) => {
+                            let changed = ui.horizontal(|ui| match ty {
+                                SocketType::Colour => ui.color_edit_button_rgb(val).changed(),
+                                SocketType::Vector => {
+                                    let mut c = false;
+                                    for k in 0..3 {
+                                        c |= ui.add(egui::DragValue::new(&mut val[k]).speed(0.01).max_decimals(3)).changed();
+                                    }
+                                    c
+                                }
+                                SocketType::Float => {
+                                    let mut x = val[0];
+                                    let c = ui.add(egui::DragValue::new(&mut x).speed(0.01).max_decimals(3)).changed();
+                                    *val = [x; 3];
+                                    c
+                                }
+                            }).inner;
+                            if changed {
+                                socket.value = *val;
+                                socket.override_default = true;
+                            }
+                        }
+                        None => {
+                            ui.label(RichText::new(t("(default)")).size(11.0).color(pal().text_dim)).on_hover_text(*default);
+                        }
+                    }
+                }
+                ui.end_row();
+            }
+            let skip = if s.color && node.params.len() >= 3 { 3 } else { 0 };
+            if skip == 3 {
+                ui.label(t("Colour"));
+                let mut rgb = [node.params[0], node.params[1], node.params[2]];
+                if ui.color_edit_button_rgb(&mut rgb).changed() {
+                    node.params[..3].copy_from_slice(&rgb);
+                }
+                ui.end_row();
+            }
+            for (k, (pname, _, min, max)) in s.params.iter().enumerate().skip(skip) {
+                let label = pname.split(" (").next().unwrap_or(pname);
+                ui.label(td(label)).on_hover_text(*pname);
+                if node.kind == "Image texture" && k == 0 {
+                    let current = g_texture_name(&node.text);
+                    egui::ComboBox::from_id_salt(("img", id)).width(160.0).selected_text(current).show_ui(ui, |ui| {
+                        for img in &images {
+                            if ui.selectable_label(node.text == *img, img).clicked() {
+                                pick_image = Some(img.clone());
+                            }
+                        }
+                    });
+                } else if let Some(choices) = v4::choices(&node.kind, k) {
+                    let mut v = node.params[k].round().clamp(0.0, choices.len() as f32 - 1.0) as usize;
+                    egui::ComboBox::from_id_salt(("choice", id, k)).width(160.0).selected_text(t(choices[v])).show_ui(ui, |ui| {
+                        for (c, name) in choices.iter().enumerate() {
+                            ui.selectable_value(&mut v, c, t(name));
+                        }
+                    });
+                    node.params[k] = v as f32;
+                } else if max - min <= 64.0 {
+                    ui.add(egui::Slider::new(&mut node.params[k], *min..=*max).max_decimals(3));
+                } else {
+                    ui.add(egui::DragValue::new(&mut node.params[k]).speed(((max - min) * 0.002).max(0.001)).range(*min..=*max).max_decimals(3));
+                }
+                ui.end_row();
             }
         });
+        if let Some(img) = pick_image {
+            assign_image(g, id, &img);
+        }
     }
 
     /// Code view of a `.wgsl` shader with a live preview on the chosen mesh.
@@ -690,18 +913,21 @@ impl Editor {
         out
     }
 
-    /// Adds a node at a graph position and optionally connects `from` to its first input.
-    fn add_node_at(&mut self, kind: &str, at: Vec2, connect_from: Option<u32>) {
+    /// Adds a node at a graph position and optionally connects an output to its first fitting input.
+    fn add_node_at(&mut self, kind: &str, at: Vec2, connect_from: Option<(u32, u8)>) {
         let Some(g) = &mut self.mat.graph else { return };
         let id = g.add_node(kind, [at.x, at.y]);
-        if g.mode == GraphMode::Effect {
-            if let Some(n) = g.nodes.last_mut() {
-                n.preview = false;
-            }
+        if let Some(n) = g.nodes.last_mut() {
+            n.preview = g.mode != GraphMode::Effect && (n.preview || matches!(kind, "Image texture" | "Noise texture" | "Voronoi texture" | "Wave texture" | "Brick texture" | "Gradient texture"));
         }
-        if let (Some(from), Some(s)) = (connect_from, spec(kind)) {
+        if let (Some((from, out)), Some(s)) = (connect_from, spec(kind)) {
             if !s.inputs.is_empty() {
-                g.connect(from, id, 0);
+                let from_kind = g.nodes.iter().find(|n| n.id == from).map(|n| n.kind.clone()).unwrap_or_default();
+                let from_type = out_type(&from_kind, out as usize);
+                // Prefer an input of the same type (a colour into a colour input...).
+                let input = s.inputs.iter().position(|(n, d)| v4::input_type(n, d) == from_type).unwrap_or(0);
+                let (name, default) = s.inputs[input];
+                g.connect_output(from, out, id, input, v4::default_conversion(from_type, v4::input_type(name, default)));
             }
         }
         self.mat.selected = BTreeSet::from([id]);
@@ -715,6 +941,7 @@ impl Editor {
         let mut picked: Option<&'static str> = None;
         let mut close = false;
         let all = Self::menu_entries(mode, "", None);
+        let opened_now = menu.just_opened;
         let area = egui::Area::new(egui::Id::unique("add-node-menu")).order(egui::Order::Foreground).fixed_pos(menu.screen).show(ctx, |ui| {
             egui::Frame::popup(ui.style()).show(ui, |ui| {
                 ui.set_width(580.0);
@@ -815,7 +1042,7 @@ impl Editor {
                 });
             });
         });
-        if area.response.clicked_elsewhere() && !menu.just_opened {
+        if area.response.clicked_elsewhere() && !opened_now {
             close = true;
         }
         if let Some(kind) = picked {
@@ -828,7 +1055,7 @@ impl Editor {
         }
     }
 
-    fn open_add_menu(&mut self, screen: Pos2, at: Vec2, connect_from: Option<u32>) {
+    fn open_add_menu(&mut self, screen: Pos2, at: Vec2, connect_from: Option<(u32, u8)>) {
         self.mat.menu = Some(AddMenu { at, screen, search: String::new(), connect_from, just_opened: true, category: None, cursor: 0 });
     }
 
@@ -934,14 +1161,14 @@ impl Editor {
             self.fit_view(rect.size());
         }
         let pointer = ui.input(|i| i.pointer.hover_pos());
-        let hovered = canvas.hovered() || canvas.dragged();
+        let hovered = canvas.hovered() || canvas.dragged() || pointer.is_some_and(|p| rect.contains(p) && self.mat.menu.is_none());
 
         // Zoom with the wheel around the pointer.
-        if hovered && self.mat.menu.is_none() {
+        if hovered && self.mat.menu.is_none() && pointer.is_some_and(|p| rect.contains(p)) {
             let scroll = ui.input(|i| i.smooth_scroll_delta.y);
             if scroll != 0.0 {
                 let old = self.mat.zoom;
-                let z = (old * (scroll * 0.0016).exp()).clamp(0.25, 2.0);
+                let z = (old * (scroll * 0.0016).exp()).clamp(0.2, 2.5);
                 if let Some(p) = pointer {
                     let rel = p - rect.min;
                     self.mat.pan = rel - (rel - self.mat.pan) * (z / old);
@@ -959,7 +1186,7 @@ impl Editor {
         let to_screen = |p: Vec2| origin + p * z;
         let to_graph = |p: Pos2| (p - origin) / z;
 
-        // Background grid.
+        // Background grid: dots, with a stronger line every fifth step.
         painter.rect_filled(rect, 8.0, pal().field);
         let step = 28.0 * z.max(0.5);
         let (ox, oy) = (self.mat.pan.x.rem_euclid(step), self.mat.pan.y.rem_euclid(step));
@@ -976,7 +1203,7 @@ impl Editor {
         let Some(graph) = self.mat.graph.clone() else { return };
         let mode = graph.mode;
         let geom = |n: &MatNode| spec(&n.kind).map(|s| Rect::from_min_size(to_screen(Vec2::from(n.pos)), node_size(n, s) * z));
-        let top_of = |n: &MatNode| HEADER_H + spec(&n.kind).map_or(0.0, |s| block_h(n, s));
+        let top_of = |n: &MatNode| HEADER_H + spec(&n.kind).map_or(0.0, |s| block_h(n, s)) + out_rows(&n.kind) as f32 * ROW_H;
         let input_pos = |n: &MatNode, r: Rect, i: usize| {
             if n.kind == "Reroute" {
                 Pos2::new(r.left(), r.center().y)
@@ -984,19 +1211,23 @@ impl Editor {
                 Pos2::new(r.left(), r.top() + (top_of(n) + i as f32 * ROW_H + ROW_H * 0.5) * z)
             }
         };
-        let output_pos = |n: &MatNode, r: Rect| {
+        let output_pos = |n: &MatNode, r: Rect, k: usize| {
             if n.kind == "Reroute" {
                 Pos2::new(r.right(), r.center().y)
+            } else if out_rows(&n.kind) > 0 {
+                let block = spec(&n.kind).map_or(0.0, |s| block_h(n, s));
+                Pos2::new(r.right(), r.top() + (HEADER_H + block + k as f32 * ROW_H + ROW_H * 0.5) * z)
             } else {
                 Pos2::new(r.right(), r.top() + HEADER_H * 0.5 * z)
             }
         };
         let shift = ui.input(|i| i.modifiers.shift);
+        let dragging_asset = egui::DragAndDrop::payload::<crate::assets_panel::AssetDrag>(ui.ctx());
 
         let mut delete: Vec<u32> = Vec::new();
-        let mut new_link: Option<(u32, u32, usize)> = None;
+        let mut new_link: Option<(u32, u8, u32, usize)> = None;
         let mut unlink: Option<(u32, usize)> = None;
-        let mut start_link: Option<u32> = None;
+        let mut start_link: Option<(u32, u8)> = None;
         let mut drag_move: Option<(u32, Vec2)> = None;
         let mut edits: Vec<(u32, usize, [f32; 3])> = Vec::new();
         let mut param_edits: Vec<(u32, usize, f32)> = Vec::new();
@@ -1007,8 +1238,10 @@ impl Editor {
         let mut resize: Option<(u32, Vec2)> = None;
         let mut comment_text: Vec<(u32, String)> = Vec::new();
         let mut start_editing: Option<u32> = None;
-        let mut disconnect: Option<u32> = None;
+        let mut disconnect: Vec<u32> = Vec::new();
         let mut toggle_preview: Vec<u32> = Vec::new();
+        let mut set_convert: Option<(u32, usize, u8)> = None;
+        let mut pick_image: Option<(u32, String)> = None;
 
         // Comment frames sit behind everything.
         for node in graph.nodes.iter().filter(|n| n.kind == "Comment") {
@@ -1063,18 +1296,27 @@ impl Editor {
             });
         }
 
-        // Links under the nodes.
+        // Links under the nodes, coloured by the type they carry.
         for node in graph.nodes.iter().filter(|n| n.kind != "Comment") {
             let Some(r) = geom(node) else { continue };
             for (i, socket) in node.inputs.iter().enumerate() {
                 let Some(from) = socket.link.and_then(|id| graph.nodes.iter().find(|n| n.id == id)) else { continue };
                 let Some(fr) = geom(from) else { continue };
-                let (a, b) = (output_pos(from, fr), input_pos(node, r, i));
+                let (a, b) = (output_pos(from, fr, socket.output as usize), input_pos(node, r, i));
                 let highlight = self.mat.selected.contains(&node.id) || self.mat.selected.contains(&from.id);
                 let k = ((b.x - a.x).abs() * 0.5).max(40.0 * z);
-                let colour = category_color(spec(&from.kind).map_or("", |s| s.category));
-                let stroke = Stroke::new(if highlight { 3.0 } else { 2.0 } * z.max(0.6), if highlight { theme::ACCENT } else { colour.gamma_multiply(1.1) });
+                let colour = type_color(out_type(&from.kind, socket.output as usize));
+                let stroke = Stroke::new(if highlight { 3.0 } else { 2.0 } * z.max(0.6), if highlight { theme::ACCENT } else { colour.gamma_multiply(0.95) });
                 painter.add(egui::epaint::CubicBezierShape::from_points_stroke([a, a + Vec2::new(k, 0.0), b - Vec2::new(k, 0.0), b], false, Color32::TRANSPARENT, stroke));
+                if socket.convert > 0 && z >= 0.5 {
+                    // Badge of the conversion just before the input.
+                    let badge = v4::conversion_badge(socket.convert);
+                    let at = b - Vec2::new(22.0 * z, 0.0);
+                    let galley = painter.layout_no_wrap(badge.to_string(), egui::FontId::proportional(9.5 * z), Color32::WHITE);
+                    let pill = Rect::from_center_size(at, galley.size() + Vec2::new(8.0 * z, 3.0 * z));
+                    painter.rect_filled(pill, 6.0 * z, colour.gamma_multiply(0.85));
+                    painter.galley(pill.center() - galley.size() * 0.5, galley, Color32::WHITE);
+                }
             }
         }
 
@@ -1103,6 +1345,15 @@ impl Editor {
             if body.dragged() && self.mat.link_from.is_none() {
                 drag_move = Some((node.id, ui.input(|i| i.pointer.delta()) / z));
             }
+            // An image dropped from the Project panel onto an image node becomes its file.
+            if node.kind == "Image texture" {
+                if let Some(drop) = body.dnd_release_payload::<crate::assets_panel::AssetDrag>() {
+                    pick_image = Some((node.id, drop.0.clone()));
+                }
+                if dragging_asset.is_some() && pointer.is_some_and(|p| r.contains(p)) {
+                    painter.rect_stroke(r.expand(3.0), radius + 3.0, Stroke::new(2.0, theme::ACCENT), egui::StrokeKind::Outside);
+                }
+            }
             body.context_menu(|ui| {
                 if !out && ui.button(t("Delete")).clicked() {
                     delete.push(node.id);
@@ -1122,12 +1373,12 @@ impl Editor {
                     ui.close();
                 }
                 if node.inputs.iter().any(|s| s.link.is_some()) && ui.button(t("Disconnect inputs")).clicked() {
-                    disconnect = Some(node.id);
+                    disconnect.push(node.id);
                     ui.close();
                 }
             });
 
-            let top = HEADER_H + block_h(node, s);
+            let top = top_of(node);
             if is_reroute {
                 painter.rect_filled(r, radius, pal().card);
                 painter.rect_stroke(r, radius, Stroke::new(if selected { 2.0 } else { 1.0 }, if selected { theme::ACCENT } else { pal().border_strong }), egui::StrokeKind::Inside);
@@ -1142,20 +1393,22 @@ impl Editor {
                 painter.rect_filled(header, egui::CornerRadius { nw: radius as u8, ne: radius as u8, sw: 0, se: 0 }, accent.gamma_multiply(0.9));
                 painter.rect_stroke(r, radius, Stroke::new(if selected { 1.5 } else { 1.0 }, if selected { theme::ACCENT } else { pal().border_strong }), egui::StrokeKind::Inside);
                 painter.text(header.left_center() + Vec2::new(10.0 * z, 0.0), egui::Align2::LEFT_CENTER, td(&node.kind), bold, Color32::WHITE);
-                if z >= 0.7 && !out {
+                if z >= 0.7 && !out && out_rows(&node.kind) > 0 {
+                    painter.text(header.right_center() - Vec2::new(10.0 * z, 0.0), egui::Align2::RIGHT_CENTER, td(s.category), egui::FontId::proportional(10.0 * z), Color32::from_white_alpha(120));
+                } else if z >= 0.7 && !out {
                     painter.text(header.right_center() - Vec2::new(16.0 * z, 0.0), egui::Align2::RIGHT_CENTER, td(s.category), egui::FontId::proportional(10.0 * z), Color32::from_white_alpha(120));
                 }
                 let help = kvas_engine::material_nodes::help_for(&node.kind, crate::i18n::current() == crate::i18n::Lang::Ru);
                 if !help.is_empty() && pointer.is_some_and(|p| header.contains(p)) {
                     body.clone().on_hover_text(help);
                 }
-                // Gradient strip of a colour ramp, or the live preview of the node.
+                // Gradient strip of a colour ramp (its stops can be dragged), or the live preview of the node.
                 let block = block_h(node, s);
                 if block > 0.0 && widgets {
                     let area = Rect::from_min_size(Pos2::new(r.left() + 8.0 * z, r.top() + (HEADER_H + 4.0) * z), Vec2::new((NODE_W - 16.0) * z, (block - 8.0) * z));
                     if node.kind == "Color ramp" {
                         let strip = Rect::from_min_size(area.min, Vec2::new(area.width(), area.height() - 8.0 * z));
-                        let steps = 40;
+                        let steps = 48;
                         for i in 0..steps {
                             let x0 = strip.left() + strip.width() * i as f32 / steps as f32;
                             let x1 = strip.left() + strip.width() * (i + 1) as f32 / steps as f32;
@@ -1168,7 +1421,18 @@ impl Editor {
                             let tip = Pos2::new(x, strip.bottom());
                             let stop = &node.inputs[k + 1];
                             let col = if stop.override_default || stop.value != [0.0; 3] { stop.value } else { parse_default(s.inputs[k + 1].1).unwrap_or([0.0; 3]) };
-                            painter.add(egui::Shape::convex_polygon(vec![tip, tip + Vec2::new(-4.0 * z, 7.0 * z), tip + Vec2::new(4.0 * z, 7.0 * z)], to_srgb8(col), Stroke::new(1.0, pal().text)));
+                            let handle = ui.interact(Rect::from_center_size(tip + Vec2::new(0.0, 3.0 * z), Vec2::new(12.0 * z, 14.0 * z)), ui.scope_id().with(("ramp", node.id, k)), Sense::drag());
+                            let hot = handle.hovered() || handle.dragged();
+                            if handle.dragged() {
+                                if let Some(p) = handle.interact_pointer_pos() {
+                                    param_edits.push((node.id, k, ((p.x - strip.left()) / strip.width()).clamp(0.0, 1.0)));
+                                }
+                            }
+                            if hot {
+                                ui.ctx().set_cursor_icon(egui::CursorIcon::ResizeHorizontal);
+                            }
+                            let w = if hot { 5.5 } else { 4.0 } * z;
+                            painter.add(egui::Shape::convex_polygon(vec![tip, tip + Vec2::new(-w, 7.0 * z), tip + Vec2::new(w, 7.0 * z)], to_srgb8(col), Stroke::new(1.0, if hot { theme::ACCENT } else { pal().text })));
                         }
                     } else {
                         painter.rect_filled(area, 6.0 * z, Color32::from_rgb(0x14, 0x15, 0x17));
@@ -1187,15 +1451,26 @@ impl Editor {
                 }
             }
 
-            // Output socket.
+            // Output sockets: one in the header, or a named row each.
             if !out {
-                let p = output_pos(node, r);
-                let resp = ui.interact(Rect::from_center_size(p, Vec2::splat(18.0 * z.max(0.7))), ui.scope_id().with(("out", node.id)), Sense::click_and_drag());
-                let hot = resp.hovered() || self.mat.link_from == Some(node.id);
-                painter.circle_filled(p, SOCKET_R * z.max(0.7), if hot { theme::ACCENT } else { category_color(s.category) });
-                painter.circle_stroke(p, SOCKET_R * z.max(0.7), Stroke::new(1.5, pal().card));
-                if resp.drag_started() {
-                    start_link = Some(node.id);
+                let outs = v4::outputs(&node.kind);
+                let count = if out_rows(&node.kind) > 0 { outs.len() } else { 1 };
+                for k in 0..count {
+                    let p = output_pos(node, r, k);
+                    if count > 1 && !is_reroute {
+                        painter.text(p - Vec2::new(14.0 * z, 0.0), egui::Align2::RIGHT_CENTER, t(outs[k].0), small.clone(), pal().text);
+                    }
+                    let resp = ui.interact(Rect::from_center_size(p, Vec2::splat(18.0 * z.max(0.7))), ui.scope_id().with(("out", node.id, k)), Sense::click_and_drag());
+                    let hot = resp.hovered() || self.mat.link_from == Some((node.id, k as u8));
+                    let colour = type_color(out_type(&node.kind, k));
+                    painter.circle_filled(p, SOCKET_R * z.max(0.7) * if hot { 1.25 } else { 1.0 }, if hot { theme::ACCENT } else { colour });
+                    painter.circle_stroke(p, SOCKET_R * z.max(0.7), Stroke::new(1.5, pal().card));
+                    if resp.drag_started() {
+                        start_link = Some((node.id, k as u8));
+                    }
+                    if count > 1 {
+                        resp.on_hover_text(t(outs[k].0));
+                    }
                 }
             }
 
@@ -1206,17 +1481,43 @@ impl Editor {
                 let resp = ui.interact(Rect::from_center_size(p, Vec2::splat(18.0 * z.max(0.7))), ui.scope_id().with(("in", node.id, i)), Sense::click_and_drag());
                 let linked = node.inputs[i].link.is_some();
                 let near = self.mat.link_from.is_some() && pointer.is_some_and(|m| (m - p).length() < 14.0 * z.max(0.8));
-                painter.circle_filled(p, SOCKET_R * z.max(0.7), if near || resp.hovered() { theme::ACCENT } else if linked { pal().text } else { pal().border_strong });
-                painter.circle_stroke(p, SOCKET_R * z.max(0.7), Stroke::new(1.5, pal().card));
-                if resp.clicked() || resp.drag_started() {
+                let ty = v4::input_type(name, default);
+                let fill = if near || resp.hovered() { theme::ACCENT } else if linked { type_color(ty) } else { type_color(ty).gamma_multiply(0.45) };
+                if ty == SocketType::Vector {
+                    // Vectors get a diamond, like in other node editors.
+                    let d = SOCKET_R * z.max(0.7) * 1.2;
+                    painter.add(egui::Shape::convex_polygon(vec![p + Vec2::new(0.0, -d), p + Vec2::new(d, 0.0), p + Vec2::new(0.0, d), p + Vec2::new(-d, 0.0)], fill, Stroke::new(1.5, pal().card)));
+                } else {
+                    painter.circle_filled(p, SOCKET_R * z.max(0.7), fill);
+                    painter.circle_stroke(p, SOCKET_R * z.max(0.7), Stroke::new(1.5, pal().card));
+                }
+                if resp.drag_started() {
                     if let Some(from) = node.inputs[i].link {
                         unlink = Some((node.id, i));
-                        start_link = Some(from);
+                        start_link = Some((from, node.inputs[i].output));
                     }
                 }
+                let current_conv = node.inputs[i].convert;
+                resp.context_menu(|ui| {
+                    ui.label(RichText::new(td(name)).family(theme::bold_family()));
+                    ui.weak(t("Convert the incoming value:"));
+                    for (k, (cname, _)) in v4::CONVERSIONS.iter().enumerate() {
+                        if ui.selectable_label(current_conv as usize == k, t(cname)).clicked() {
+                            set_convert = Some((node.id, i, k as u8));
+                            ui.close();
+                        }
+                    }
+                    if linked {
+                        ui.separator();
+                        if ui.button(t("Disconnect")).clicked() {
+                            unlink = Some((node.id, i));
+                            ui.close();
+                        }
+                    }
+                });
                 if near && ui.input(|i| i.pointer.any_released()) {
-                    if let Some(from) = self.mat.link_from {
-                        new_link = Some((from, node.id, i));
+                    if let Some((from, k)) = self.mat.link_from {
+                        new_link = Some((from, k, node.id, i));
                     }
                 }
                 if !is_reroute {
@@ -1230,8 +1531,15 @@ impl Editor {
                                 ui.scope_builder(egui::UiBuilder::new().max_rect(field), |ui| {
                                     ui.spacing_mut().interact_size.y = (ROW_H - 4.0) * z;
                                     ui.style_mut().override_font_id = Some(small.clone());
-                                    if is_colour_input(name) {
+                                    if is_colour_input(name, default) {
                                         changed = ui.color_edit_button_rgb(&mut value).changed();
+                                    } else if ty == SocketType::Vector && (value[0] != value[1] || value[1] != value[2]) {
+                                        ui.spacing_mut().item_spacing.x = 2.0;
+                                        ui.horizontal(|ui| {
+                                            for c in &mut value {
+                                                changed |= ui.add(egui::DragValue::new(c).speed(0.01).max_decimals(2)).changed();
+                                            }
+                                        });
                                     } else {
                                         let mut v = value[0];
                                         if ui.add(egui::DragValue::new(&mut v).speed(0.01).max_decimals(3)).changed() {
@@ -1279,41 +1587,69 @@ impl Editor {
                 prow += 1;
                 let label = pname.split(" (").next().unwrap_or(pname);
                 let label_pos = Pos2::new(r.left() + 14.0 * z, y + ROW_H * z * 0.5);
-                painter.text(label_pos, egui::Align2::LEFT_CENTER, td(label), small.clone(), pal().text_dim);
+                let image_row = node.kind == "Image texture" && k == 0;
+                painter.text(label_pos, egui::Align2::LEFT_CENTER, if image_row { t("Image").to_string() } else { td(label) }, small.clone(), pal().text_dim);
                 let field = Rect::from_min_size(Pos2::new(r.left() + 100.0 * z, y + 2.0 * z), Vec2::new((NODE_W - 110.0) * z, (ROW_H - 4.0) * z));
                 let mut v = node.params.get(k).copied().unwrap_or(0.0);
-                if widgets {
-                    let selector = pname.contains('(');
-                    if selector {
-                        // The label hides the legend of a selector ("type (0 fBm, 1 ridged...)"): show it on hover.
-                        let hint = Rect::from_min_size(Pos2::new(r.left(), y), Vec2::new(100.0 * z, ROW_H * z));
-                        ui.interact(hint, ui.scope_id().with(("hint", node.id, k)), Sense::hover()).on_hover_text(*pname);
-                    }
-                    ui.scope_builder(egui::UiBuilder::new().max_rect(field), |ui| {
-                        ui.spacing_mut().interact_size.y = (ROW_H - 4.0) * z;
-                        ui.style_mut().override_font_id = Some(small.clone());
-                        ui.spacing_mut().slider_width = (field.width() - 48.0 * z).max(24.0);
-                        let changed = if selector {
-                            ui.add(egui::Slider::new(&mut v, *min..=*max).integer()).changed()
-                        } else if max - min <= 64.0 {
-                            ui.add(egui::Slider::new(&mut v, *min..=*max).max_decimals(3)).changed()
-                        } else {
-                            ui.add(egui::DragValue::new(&mut v).speed(((max - min) * 0.005).max(0.001)).range(*min..=*max).max_decimals(3)).changed()
-                        };
-                        if changed {
-                            param_edits.push((node.id, k, v));
-                        }
-                    });
+                if !widgets {
+                    continue;
                 }
+                let choices = v4::choices(&node.kind, k);
+                if pname.contains('(') && choices.is_none() {
+                    // The label hides the legend of a selector ("type (0 fBm, 1 ridged...)"): show it on hover.
+                    let hint = Rect::from_min_size(Pos2::new(r.left(), y), Vec2::new(100.0 * z, ROW_H * z));
+                    ui.interact(hint, ui.scope_id().with(("hint", node.id, k)), Sense::hover()).on_hover_text(*pname);
+                }
+                ui.scope_builder(egui::UiBuilder::new().max_rect(field), |ui| {
+                    ui.spacing_mut().interact_size.y = (ROW_H - 4.0) * z;
+                    ui.style_mut().override_font_id = Some(small.clone());
+                    ui.spacing_mut().slider_width = (field.width() - 48.0 * z).max(24.0);
+                    if image_row {
+                        let images: Vec<&String> = self.asset_list.iter().filter(|a| matches!(a.rsplit('.').next().map(str::to_ascii_lowercase).as_deref(), Some("png" | "jpg" | "jpeg"))).collect();
+                        egui::ComboBox::from_id_salt(("node-img", node.id)).width(field.width()).selected_text(g_texture_name(&node.text)).show_ui(ui, |ui| {
+                            if images.is_empty() {
+                                ui.weak(t("No images in the project"));
+                            }
+                            for img in images {
+                                if ui.selectable_label(node.text == *img, img.as_str()).clicked() {
+                                    pick_image = Some((node.id, img.clone()));
+                                }
+                            }
+                        });
+                        return;
+                    }
+                    if let Some(choices) = choices {
+                        let mut c = v.round().clamp(0.0, choices.len() as f32 - 1.0) as usize;
+                        egui::ComboBox::from_id_salt(("node-choice", node.id, k)).width(field.width()).selected_text(t(choices[c])).show_ui(ui, |ui| {
+                            for (j, name) in choices.iter().enumerate() {
+                                ui.selectable_value(&mut c, j, t(name));
+                            }
+                        });
+                        if c as f32 != v {
+                            param_edits.push((node.id, k, c as f32));
+                        }
+                        return;
+                    }
+                    let changed = if pname.contains('(') {
+                        ui.add(egui::Slider::new(&mut v, *min..=*max).integer()).changed()
+                    } else if max - min <= 64.0 {
+                        ui.add(egui::Slider::new(&mut v, *min..=*max).max_decimals(3)).changed()
+                    } else {
+                        ui.add(egui::DragValue::new(&mut v).speed(((max - min) * 0.005).max(0.001)).range(*min..=*max).max_decimals(3)).changed()
+                    };
+                    if changed {
+                        param_edits.push((node.id, k, v));
+                    }
+                });
             }
         }
 
         // Link being dragged.
-        if let (Some(from), Some(m)) = (self.mat.link_from, pointer) {
+        if let (Some((from, k)), Some(m)) = (self.mat.link_from, pointer) {
             if let Some((n, fr)) = graph.nodes.iter().find(|n| n.id == from).and_then(|n| geom(n).map(|r| (n, r))) {
-                let a = output_pos(n, fr);
-                let k = ((m.x - a.x).abs() * 0.5).max(40.0 * z);
-                painter.add(egui::epaint::CubicBezierShape::from_points_stroke([a, a + Vec2::new(k, 0.0), m - Vec2::new(k, 0.0), m], false, Color32::TRANSPARENT, Stroke::new(2.0, theme::ACCENT)));
+                let a = output_pos(n, fr, k as usize);
+                let c = ((m.x - a.x).abs() * 0.5).max(40.0 * z);
+                painter.add(egui::epaint::CubicBezierShape::from_points_stroke([a, a + Vec2::new(c, 0.0), m - Vec2::new(c, 0.0), m], false, Color32::TRANSPARENT, Stroke::new(2.0, theme::ACCENT)));
             }
         }
 
@@ -1344,28 +1680,63 @@ impl Editor {
             }
             self.mat.editing_comment = None;
         }
+        let double_add = canvas.double_clicked() && hovered_node.is_none();
 
-        // Keyboard.
-        let typing = ui.ctx().memory(|m| m.focused()).is_some() && self.mat.editing_comment.is_some();
-        let (copy, paste, cut_dup, select_all, undo, redo, del, fit, add_key) = if hovered && !typing && self.mat.menu.is_none() {
+        // Keyboard (only while the pointer is over the canvas and no text field has focus).
+        let typing = ui.ctx().egui_wants_keyboard_input();
+        #[derive(Default)]
+        struct Keys {
+            copy: bool,
+            paste: bool,
+            dup: bool,
+            all: bool,
+            none: bool,
+            undo: bool,
+            redo: bool,
+            del: bool,
+            fit: bool,
+            add: bool,
+            linked: bool,
+            unlink: bool,
+            frame: bool,
+            previews: bool,
+            solo: bool,
+            nudge: Vec2,
+            zoom1: bool,
+            save: bool,
+            export: bool,
+            sheet: bool,
+        }
+        let mut keys = Keys::default();
+        if hovered && !typing && self.mat.menu.is_none() {
             ui.input_mut(|i| {
-                let copy = i.consume_key(Modifiers::COMMAND, Key::C) || i.events.iter().any(|e| matches!(e, egui::Event::Copy));
-                let paste = i.consume_key(Modifiers::COMMAND, Key::V) || i.events.iter().any(|e| matches!(e, egui::Event::Paste(_)));
-                (
-                    copy,
-                    paste,
-                    i.consume_key(Modifiers::COMMAND, Key::D),
-                    i.consume_key(Modifiers::COMMAND, Key::A),
-                    i.consume_key(Modifiers::COMMAND, Key::Z),
-                    i.consume_key(Modifiers::COMMAND, Key::Y) || i.consume_key(Modifiers::COMMAND | Modifiers::SHIFT, Key::Z),
-                    i.consume_key(Modifiers::NONE, Key::Delete) || i.consume_key(Modifiers::NONE, Key::Backspace),
-                    i.consume_key(Modifiers::NONE, Key::F) || i.consume_key(Modifiers::NONE, Key::Home),
-                    i.consume_key(Modifiers::SHIFT, Key::A),
-                )
-            })
-        } else {
-            (false, false, false, false, false, false, false, false, false)
-        };
+                keys.copy = i.consume_key(Modifiers::COMMAND, Key::C) || i.events.iter().any(|e| matches!(e, egui::Event::Copy));
+                keys.paste = i.consume_key(Modifiers::COMMAND, Key::V) || i.events.iter().any(|e| matches!(e, egui::Event::Paste(_)));
+                keys.dup = i.consume_key(Modifiers::COMMAND, Key::D) || i.consume_key(Modifiers::SHIFT, Key::D);
+                keys.all = i.consume_key(Modifiers::COMMAND, Key::A);
+                keys.none = i.consume_key(Modifiers::ALT, Key::A);
+                keys.redo = i.consume_key(Modifiers::COMMAND, Key::Y) || i.consume_key(Modifiers::COMMAND | Modifiers::SHIFT, Key::Z);
+                keys.undo = i.consume_key(Modifiers::COMMAND, Key::Z);
+                keys.del = i.consume_key(Modifiers::NONE, Key::Delete) || i.consume_key(Modifiers::NONE, Key::Backspace) || i.consume_key(Modifiers::NONE, Key::X);
+                keys.fit = i.consume_key(Modifiers::NONE, Key::F) || i.consume_key(Modifiers::NONE, Key::Home);
+                keys.add = i.consume_key(Modifiers::SHIFT, Key::A);
+                keys.linked = i.consume_key(Modifiers::COMMAND, Key::L);
+                keys.unlink = i.consume_key(Modifiers::ALT, Key::D);
+                keys.frame = i.consume_key(Modifiers::COMMAND, Key::G);
+                keys.previews = i.consume_key(Modifiers::NONE, Key::H);
+                keys.solo = i.consume_key(Modifiers::NONE, Key::P);
+                keys.zoom1 = i.consume_key(Modifiers::NONE, Key::Num1);
+                keys.save = i.consume_key(Modifiers::COMMAND, Key::S);
+                keys.export = i.consume_key(Modifiers::COMMAND, Key::E);
+                keys.sheet = i.consume_key(Modifiers::NONE, Key::K);
+                let step = if i.modifiers.shift { 50.0 } else { 10.0 };
+                for (key, d) in [(Key::ArrowLeft, Vec2::new(-step, 0.0)), (Key::ArrowRight, Vec2::new(step, 0.0)), (Key::ArrowUp, Vec2::new(0.0, -step)), (Key::ArrowDown, Vec2::new(0.0, step))] {
+                    if i.consume_key(Modifiers::NONE, key) || i.consume_key(Modifiers::SHIFT, key) {
+                        keys.nudge += d;
+                    }
+                }
+            });
+        }
 
         // Selection from clicks.
         if let Some(id) = clicked_node {
@@ -1412,9 +1783,9 @@ impl Editor {
                 ui.close();
             }
         });
-        if open_menu || add_key {
-            let at = to_graph(if add_key { pointer.unwrap_or(menu_screen) } else { menu_screen });
-            self.open_add_menu(if add_key { pointer.unwrap_or(menu_screen) } else { menu_screen }, at, None);
+        if open_menu || keys.add || double_add {
+            let at_screen = if open_menu { menu_screen } else { pointer.unwrap_or(menu_screen) };
+            self.open_add_menu(at_screen, to_graph(at_screen), None);
         }
 
         // Finish a link: onto a socket, onto a node body, or into the add popup.
@@ -1423,19 +1794,24 @@ impl Editor {
             self.mat.link_from = start_link;
         }
         if released {
-            if let Some(from) = self.mat.link_from.take() {
+            if let Some((from, k)) = self.mat.link_from.take() {
                 if new_link.is_none() && start_link.is_none() {
                     if let Some(p) = pointer.filter(|p| rect.contains(*p)) {
                         let over = graph.nodes.iter().find(|n| n.id != from && n.kind != "Comment" && geom(n).is_some_and(|r| r.contains(p)));
                         match over {
                             Some(n) => {
-                                let free = n.inputs.iter().position(|s| s.link.is_none()).unwrap_or(0);
-                                if !n.inputs.is_empty() {
-                                    new_link = Some((from, n.id, free));
+                                // Dropped on a node: the first free input of the same type, else the first free one.
+                                let from_type = graph.nodes.iter().find(|x| x.id == from).map_or(SocketType::Float, |x| out_type(&x.kind, k as usize));
+                                if let Some(s) = spec(&n.kind) {
+                                    let free = (0..n.inputs.len()).filter(|i| n.inputs[*i].link.is_none());
+                                    let typed = free.clone().find(|i| v4::input_type(s.inputs[*i].0, s.inputs[*i].1) == from_type);
+                                    if let Some(i) = typed.or_else(|| free.clone().next()).or((!n.inputs.is_empty()).then_some(0)) {
+                                        new_link = Some((from, k, n.id, i));
+                                    }
                                 }
                             }
                             None => {
-                                self.open_add_menu(p, to_graph(p), Some(from));
+                                self.open_add_menu(p, to_graph(p), Some((from, k)));
                             }
                         }
                     }
@@ -1445,34 +1821,70 @@ impl Editor {
 
         // Apply what happened.
         let ids: Vec<u32> = self.mat.selected.iter().copied().collect();
-        let mut selected_delete = Vec::new();
-        if del {
-            selected_delete = ids.clone();
-        }
-        if select_all {
+        if keys.all {
             self.mat.selected = graph.nodes.iter().map(|n| n.id).collect();
         }
-        if copy {
+        if keys.none {
+            self.mat.selected.clear();
+        }
+        if keys.linked {
+            // Everything upstream of the selection.
+            let mut stack = ids.clone();
+            while let Some(id) = stack.pop() {
+                if let Some(n) = graph.nodes.iter().find(|n| n.id == id) {
+                    for l in n.inputs.iter().filter_map(|s| s.link) {
+                        if self.mat.selected.insert(l) {
+                            stack.push(l);
+                        }
+                    }
+                }
+            }
+        }
+        if keys.copy {
             self.copy_selection();
         }
-        if paste {
+        if keys.paste {
             self.paste_clipboard(to_graph(pointer.unwrap_or(rect.center())));
         }
-        if cut_dup || dup {
+        if keys.dup || dup {
             self.copy_selection();
             let at = ids.iter().filter_map(|id| graph.nodes.iter().find(|n| n.id == *id)).fold(Vec2::splat(f32::MAX), |m, n| Vec2::new(m.x.min(n.pos[0]), m.y.min(n.pos[1]))) + Vec2::splat(30.0);
             if at.x < f32::MAX {
                 self.paste_clipboard(at);
             }
         }
-        if undo {
+        if keys.undo {
             self.undo_redo(true);
         }
-        if redo {
+        if keys.redo {
             self.undo_redo(false);
         }
-        if fit {
+        if keys.fit {
             self.mat.fit_next = true;
+        }
+        if keys.zoom1 {
+            let c = rect.size() * 0.5;
+            let at = (c - self.mat.pan) / self.mat.zoom;
+            self.mat.zoom = 1.0;
+            self.mat.pan = c - at;
+        }
+        if keys.solo {
+            self.mat.preview_node = !self.mat.preview_node;
+        }
+        if keys.sheet {
+            self.mat.show_keys = !self.mat.show_keys;
+        }
+        if keys.save && self.mat.dirty_since.is_some() {
+            self.save_material();
+        }
+        if keys.export {
+            self.export_material_wgsl();
+        }
+        if keys.previews {
+            toggle_preview.extend(ids.iter().copied());
+        }
+        if keys.unlink {
+            disconnect.extend(ids.iter().copied());
         }
         if let Some(id) = preview_this {
             self.mat.selected = BTreeSet::from([id]);
@@ -1480,22 +1892,59 @@ impl Editor {
         }
         let selected_now = self.mat.selected.clone();
         if let Some(g) = &mut self.mat.graph {
+            if keys.frame && !ids.is_empty() {
+                // A comment frame around the selection.
+                let mut min = Vec2::splat(f32::MAX);
+                let mut max = Vec2::splat(f32::MIN);
+                for n in g.nodes.iter().filter(|n| ids.contains(&n.id) && n.kind != "Comment") {
+                    if let Some(s) = spec(&n.kind) {
+                        min = Vec2::new(min.x.min(n.pos[0]), min.y.min(n.pos[1]));
+                        let sz = node_size(n, s);
+                        max = Vec2::new(max.x.max(n.pos[0] + sz.x), max.y.max(n.pos[1] + sz.y));
+                    }
+                }
+                if min.x < max.x {
+                    let id = g.add_node("Comment", [min.x - 24.0, min.y - 44.0]);
+                    if let Some(c) = g.nodes.iter_mut().find(|n| n.id == id) {
+                        c.size = [max.x - min.x + 48.0, max.y - min.y + 68.0];
+                        c.text = t("Group").to_string();
+                    }
+                    // Frames are drawn behind nodes by kind, so their order in the list does not matter.
+                    self.mat.selected = BTreeSet::from([id]);
+                    self.mat.editing_comment = Some(id);
+                }
+            }
             if let Some((node, input)) = unlink {
                 if let Some(n) = g.nodes.iter_mut().find(|n| n.id == node) {
                     n.inputs[input].link = None;
+                    n.inputs[input].output = 0;
+                    n.inputs[input].convert = 0;
                 }
             }
-            if let Some(id) = disconnect {
+            for id in disconnect {
                 if let Some(n) = g.nodes.iter_mut().find(|n| n.id == id) {
                     for s in &mut n.inputs {
                         s.link = None;
                     }
                 }
             }
-            if let Some((from, to, input)) = new_link {
-                g.connect(from, to, input);
+            if let Some((from, k, to, input)) = new_link {
+                let from_kind = g.nodes.iter().find(|n| n.id == from).map(|n| n.kind.clone()).unwrap_or_default();
+                let to_type = g.nodes.iter().find(|n| n.id == to).and_then(|n| spec(&n.kind)).and_then(|s| s.inputs.get(input)).map_or(SocketType::Float, |(n, d)| v4::input_type(n, d));
+                g.connect_output(from, k, to, input, v4::default_conversion(out_type(&from_kind, k as usize), to_type));
             }
-            if let Some((id, d)) = drag_move {
+            if let Some((id, i, c)) = set_convert {
+                if let Some(n) = g.nodes.iter_mut().find(|n| n.id == id) {
+                    n.inputs[i].convert = c;
+                }
+            }
+            let mut moves: Vec<(u32, Vec2)> = drag_move.into_iter().collect();
+            if keys.nudge != Vec2::ZERO {
+                if let Some(first) = selected_now.iter().next() {
+                    moves.push((*first, keys.nudge));
+                }
+            }
+            for (id, d) in moves {
                 // Move the whole selection; a comment also carries the nodes inside it.
                 let mut moving: BTreeSet<u32> = if selected_now.contains(&id) { selected_now.clone() } else { BTreeSet::from([id]) };
                 let frames: Vec<Rect> = g.nodes.iter().filter(|n| n.kind == "Comment" && moving.contains(&n.id)).map(|n| Rect::from_min_size(Pos2::new(n.pos[0], n.pos[1]), Vec2::from(n.size))).collect();
@@ -1532,7 +1981,9 @@ impl Editor {
             }
             for id in toggle_preview {
                 if let Some(n) = g.nodes.iter_mut().find(|n| n.id == id) {
-                    n.preview = !n.preview;
+                    if mode != GraphMode::Effect && !is_output(&n.kind) && !matches!(n.kind.as_str(), "Reroute" | "Comment") {
+                        n.preview = !n.preview;
+                    }
                 }
                 self.mat.prev_rev = u64::MAX;
             }
@@ -1541,15 +1992,41 @@ impl Editor {
                     n.params[k] = v;
                 }
             }
+            if let Some((id, img)) = pick_image {
+                assign_image(g, id, &img);
+            }
+            let selected_delete = if keys.del { ids.clone() } else { Vec::new() };
             for id in delete.into_iter().chain(selected_delete) {
                 g.remove_node(id);
                 self.mat.selected.remove(&id);
             }
         }
 
-        // Overlays: toolbar and mini-map.
+        // Overlays: toolbar, mini-map and the shortcut sheet.
         self.canvas_toolbar(ui, rect, mode);
         self.minimap(ui, rect, &graph);
+        if self.mat.show_keys {
+            self.key_sheet(ui, rect);
+        }
+    }
+
+    /// The keyboard shortcuts, as a card in the top-right corner of the canvas.
+    fn key_sheet(&mut self, ui: &mut egui::Ui, rect: Rect) {
+        let width = 330.0;
+        let height = 28.0 + KEYS.len() as f32 * 18.0;
+        let card = Rect::from_min_size(Pos2::new(rect.right() - width - 10.0, rect.top() + 44.0), Vec2::new(width, height));
+        let painter = ui.painter_at(rect);
+        painter.rect_filled(card, 10.0, pal().panel.gamma_multiply(0.96));
+        painter.rect_stroke(card, 10.0, Stroke::new(1.0, pal().border_strong), egui::StrokeKind::Inside);
+        painter.text(card.min + Vec2::new(12.0, 14.0), egui::Align2::LEFT_CENTER, t("Keyboard shortcuts"), egui::FontId::new(13.0, theme::bold_family()), pal().text);
+        for (i, (keys, what)) in KEYS.iter().enumerate() {
+            let y = card.top() + 34.0 + i as f32 * 18.0;
+            painter.text(Pos2::new(card.left() + 12.0, y), egui::Align2::LEFT_CENTER, *keys, egui::FontId::monospace(10.5), theme::ACCENT);
+            painter.text(Pos2::new(card.left() + 150.0, y), egui::Align2::LEFT_CENTER, t(what), egui::FontId::proportional(11.0), pal().text_dim);
+        }
+        if ui.interact(card, ui.scope_id().with("key-sheet"), Sense::click()).clicked() {
+            self.mat.show_keys = false;
+        }
     }
 
     fn canvas_toolbar(&mut self, ui: &mut egui::Ui, rect: Rect, mode: GraphMode) {
@@ -1572,6 +2049,9 @@ impl Editor {
                 }
                 if ui.button(t("Arrange")).on_hover_text(t("Tidy the nodes into columns")).clicked() {
                     self.auto_arrange();
+                }
+                if ui.button(t("Keys")).on_hover_text("K").clicked() {
+                    self.mat.show_keys = !self.mat.show_keys;
                 }
                 ui.weak(format!("{:.0}%", self.mat.zoom * 100.0));
                 ui.weak(match mode {
@@ -1623,6 +2103,32 @@ impl Editor {
                 let graph_pos = min + (p - map.min - Vec2::splat(5.0)) / scale;
                 self.mat.pan = rect.size() * 0.5 - graph_pos * self.mat.zoom;
             }
+        }
+    }
+}
+
+/// The file name shown for an image node.
+fn g_texture_name(path: &str) -> String {
+    if path.is_empty() { t("Choose an image...").to_string() } else { path.rsplit('/').next().unwrap_or(path).to_string() }
+}
+
+/// Gives the image of an "Image texture" node a texture slot of the material: the slot already
+/// holding that image, else a free one, else the node's own slot (replacing what was there).
+pub fn assign_image(g: &mut MaterialGraph, id: u32, image: &str) {
+    let own = g.nodes.iter().find(|n| n.id == id).map_or(0, |n| n.params.first().copied().unwrap_or(0.0).round().clamp(0.0, 2.0) as usize);
+    let used: Vec<usize> = g.nodes.iter().filter(|n| n.id != id && matches!(n.kind.as_str(), "Image texture" | "Texture" | "Triplanar texture")).map(|n| n.params.first().copied().unwrap_or(0.0).round().clamp(0.0, 2.0) as usize).collect();
+    let slot = g
+        .textures
+        .iter()
+        .position(|t| t == image)
+        .or_else(|| (0..3).find(|i| g.textures[*i].is_empty() && !used.contains(i)))
+        .or_else(|| (0..3).find(|i| !used.contains(i)))
+        .unwrap_or(own);
+    g.textures[slot] = image.to_string();
+    if let Some(n) = g.nodes.iter_mut().find(|n| n.id == id) {
+        n.text = image.to_string();
+        if let Some(p) = n.params.first_mut() {
+            *p = slot as f32;
         }
     }
 }

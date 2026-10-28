@@ -119,7 +119,36 @@ register_scripts!(Spinner);
 | `key_down(Key::W)`, `key_pressed(..)`, `mouse_pressed(MouseButton::Left)` | сырой ввод |
 | `action_down("Jump")`, `action_axis("Left", "Right")`, `action_vector(..)` | именованные действия (настройки: File → Project Settings → Input) |
 | `hud_message(text, seconds)`, `hud_prompt(text)`, `hud_objective(text)` | подсказки на экране |
-| `lock_cursor(true)` | захват курсора для шутера |
+| `lock_cursor(true)` | захват курсора для шутера (при запуске игры курсор захватывается сам; Esc освобождает, клик по окну игры — снова захватывает) |
+
+### Сцены
+
+| Метод | Что делает |
+|---|---|
+| `load_scene("scenes/level2.scene.json")` | после кадра переключает игру на другую сцену: объекты и скрипты текущей сцены удаляются, у новой скрипты стартуют заново |
+| `add_scene("scenes/ui.scene.json")` | добавляет все объекты другой сцены к текущей (куски уровня, общий интерфейс) |
+| `reload_scene()` | перезапускает текущую сцену из файла (рестарт уровня) |
+| `scene_path()` | путь текущей сцены |
+
+```rust
+script! {
+    /// R — начать уровень заново; упал вниз — следующий уровень.
+    pub struct LevelFlow {
+        next: String = "scenes/level2.scene.json".into(),
+    }
+
+    update(self, ctx) {
+        if ctx.key_pressed(Key::R) {
+            ctx.reload_scene();
+        }
+        if ctx.position().y < -20.0 {
+            ctx.load_scene(&self.next);
+        }
+    }
+}
+```
+
+Время, привязки клавиш и захват курсора переходят в новую сцену; физика и экземпляры скриптов создаются заново.
 
 ### Звук, небо, эффекты
 

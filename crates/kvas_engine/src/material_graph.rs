@@ -26,6 +26,23 @@ pub struct Socket {
     /// Explicit constant override, including zero. Older files used nonzero values as overrides.
     #[serde(default)]
     pub override_default: bool,
+    /// Which output of the linked node feeds this socket (0 = its main result).
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub output: u8,
+    /// How the linked value is converted, an index into [`crate::material_nodes_v4::CONVERSIONS`].
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub convert: u8,
+}
+
+fn is_zero(v: &u8) -> bool {
+    *v == 0
+}
+
+impl Socket {
+    /// An unconnected socket that uses the default of its spec.
+    pub fn empty() -> Socket {
+        Socket { link: None, value: [0.0; 3], override_default: false, output: 0, convert: 0 }
+    }
 }
 
 /// What a graph produces.
@@ -79,7 +96,7 @@ pub fn available(kind: &str, mode: GraphMode) -> bool {
         return kind == mode.output_kind();
     }
     match mode {
-        GraphMode::Effect => !MESH_ONLY.contains(&kind) && !crate::material_nodes_ext::MESH_ONLY.contains(&kind),
+        GraphMode::Effect => !MESH_ONLY.contains(&kind) && !crate::material_nodes_ext::MESH_ONLY.contains(&kind) && !crate::material_nodes_v4::MESH_ONLY.contains(&kind),
         _ => !EFFECT_ONLY.contains(&kind),
     }
 }
@@ -210,7 +227,7 @@ pub fn spec(kind: &str) -> Option<&'static NodeSpec> {
 
 /// Every node type of both lists.
 pub fn all_specs() -> impl Iterator<Item = &'static NodeSpec> {
-    SPECS.iter().chain(crate::material_nodes::MORE_SPECS.iter()).chain(crate::material_nodes_ext::EXT_SPECS.iter())
+    SPECS.iter().chain(crate::material_nodes::MORE_SPECS.iter()).chain(crate::material_nodes_ext::EXT_SPECS.iter()).chain(crate::material_nodes_v4::V4_SPECS.iter())
 }
 
 impl MaterialGraph {
@@ -240,7 +257,7 @@ impl MaterialGraph {
             id,
             kind: kind.to_string(),
             pos,
-            inputs: spec.inputs.iter().map(|_| Socket { link: None, value: [0.0; 3], override_default: false }).collect(),
+            inputs: spec.inputs.iter().map(|_| Socket::empty()).collect(),
             params: spec.params.iter().map(|p| p.1).collect(),
             text: if kind == "Comment" { "Comment".into() } else { String::new() },
             size: if kind == "Comment" { [260.0, 160.0] } else { [0.0, 0.0] },
@@ -249,8 +266,14 @@ impl MaterialGraph {
         id
     }
 
-    /// Connects `from`'s output to input `input` of node `to`. Returns false for self-links or cycles.
+    /// Connects `from`'s main output to input `input` of node `to`. Returns false for self-links or cycles.
     pub fn connect(&mut self, from: u32, to: u32, input: usize) -> bool {
+        self.connect_output(from, 0, to, input, 0)
+    }
+
+    /// Connects output `output` of `from` to input `input` of `to`, converting with `convert`
+    /// (see [`crate::material_nodes_v4::CONVERSIONS`]).
+    pub fn connect_output(&mut self, from: u32, output: u8, to: u32, input: usize, convert: u8) -> bool {
         if !self.nodes.iter().any(|n| n.id == from && !is_output(&n.kind) && n.kind != "Comment") {
             return false;
         }
@@ -260,6 +283,8 @@ impl MaterialGraph {
         match self.nodes.iter_mut().find(|n| n.id == to).and_then(|n| n.inputs.get_mut(input)) {
             Some(socket) => {
                 socket.link = Some(from);
+                socket.output = output;
+                socket.convert = convert;
                 true
             }
             None => false,
@@ -306,7 +331,7 @@ impl MaterialGraph {
         // Files written by older or hand-edited versions may have too few sockets or parameters.
         for n in &mut g.nodes {
             if let Some(spec) = spec(&n.kind) {
-                n.inputs.resize(spec.inputs.len(), Socket { link: None, value: [0.0; 3], override_default: false });
+                n.inputs.resize(spec.inputs.len(), Socket::empty());
                 while n.params.len() < spec.params.len() {
                     n.params.push(spec.params[n.params.len()].1);
                 }
@@ -380,6 +405,10 @@ struct Gen<'a> {
     lines: Vec<String>,
     done: HashMap<u32, String>,
     visiting: Vec<u32>,
+    /// Variables of the extra outputs already generated, keyed by `id | output << 32`.
+    extra: HashMap<u64, String>,
+    /// The (named) input values of every generated node, for its extra outputs.
+    inputs_of: HashMap<u32, Vec<String>>,
     /// Generating the vertex stage (textures are not available there).
     vertex: bool,
 }
@@ -401,7 +430,14 @@ impl Gen<'_> {
     fn input(&mut self, node: &MatNode, index: usize, spec: &NodeSpec) -> Result<String, String> {
         let socket = node.inputs.get(index);
         match socket.and_then(|s| s.link) {
-            Some(id) => self.eval(id),
+            Some(id) => {
+                let socket = socket.unwrap();
+                let value = self.eval_output(id, socket.output as usize)?;
+                match crate::material_nodes_v4::CONVERSIONS.get(socket.convert as usize) {
+                    Some((_, conv)) if socket.convert > 0 => Ok(conv.replace("{v}", &value)),
+                    _ => Ok(value),
+                }
+            }
             None => {
                 // A socket the user typed a value into overrides the default expression.
                 match socket.map(|s| s.value) {
@@ -410,6 +446,35 @@ impl Gen<'_> {
                 }
             }
         }
+    }
+
+    /// The value of output `output` of node `id` (0 is the main result).
+    fn eval_output(&mut self, id: u32, output: usize) -> Result<String, String> {
+        let main = self.eval(id)?;
+        let node = self.graph.nodes.iter().find(|n| n.id == id).ok_or("a link points to a missing node")?;
+        // Output 0 is the main result, unless the node's first named output reshapes it
+        // (Voronoi "Factor", Brick "Colour"...).
+        let Some((_, template)) = crate::material_nodes_v4::outputs(&node.kind).get(output) else { return Ok(main) };
+        if *template == "{v}" {
+            return Ok(main);
+        }
+        let key = id as u64 | ((output as u64) << 32);
+        if let Some(v) = self.extra.get(&key) {
+            return Ok(v.clone());
+        }
+        let mut e = template.replace("{v}", &main);
+        let inputs = self.inputs_of.get(&id).cloned().unwrap_or_default();
+        for (i, input) in inputs.iter().enumerate() {
+            e = e.replace(&format!("{{{i}}}"), &format!("({input})"));
+        }
+        for (i, p) in node.params.iter().enumerate() {
+            e = e.replace(&format!("{{p{i}}}"), &f(*p));
+        }
+        let e = self.ctx(e);
+        let name = format!("v{id}_{output}");
+        self.lines.push(format!("    let {name} = {e};"));
+        self.extra.insert(key, name.clone());
+        Ok(name)
     }
 
     fn eval(&mut self, id: u32) -> Result<String, String> {
@@ -424,7 +489,7 @@ impl Gen<'_> {
         if !available(&node.kind, self.graph.mode) {
             return Err(format!("the node '{}' cannot be used in this kind of graph", node.kind));
         }
-        if self.vertex && (matches!(node.kind.as_str(), "Texture" | "Normal map" | "Bump from height" | "Shadow" | "Lighting" | "Sky reflection" | "Screen position") || crate::material_nodes_ext::FRAGMENT_ONLY.contains(&node.kind.as_str())) {
+        if self.vertex && (matches!(node.kind.as_str(), "Texture" | "Normal map" | "Bump from height" | "Shadow" | "Lighting" | "Sky reflection" | "Screen position") || crate::material_nodes_ext::FRAGMENT_ONLY.contains(&node.kind.as_str()) || crate::material_nodes_v4::FRAGMENT_ONLY.contains(&node.kind.as_str())) {
             return Err(format!("'{}' requires fragment-stage sampling or derivatives and cannot feed Vertex offset", node.kind));
         }
         self.visiting.push(id);
@@ -433,6 +498,19 @@ impl Gen<'_> {
             inputs.push(self.input(&node, i, spec)?);
         }
         self.visiting.pop();
+        // Inputs get short names, so extra outputs that reuse them do not repeat long expressions.
+        let mut short = Vec::new();
+        for (i, input) in inputs.iter().enumerate() {
+            if input.starts_with('v') && input[1..].chars().all(|c| c.is_ascii_digit() || c == '_') {
+                short.push(input.clone());
+            } else {
+                let name = format!("i{id}_{i}");
+                self.lines.push(format!("    let {name} = {input};"));
+                short.push(name);
+            }
+        }
+        let inputs = short;
+        self.inputs_of.insert(id, inputs.clone());
         let expr = if node.kind == "Texture" {
             let slot = node.params.first().copied().unwrap_or(0.0).round() as i32;
             let tex = match slot {
@@ -472,7 +550,7 @@ impl Gen<'_> {
 }
 
 fn new_gen(graph: &MaterialGraph, vertex: bool) -> Gen<'_> {
-    Gen { graph, lines: Vec::new(), done: HashMap::new(), visiting: Vec::new(), vertex }
+    Gen { graph, lines: Vec::new(), done: HashMap::new(), visiting: Vec::new(), extra: HashMap::new(), inputs_of: HashMap::new(), vertex }
 }
 
 /// Generates the shader of a graph (the prelude and the library functions are added by the renderer):

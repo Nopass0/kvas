@@ -18,6 +18,7 @@ mod image_document;
 mod image_editor;
 mod lang_ru;
 mod lang_ru_nodes;
+mod lang_ru_v4;
 mod build_dialog;
 mod code_editor;
 mod wgsl_edit;
@@ -53,6 +54,8 @@ enum Tab {
     Project,
     Console,
     Audio,
+    /// The node editor of the open material / shader graph, a tab next to the Scene.
+    Nodes,
 }
 
 struct Viewer<'a>(&'a mut Editor);
@@ -69,6 +72,7 @@ impl TabViewer for Viewer<'_> {
             Tab::Project => "tab-project",
             Tab::Console => "tab-console",
             Tab::Audio => "tab-audio",
+            Tab::Nodes => "tab-nodes",
         })
     }
 
@@ -80,6 +84,7 @@ impl TabViewer for Viewer<'_> {
             Tab::Project => t("Project"),
             Tab::Console => t("Console"),
             Tab::Audio => t("Sound"),
+            Tab::Nodes => return self.0.node_tab_title().into(),
         }
         .into()
     }
@@ -89,18 +94,29 @@ impl TabViewer for Viewer<'_> {
             self.0.viewport_ui(ui);
             return;
         }
+        if *tab == Tab::Nodes {
+            self.0.node_editor_tab(ui);
+            return;
+        }
         egui::Frame::NONE.inner_margin(egui::Margin::same(8)).show(ui, |ui| match tab {
             Tab::Hierarchy => self.0.hierarchy_ui(ui),
             Tab::Inspector => self.0.inspector_ui(ui),
             Tab::Project => self.0.assets_ui(ui),
             Tab::Console => self.0.console.ui(ui),
             Tab::Audio => self.0.audio_ui(ui),
-            Tab::Scene => {}
+            Tab::Scene | Tab::Nodes => {}
         });
     }
 
-    fn is_closeable(&self, _tab: &Tab) -> bool {
-        false
+    fn is_closeable(&self, tab: &Tab) -> bool {
+        *tab == Tab::Nodes
+    }
+
+    fn on_close(&mut self, tab: &mut Tab) -> egui_dock::widgets::tab_viewer::OnCloseResponse {
+        if *tab == Tab::Nodes {
+            self.0.close_node_editor();
+        }
+        egui_dock::widgets::tab_viewer::OnCloseResponse::Close
     }
 
     fn scroll_bars(&self, _tab: &Tab) -> [bool; 2] {
@@ -161,7 +177,7 @@ struct App {
 impl App {
     fn shortcuts(&mut self, ctx: &egui::Context) {
         if ctx.input_mut(|i| i.consume_key(Modifiers::NONE, Key::F1)) { self.editor.help.open = true; }
-        if ctx.egui_wants_keyboard_input() || self.editor.mat.open || self.editor.code.open || self.editor.image_editor.open {
+        if ctx.egui_wants_keyboard_input() || self.editor.mat.visible || self.editor.code.open || self.editor.image_editor.open {
             return;
         }
         let ed = &mut self.editor;
@@ -494,9 +510,34 @@ impl App {
         }
     }
 
+    /// Keeps the Nodes tab in step with the node editor: opening a graph adds the tab next to the
+    /// Scene (and shows it), closing the graph removes it.
+    fn sync_node_tab(&mut self) {
+        let open = self.editor.mat.is_open();
+        let present = self.dock.find_tab(&Tab::Nodes);
+        match (open, present) {
+            (true, None) => {
+                let path = self.dock.find_tab(&Tab::Scene);
+                match path.and_then(|p| self.dock.leaf_mut(p.node_path()).ok()) {
+                    Some(leaf) => leaf.append_tab(Tab::Nodes),
+                    None => self.dock.push_to_first_leaf(Tab::Nodes),
+                }
+                self.editor.mat.focus_request = false;
+            }
+            (true, Some(path)) if self.editor.mat.focus_request => {
+                let _ = self.dock.set_active_tab(path);
+                self.editor.mat.focus_request = false;
+            }
+            (false, Some(_)) => self.dock.retain_tabs(|t| *t != Tab::Nodes),
+            _ => {}
+        }
+    }
+
     fn save_prefs(&mut self) {
         self.editor.sync_prefs();
-        self.editor.prefs.layout = serde_json::to_string(&self.dock).ok();
+        let mut dock = self.dock.clone();
+        dock.retain_tabs(|t| *t != Tab::Nodes);
+        self.editor.prefs.layout = serde_json::to_string(&dock).ok();
         self.editor.prefs.save();
     }
 }
@@ -549,6 +590,7 @@ impl eframe::App for App {
                 });
             });
         });
+        self.sync_node_tab();
         egui::CentralPanel::default().frame(egui::Frame::NONE.fill(p.gap)).show(ui, |ui| {
             let style = theme::dock_style(ui.style().as_ref());
             DockArea::new(&mut self.dock).style(style).show_inside(ui, &mut Viewer(&mut self.editor));

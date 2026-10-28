@@ -101,7 +101,18 @@ A hot reload creates a new instance and calls `start` again: **script state is r
 | `key_down(Key::W)`, `key_pressed(..)`, `mouse_pressed(MouseButton::Left)` | raw input |
 | `action_down("Jump")`, `action_axis("Left", "Right")`, `action_vector(..)` | named actions (File → Project Settings → Input) |
 | `hud_message(text, seconds)`, `hud_prompt(text)`, `hud_objective(text)` | on-screen text |
-| `lock_cursor(true)` | capture the cursor for a shooter |
+| `lock_cursor(true)` | capture the cursor for a shooter (the game captures it on start; Escape frees it, a click on the game view takes it back) |
+
+### Scenes
+
+| Method | What it does |
+|---|---|
+| `load_scene("scenes/level2.scene.json")` | after the frame, switches the game to another scene: objects and scripts of the current one go away, the new scene's scripts start fresh |
+| `add_scene("scenes/ui.scene.json")` | adds every object of another scene to the current one (level pieces, a shared UI) |
+| `reload_scene()` | restarts the current scene from its file |
+| `scene_path()` | asset path of the running scene |
+
+Time, key bindings and the cursor state carry over; physics and script instances start over.
 
 ### Sound, sky, effects
 

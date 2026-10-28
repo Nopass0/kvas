@@ -27,3 +27,6 @@ __pycache__/
 /docs/node_modules/
 /docs/.vitepress/dist/
 /docs/.vitepress/cache/
+# Built-in materials and shaders the editor copies into a project when it opens it.
+/games/*/assets/materials/library/
+/games/*/assets/shaders/library/

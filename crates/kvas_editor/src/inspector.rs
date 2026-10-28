@@ -130,6 +130,7 @@ fn component_icon(name: &str) -> Option<Icon> {
         "TexturePaint" => Icon::Brush,
         "Cloth" => Icon::Shirt,
         "Grass" => Icon::Wind,
+        "Tree" => Icon::Mountain,
         "VoxelWater" => Icon::Waves,
         "VoxelSmoke" => Icon::Flame,
         "VoxelClouds" => Icon::Cloud,
@@ -148,7 +149,7 @@ fn category(name: &str) -> &'static str {
         "RigidBody" | "Collider" | "Joint" => "Physics",
         "Spin" | "Bob" | "Pulse" | "Wobble" | "ColorCycle" | "MoveTween" | "TransformAnimation" => "Modifiers",
         "MeshModifiers" | "EditableMesh" => "Mesh",
-        "Cloth" | "Grass" | "VoxelSmoke" | "VoxelClouds" | "VoxelWater" | "AudioSource" | "ParticleEmitter" => "Effects",
+        "Cloth" | "Grass" | "Tree" | "VoxelSmoke" | "VoxelClouds" | "VoxelWater" | "AudioSource" | "ParticleEmitter" => "Effects",
         "Switch" | "Slider" | "Tags" | "Lifetime" | "NeuralAgent" | "UiElement" => "Gameplay",
         _ => "Scripting",
     }
@@ -173,6 +174,11 @@ impl Editor {
     }
 
     pub fn inspector_ui(&mut self, ui: &mut egui::Ui) {
+        // While the node editor is in front, the Inspector shows its preview and node settings.
+        if self.mat.is_open() && self.mat.visible {
+            self.material_inspector(ui);
+            return;
+        }
         let rect = ui.max_rect();
         egui::ScrollArea::vertical().auto_shrink(false).show(ui, |ui| match self.selection.filter(|&e| self.active().world.is_alive(e)) {
             Some(e) => self.entity_inspector(ui, e),

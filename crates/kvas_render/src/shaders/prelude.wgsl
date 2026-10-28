@@ -44,6 +44,8 @@ struct Object {
 @group(2) @binding(2) var volume_tex: texture_3d<f32>;
 @group(2) @binding(3) var normal_tex: texture_2d<f32>;   // tangent-space normal map (OpenGL, green up)
 @group(2) @binding(4) var orm_tex: texture_2d<f32>;      // R occlusion, G roughness, B metallic
+// Depth of the opaque scene; filled for transparent objects only (water, glass), empty otherwise.
+@group(3) @binding(0) var scene_depth_tex: texture_depth_multisampled_2d;
 
 struct VertexIn {
     @location(0) position: vec3<f32>,
@@ -57,6 +59,32 @@ struct VsOut {
     @location(1) normal: vec3<f32>,
     @location(2) uv: vec2<f32>,
 };
+
+// Distance from a transparent surface point to the opaque surface behind it, in metres
+// (1000 where nothing is behind, or for opaque objects). Water uses it for shore and contact foam.
+fn scene_depth_behind(clip: vec4<f32>, world_pos: vec3<f32>) -> f32 {
+    let dims = vec2<i32>(textureDimensions(scene_depth_tex));
+    let px = vec2<i32>(clip.xy);
+    if (dims.x < 2 || px.x < 0 || px.y < 0 || px.x >= dims.x || px.y >= dims.y) { return 1000.0; }
+    let d = textureLoad(scene_depth_tex, px, 0);
+    if (d >= 1.0) { return 1000.0; }
+    let uv = clip.xy / vec2<f32>(dims);
+    let ndc = vec4<f32>(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0, d, 1.0);
+    let w = globals.inv_view_proj * ndc;
+    return distance(w.xyz / w.w, world_pos);
+}
+
+// World position of the opaque surface seen through this pixel (the point itself where nothing is behind).
+fn scene_point_behind(clip: vec4<f32>, world_pos: vec3<f32>) -> vec3<f32> {
+    let dims = vec2<i32>(textureDimensions(scene_depth_tex));
+    let px = vec2<i32>(clip.xy);
+    if (dims.x < 2 || px.x < 0 || px.y < 0 || px.x >= dims.x || px.y >= dims.y) { return world_pos; }
+    let d = textureLoad(scene_depth_tex, px, 0);
+    if (d >= 1.0) { return world_pos; }
+    let uv = clip.xy / vec2<f32>(dims);
+    let w = globals.inv_view_proj * vec4<f32>(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0, d, 1.0);
+    return w.xyz / w.w;
+}
 
 fn standard_vertex(v: VertexIn) -> VsOut {
     var out: VsOut;

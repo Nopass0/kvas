@@ -43,6 +43,7 @@ pub fn update(world: &mut World, time: f32, dt: f32, simulate: bool) {
     crate::meshmod::update(world);
     crate::paint::update(world, crate::meshmod::assets().as_ref());
     crate::grass::update(world);
+    crate::tree::update(world);
     crate::voxel::update_clouds(world, dt, simulate);
     crate::voxel::update_smoke(world, dt, simulate);
     crate::cloth::update(world, time, dt, simulate);

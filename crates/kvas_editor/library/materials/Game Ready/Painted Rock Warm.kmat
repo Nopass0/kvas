@@ -1,0 +1,395 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "Output",
+      "pos": [
+        1900.0,
+        140.0
+      ],
+      "inputs": [
+        {
+          "link": 7,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.85,
+            0.85,
+            0.85
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 8,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 2,
+      "kind": "Texture coordinate",
+      "pos": [
+        40.0,
+        30.0
+      ],
+      "inputs": [],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 3,
+      "kind": "Mapping",
+      "pos": [
+        40.0,
+        234.0
+      ],
+      "inputs": [
+        {
+          "link": 2,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false,
+          "output": 2
+        }
+      ],
+      "params": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 4,
+      "kind": "Noise texture",
+      "pos": [
+        300.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 3,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            1.8,
+            1.8,
+            1.8
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            3.0,
+            3.0,
+            3.0
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.6,
+            0.6,
+            0.6
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [
+        0.0,
+        2.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 5,
+      "kind": "Color ramp",
+      "pos": [
+        560.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 4,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.25,
+            0.15,
+            0.12
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.495,
+            0.35999995,
+            0.26999998
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.85,
+            0.65,
+            0.42
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.9775,
+            0.728,
+            0.42
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [
+        0.0,
+        0.4,
+        0.62,
+        1.0,
+        1.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 6,
+      "kind": "Normal",
+      "pos": [
+        560.0,
+        378.0
+      ],
+      "inputs": [],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 7,
+      "kind": "Mix colour",
+      "pos": [
+        820.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 6,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false,
+          "output": 1
+        },
+        {
+          "link": 5,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            1.0200001,
+            0.8125,
+            0.46199998
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [
+        0.0,
+        0.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 8,
+      "kind": "Bump",
+      "pos": [
+        1080.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 4,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false,
+          "convert": 4
+        },
+        {
+          "link": null,
+          "value": [
+            0.6,
+            0.6,
+            0.6
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.1,
+            0.1,
+            0.1
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [
+        0.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    }
+  ],
+  "textures": [
+    "",
+    "",
+    ""
+  ],
+  "next_id": 9,
+  "mode": "material"
+}

@@ -12,4 +12,8 @@ fn main() {
         std::fs::write(dir.join(format!("{}.kmat", p.name)), p.graph.to_json()).expect("write material");
     }
     println!("{} materials -> {}", all.len(), root.display());
+    // The demo's lab marble is the node-built marble too (open it to see every step).
+    let lab = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../games/demo/assets/materials/lab/marble.kmat");
+    let marble = kvas_engine::material_presets_v4::marble([0.9, 0.9, 0.88], [0.28, 0.3, 0.34], 3.0, 1.6);
+    std::fs::write(&lab, marble.to_json()).expect("write lab marble");
 }

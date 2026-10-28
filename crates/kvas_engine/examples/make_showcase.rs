@@ -80,12 +80,27 @@ fn main() {
     b.solid(seabed, Vec3::ONE);
     let grass = b.entity("Meadow");
     b.scene.world.insert(grass, Transform::at(Vec3::new(0.0, 0.0, 0.0)));
-    b.scene.world.insert(grass, Grass { count: 40_000, width: 18.0, depth: 14.0, ..Default::default() });
+    b.scene.world.insert(grass, Grass {
+        count: 90_000,
+        width: 23.0,
+        depth: 19.0,
+        blade_height: 0.42,
+        height_variation: 0.55,
+        blade_width: 0.07,
+        base_color: [0.02, 0.07, 0.02, 1.0],
+        tip_color: [0.42, 0.6, 0.22, 1.0],
+        patchiness: 0.85,
+        round: true,
+        flowers: 0.05,
+        wind_strength: 0.45,
+        chunk_size: 6.0,
+        ..Default::default()
+    });
 
     // Water: smooth, semi-realistic sea and a blocky voxel pond on the island.
     let sea = b.entity("Sea");
     b.scene.world.insert(sea, Transform::at(Vec3::new(0.0, -0.05, 0.0)));
-    b.scene.world.insert(sea, VoxelWater { style: WaterStyle::Realistic, cells: 110, cell: 0.75, wave_height: 0.28, wavelength: 9.0, ..Default::default() });
+    b.scene.world.insert(sea, VoxelWater { style: WaterStyle::Realistic, cells: 150, cell: 1.4, wave_height: 0.22, wavelength: 11.0, ..Default::default() });
     b.scene.world.insert(sea, AudioSource { clip: "sounds/waves.wav".into(), volume: 0.7, spatial: false, ..Default::default() });
     let pond = b.entity("Voxel Pond");
     b.scene.world.insert(pond, Transform::at(Vec3::new(-6.0, 0.0, -3.0)));
@@ -103,8 +118,25 @@ fn main() {
         let e = b.model(if i % 2 == 0 { "barrels" } else { "detail-crate-ropes" }, Vec3::new(x, 0.6, z), i as f32 * 53.0, 2.0);
         b.solid(e, Vec3::splat(0.5));
     }
-    for (i, &(x, z)) in [(-9.0f32, -6.0f32), (9.0, 6.5), (-10.5, 4.0), (11.0, -4.5)].iter().enumerate() {
-        b.model(if i % 2 == 0 { "tree-large" } else { "tree-shrub" }, Vec3::new(x, 0.2, z), i as f32 * 41.0, 6.0 + (i % 3) as f32);
+    // Procedural trees: oaks, pines, palms on the beach and a few bushes.
+    let (oak, oak_2) = ([0.05, 0.14, 0.03, 1.0], [0.16, 0.24, 0.04, 1.0]);
+    let (pine, pine_2, pine_bark) = ([0.02, 0.07, 0.03, 1.0], [0.04, 0.11, 0.04, 1.0], [0.25, 0.17, 0.12, 1.0]);
+    let (palm, palm_2, palm_bark) = ([0.06, 0.16, 0.03, 1.0], [0.18, 0.26, 0.05, 1.0], [0.45, 0.36, 0.25, 1.0]);
+    let trees = [
+        ("Oak", Vec3::new(-9.0, 0.0, -5.5), Tree { height: 6.2, trunk_radius: 0.3, seed: 3, leaf_density: 16, ..Default::default() }),
+        ("Oak 2", Vec3::new(-10.0, 0.0, 3.5), Tree { height: 5.0, trunk_radius: 0.24, seed: 8, leaf_color: [0.06, 0.15, 0.03, 1.0], leaf_color_2: [0.3, 0.26, 0.04, 1.0], ..Default::default() }),
+        ("Pine", Vec3::new(9.5, 0.0, -5.0), Tree { style: TreeStyle::Conifer, height: 8.5, trunk_radius: 0.22, levels: 2, branches: 9, branch_angle: 78.0, branch_length: 0.5, leaf_density: 10, leaf_size: 0.6, crookedness: 0.12, bark_color: pine_bark, leaf_color: pine, leaf_color_2: pine_2, seed: 5, ..Default::default() }),
+        ("Pine 2", Vec3::new(6.0, 0.0, -9.0), Tree { style: TreeStyle::Conifer, height: 6.5, trunk_radius: 0.18, levels: 2, branches: 8, branch_angle: 76.0, branch_length: 0.5, leaf_density: 10, leaf_size: 0.55, crookedness: 0.1, bark_color: pine_bark, leaf_color: pine, leaf_color_2: pine_2, seed: 12, ..Default::default() }),
+        ("Palm", Vec3::new(10.5, 0.0, 5.5), Tree { style: TreeStyle::Palm, height: 6.5, trunk_radius: 0.16, crookedness: 0.6, leaf_density: 6, leaf_size: 0.9, bark_color: palm_bark, leaf_color: palm, leaf_color_2: palm_2, seed: 2, ..Default::default() }),
+        ("Palm 2", Vec3::new(-6.5, 0.0, 9.0), Tree { style: TreeStyle::Palm, height: 5.5, trunk_radius: 0.15, crookedness: 0.8, leaf_density: 6, leaf_size: 0.85, bark_color: palm_bark, leaf_color: palm, leaf_color_2: palm_2, seed: 7, ..Default::default() }),
+        ("Bush", Vec3::new(-4.0, 0.0, -7.5), Tree { style: TreeStyle::Bush, height: 1.6, trunk_radius: 0.08, levels: 2, branches: 3, leaf_density: 12, leaf_size: 0.55, seed: 4, leaf_color: oak, leaf_color_2: oak_2, ..Default::default() }),
+        ("Bush 2", Vec3::new(8.0, 0.0, 1.0), Tree { style: TreeStyle::Bush, height: 1.3, trunk_radius: 0.07, levels: 2, branches: 3, leaf_density: 12, leaf_size: 0.5, seed: 9, leaf_color: [0.05, 0.12, 0.03, 1.0], leaf_color_2: [0.26, 0.05, 0.07, 1.0], ..Default::default() }),
+        ("Bush 3", Vec3::new(-11.0, 0.0, -1.0), Tree { style: TreeStyle::Bush, height: 1.5, trunk_radius: 0.07, levels: 2, branches: 3, leaf_density: 12, leaf_size: 0.55, seed: 14, ..Default::default() }),
+    ];
+    for (i, (name, at, tree)) in trees.into_iter().enumerate() {
+        let e = b.entity(name);
+        b.scene.world.insert(e, Transform { position: at, rotation: Vec3::new(0.0, i as f32 * 40.0, 0.0), ..Default::default() });
+        b.scene.world.insert(e, tree);
     }
     for i in 0..4 {
         b.model("dock-side", Vec3::new(-1.5 + i as f32 * 1.3, 0.1, 12.5), 90.0, 1.6);

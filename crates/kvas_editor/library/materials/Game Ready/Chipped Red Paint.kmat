@@ -1,0 +1,578 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "Output",
+      "pos": [
+        1900.0,
+        140.0
+      ],
+      "inputs": [
+        {
+          "link": 10,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 11,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 12,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 13,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 2,
+      "kind": "Texture coordinate",
+      "pos": [
+        40.0,
+        30.0
+      ],
+      "inputs": [],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 3,
+      "kind": "Mapping",
+      "pos": [
+        40.0,
+        234.0
+      ],
+      "inputs": [
+        {
+          "link": 2,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false,
+          "output": 2
+        }
+      ],
+      "params": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 4,
+      "kind": "Noise texture",
+      "pos": [
+        300.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 3,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            3.5,
+            3.5,
+            3.5
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            8.0,
+            8.0,
+            8.0
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.65,
+            0.65,
+            0.65
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.3,
+            0.3,
+            0.3
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [
+        0.0,
+        2.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 5,
+      "kind": "Smoothstep",
+      "pos": [
+        560.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 4,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        0.56,
+        0.6
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 6,
+      "kind": "Noise texture",
+      "pos": [
+        300.0,
+        306.0
+      ],
+      "inputs": [
+        {
+          "link": 3,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            8.0,
+            8.0,
+            8.0
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            5.0,
+            5.0,
+            5.0
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.6,
+            0.6,
+            0.6
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [
+        0.0,
+        2.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 7,
+      "kind": "Mix colour",
+      "pos": [
+        560.0,
+        162.0
+      ],
+      "inputs": [
+        {
+          "link": null,
+          "value": [
+            0.6,
+            0.6,
+            0.6
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.32,
+            0.14,
+            0.06
+          ],
+          "override_default": true
+        },
+        {
+          "link": 6,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false,
+          "output": 1
+        }
+      ],
+      "params": [
+        3.0,
+        0.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 8,
+      "kind": "Mix colour",
+      "pos": [
+        820.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 5,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.5,
+            0.06,
+            0.04
+          ],
+          "override_default": true
+        },
+        {
+          "link": 7,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        0.0,
+        0.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 9,
+      "kind": "Geometry info",
+      "pos": [
+        820.0,
+        330.0
+      ],
+      "inputs": [],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 10,
+      "kind": "Mix colour",
+      "pos": [
+        1080.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 9,
+          "value": [
+            0.15,
+            0.15,
+            0.15
+          ],
+          "override_default": true,
+          "output": 5
+        },
+        {
+          "link": 8,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.6,
+            0.55,
+            0.5
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [
+        1.0,
+        0.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 11,
+      "kind": "Map range",
+      "pos": [
+        1080.0,
+        330.0
+      ],
+      "inputs": [
+        {
+          "link": 5,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        0.0,
+        1.0,
+        0.35,
+        0.95
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 12,
+      "kind": "Map range",
+      "pos": [
+        1080.0,
+        510.0
+      ],
+      "inputs": [
+        {
+          "link": 5,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        0.0,
+        1.0,
+        0.0,
+        0.3
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 13,
+      "kind": "Bump",
+      "pos": [
+        1340.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 5,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false,
+          "convert": 4
+        },
+        {
+          "link": null,
+          "value": [
+            -0.5,
+            -0.5,
+            -0.5
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.01,
+            0.01,
+            0.01
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [
+        0.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    }
+  ],
+  "textures": [
+    "",
+    "",
+    ""
+  ],
+  "next_id": 14,
+  "mode": "material"
+}
