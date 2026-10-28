@@ -113,6 +113,50 @@ fn decal_shape(uv: vec2<f32>, shape: i32, seed: f32) -> vec2<f32> {
     }
 }
 
+// Rain ripples on standing water: rings growing from random drops; returns the slope.
+fn ripples(p: vec2<f32>, t: f32) -> vec2<f32> {
+    var g = vec2<f32>(0.0);
+    for (var k = 0; k < 3; k = k + 1) {
+        let q = p * 3.0 + vec2<f32>(f32(k) * 7.31, f32(k) * 3.17);
+        let cell = floor(q);
+        let jitter = vec2<f32>(hash21(cell + vec2<f32>(1.7, f32(k))), hash21(cell + vec2<f32>(9.2, f32(k)))) - vec2<f32>(0.5);
+        let f = fract(q) - vec2<f32>(0.5) - jitter * 0.5;
+        let phase = fract(t * (0.7 + 0.3 * hash21(cell)) + hash21(cell + vec2<f32>(f32(k), 4.4)));
+        let d = length(f);
+        let ring = exp(-pow((d - phase * 0.48) * 22.0, 2.0)) * (1.0 - phase);
+        g += normalize(f + vec2<f32>(1e-5)) * ring * sin((d - phase * 0.48) * 60.0);
+    }
+    return g;
+}
+
+// Screen-space reflection: walks the reflected ray through the opaque scene depth and returns the
+// colour it meets (rgb) and how sure the hit is (a, 0 = nothing found on screen).
+fn ssr(start: vec3<f32>, dir: vec3<f32>) -> vec4<f32> {
+    let dims = vec2<f32>(textureDimensions(scene_depth_tex));
+    let cam = globals.camera_pos.xyz;
+    var pos = start;
+    var step = 0.08;
+    for (var i = 0; i < 40; i = i + 1) {
+        pos += dir * step;
+        step *= 1.12;
+        let c = globals.view_proj * vec4<f32>(pos, 1.0);
+        if (c.w <= 0.0) { break; }
+        let ndc = c.xyz / c.w;
+        let uv = vec2<f32>(ndc.x * 0.5 + 0.5, 0.5 - ndc.y * 0.5);
+        if (any(uv < vec2<f32>(0.0)) || any(uv > vec2<f32>(1.0))) { break; }
+        let px = vec2<i32>(uv * dims);
+        let d = textureLoad(scene_depth_tex, px, 0);
+        let w = globals.inv_view_proj * vec4<f32>(ndc.xy, d, 1.0);
+        let scene_p = w.xyz / w.w;
+        let behind = distance(cam, pos) - distance(cam, scene_p);
+        if (d < 1.0 && behind > 0.0 && behind < step * 2.5 + 0.1) {
+            let edge = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
+            return vec4<f32>(textureLoad(scene_color_tex, px, 0).rgb, smoothstep(0.0, 0.08, edge) * (1.0 - f32(i) / 40.0));
+        }
+    }
+    return vec4<f32>(0.0);
+}
+
 fn overlay(b: vec3<f32>, d: vec3<f32>) -> vec3<f32> {
     return select(vec3<f32>(1.0) - 2.0 * (vec3<f32>(1.0) - b) * (vec3<f32>(1.0) - d), 2.0 * b * d, b < vec3<f32>(0.5));
 }
@@ -215,6 +259,19 @@ fn fs_main(in: VsOut) -> @location(0) vec4<f32> {
             out = tint / max(dot(tint, vec3<f32>(0.2126, 0.7152, 0.0722)), 1e-3) * l * relief;
         }
         default: {}
+    }
+    // Standing water: dark wet ground with real reflections of what is on screen (street lamps,
+    // signs) and rings from falling drops.
+    if (shape == 5) {
+        let rip = ripples(p.xz, globals.time.x) * strength;
+        let wn = normalize(n + (t * rip.x + b * rip.y) * 0.18);
+        let r = reflect(-v, wn);
+        let hit = ssr(p + n * 0.02, r);
+        let sky = to_display_at(env_color(vec3<f32>(r.x, abs(r.y), r.z)), in.clip);
+        let refl = mix(sky * 0.6, hit.rgb, hit.a);
+        let fres = 0.04 + 0.96 * pow(1.0 - clamp(dot(wn, v), 0.0, 1.0), 5.0);
+        let wet = base * albedo * 1.6;
+        out = mix(wet, refl, clamp(fres + 0.35, 0.0, 1.0));
     }
     // Glow is added whatever the mode.
     out += to_display_at(albedo * object.user1.y, in.clip) * select(1.0, 0.0, i32(object.user0.x + 0.5) == 0);

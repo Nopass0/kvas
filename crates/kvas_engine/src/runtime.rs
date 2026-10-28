@@ -189,6 +189,7 @@ impl Runtime {
         self.time.frame = self.time.frame.saturating_add(1);
 
         self.input.begin_frame(dt);
+        self.input.canvas.begin();
         self.scene.signals.begin_frame();
         self.scripts.sync(&self.scene, &mut self.log);
         self.scripts.run(Phase::Update, &mut self.scene, &self.physics, &self.input, self.time, &mut self.log);

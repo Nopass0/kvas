@@ -134,6 +134,13 @@ pub struct Input {
     scene_request: RefCell<Option<SceneRequest>>,
     /// Asset path of the running scene, kept by the host.
     scene_path: RefCell<String>,
+    /// Screen interface drawn by scripts this frame.
+    pub canvas: crate::canvas::Canvas,
+    /// The game's data folder (saves, settings, files), set by the host.
+    storage: RefCell<crate::storage::Storage>,
+    /// Requests to the host: quit the game, toggle fullscreen.
+    quit: Cell<bool>,
+    fullscreen: Cell<Option<bool>>,
 }
 
 /// A scene change asked for by a script (see `ScriptCtx::load_scene`).
@@ -198,6 +205,33 @@ impl Input {
     /// Records the asset path of the running scene (hosts call this).
     pub fn set_scene_path(&self, path: &str) {
         *self.scene_path.borrow_mut() = path.to_string();
+        self.storage.borrow_mut().set_scene(path);
+    }
+    /// Sets the game's data folder (hosts call this once).
+    pub fn set_storage(&self, storage: crate::storage::Storage) {
+        let scene = self.scene_path();
+        *self.storage.borrow_mut() = storage;
+        self.storage.borrow_mut().set_scene(&scene);
+    }
+    /// The game's data folder.
+    pub fn storage(&self) -> crate::storage::Storage {
+        self.storage.borrow().clone()
+    }
+    /// Asks the host to close the game.
+    pub fn request_quit(&self) {
+        self.quit.set(true);
+    }
+    /// Whether a script asked to quit (hosts poll this).
+    pub fn quit_requested(&self) -> bool {
+        self.quit.get()
+    }
+    /// Asks the host to switch fullscreen on or off.
+    pub fn request_fullscreen(&self, on: bool) {
+        self.fullscreen.set(Some(on));
+    }
+    /// Takes a pending fullscreen request (hosts poll this).
+    pub fn take_fullscreen_request(&self) -> Option<bool> {
+        self.fullscreen.take()
     }
     /// Mutably borrows shell HUD state.
     ///

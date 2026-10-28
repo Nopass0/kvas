@@ -446,12 +446,34 @@ pub struct Camera {
     pub exposure_comp: f32,
     /// Cinematic bars: target picture ratio such as 2.39 or 1.85 (0 = full screen).
     pub letterbox: f32,
+    /// Camera shaders of this camera only, applied after the scene's own effects while it is the
+    /// active camera (security cam static, a character's blurred view...).
+    pub effects: Vec<crate::fx::PostEffect>,
 }
 
 impl Default for Camera {
     fn default() -> Self {
-        Self { fov: 60.0, near: 0.1, far: 500.0, primary: true, orthographic: false, ortho_size: 10.0, focal_length: 0.0, dof: false, aperture: 2.8, focus_distance: 8.0, autofocus: true, focus_speed: 6.0, exposure_comp: 0.0, letterbox: 0.0 }
+        Self { fov: 60.0, near: 0.1, far: 500.0, primary: true, orthographic: false, ortho_size: 10.0, focal_length: 0.0, dof: false, aperture: 2.8, focus_distance: 8.0, autofocus: true, focus_speed: 6.0, exposure_comp: 0.0, letterbox: 0.0, effects: Vec::new() }
     }
+}
+
+/// The camera the game looks through: the first `primary` camera, else the first camera at all.
+pub fn active_camera(world: &World) -> Option<Entity> {
+    world.iter::<Camera>().find(|(_, c)| c.primary).or_else(|| world.iter::<Camera>().next()).map(|(e, _)| e)
+}
+
+/// Makes `camera` the only primary camera (the one the game looks through).
+pub fn set_active_camera(world: &mut World, camera: Entity) -> bool {
+    if !world.has::<Camera>(camera) {
+        return false;
+    }
+    let all: Vec<Entity> = world.iter::<Camera>().map(|(e, _)| e).collect();
+    for e in all {
+        if let Some(c) = world.get_mut::<Camera>(e) {
+            c.primary = e == camera;
+        }
+    }
+    true
 }
 
 impl Camera {

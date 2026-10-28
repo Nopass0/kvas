@@ -16,6 +16,7 @@ mod environment;
 use kvas_engine::fx::Upscaler;
 pub mod debug;
 pub mod shell;
+pub mod script_ui;
 pub mod view;
 
 use bytemuck::{Pod, Zeroable};
@@ -1190,7 +1191,44 @@ impl Renderer {
         id
     }
 
+    /// Preview of a camera shader: a small colourful scene seen through the effect.
+    fn render_effect_thumbnail(&mut self, effect: &str, size: u32) -> Option<TextureId> {
+        let mut scene = Scene::default();
+        scene.settings.atmosphere.procedural = true;
+        scene.settings.atmosphere.time = 16.5;
+        scene.settings.post.effects.push(kvas_engine::fx::PostEffect { shader: effect.to_string(), ..Default::default() });
+        let w = &mut scene.world;
+        let floor = w.spawn();
+        w.insert(floor, MeshRenderer { mesh: "primitive:plane".into(), color: [0.55, 0.52, 0.48, 1.0], roughness: 0.9, ..Default::default() });
+        w.insert(floor, GlobalTransform(Mat4::from_scale(Vec3::splat(8.0))));
+        for (i, c) in [[0.9, 0.2, 0.15, 1.0], [0.2, 0.6, 0.95, 1.0], [0.95, 0.8, 0.2, 1.0], [0.3, 0.85, 0.4, 1.0]].iter().enumerate() {
+            let e = w.spawn();
+            w.insert(e, MeshRenderer { mesh: if i % 2 == 0 { "primitive:sphere".into() } else { "primitive:cube".into() }, color: *c, roughness: 0.35, emissive: if i == 2 { 0.6 } else { 0.0 }, ..Default::default() });
+            w.insert(e, GlobalTransform(Mat4::from_scale_rotation_translation(Vec3::splat(0.9), glam::Quat::from_rotation_y(i as f32 * 0.6), Vec3::new(-1.6 + i as f32 * 1.05, 0.45, (i % 2) as f32 * -0.8))));
+        }
+        let sun = w.spawn();
+        w.insert(sun, Light { intensity: 1.3, ..Default::default() });
+        w.insert(sun, GlobalTransform(Mat4::from_rotation_translation(glam::Quat::from_euler(glam::EulerRot::YXZ, -0.7, -0.7, 0.0), Vec3::ZERO)));
+        let eye = Vec3::new(0.0, 1.6, 3.6);
+        let view = View::new(glam::camera::rh::view::look_at_mat4(eye, Vec3::new(0.0, 0.4, 0.0), Vec3::Y).inverse(), 45.0, 1.0, 0.05, 60.0);
+        let targets = make_targets(&self.device, [size, size], None);
+        let debug = DebugDraw::default();
+        let frame = Frame { view, size: [size, size], time: 1.0, dt: 0.0, debug: &debug, shadows: false, debug_view: 0, cinematic: false };
+        self.draw(&scene, &frame, &targets);
+        let out = match self.run_post(&scene, &frame, &targets) {
+            1 => &targets.post_out,
+            2 => &targets.post_tmp,
+            _ => &targets.resolve,
+        };
+        let id = self.rs.renderer.write().register_native_texture(&self.device, out, wgpu::FilterMode::Linear);
+        Some(id)
+    }
+
     fn render_thumbnail(&mut self, mesh: &str, shader: &str, size: u32) -> Option<TextureId> {
+        let is_effect = shader.ends_with(".kfx") || (shader.ends_with(".wgsl") && self.assets.read_string(shader).is_ok_and(|s| s.contains("fn effect(")));
+        if is_effect {
+            return self.render_effect_thumbnail(shader, size);
+        }
         use kvas_engine::hierarchy;
         let (min, max) = self.mesh_bounds(mesh)?;
         let mut scene = Scene::default();
@@ -1842,7 +1880,14 @@ impl Renderer {
     /// Runs the post-processing passes. Returns where the picture ended up: 0 = unchanged
     /// (`resolve`), 1 = `post_out`, 2 = `post_tmp`.
     fn run_post(&mut self, scene: &Scene, frame: &Frame, targets: &Targets) -> u8 {
-        let settings = &scene.settings.post;
+        // The active camera's own shaders follow the scene's while playing.
+        let mut owned = scene.settings.post.clone();
+        if frame.cinematic {
+            if let Some(cam) = kvas_engine::components::active_camera(&scene.world).and_then(|e| scene.world.get::<Camera>(e)) {
+                owned.effects.extend(cam.effects.iter().cloned());
+            }
+        }
+        let settings = &owned;
         let lens = if frame.cinematic { post::Lens::of(scene, &frame.view) } else { post::Lens::default() };
         if !settings.any() && !lens.active() {
             self.post.forget();
@@ -1906,7 +1951,7 @@ impl Renderer {
             }
             let Some(gt) = scene.world.get::<GlobalTransform>(e) else { continue };
             // Water reads the depth of what is under it (foam at contacts), so it is drawn with the transparent objects.
-            let transparent = mr.color[3] < 0.999 || mr.shader == "builtin:water" || mr.shader.to_ascii_lowercase().contains("water");
+            let transparent = mr.color[3] < 0.999 || mr.shader == "builtin:water" || { let s = mr.shader.to_ascii_lowercase(); s.contains("water") || s.contains("glass") };
             let mesh = kvas_engine::components::mesh_key(&scene.world, e).unwrap_or_default();
             // A node material brings its own images unless the object overrides them.
             let (mut texture, mut normal_map, mut orm_map) = (mr.texture.clone(), mr.normal_map.clone(), mr.orm_map.clone());

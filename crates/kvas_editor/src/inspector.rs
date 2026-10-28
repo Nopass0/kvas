@@ -615,9 +615,44 @@ impl Editor {
                     self.animation_clip_ui(ui, e);
                     if ui.button("Открыть таймлайн").clicked() { self.animation_open = true; }
                 } else if info.name == "Camera" {
+                    let fx_shaders: Vec<String> = self.asset_list.iter().filter(|a| (a.ends_with(".wgsl") && a.contains("fx")) || a.ends_with(".kfx")).cloned().collect();
+                    let looking = self.look_through == Some(e);
                     let world = world_of(&mut self.play, &mut self.scene);
                     if let Some(camera) = world.get_mut::<Camera>(e) {
                         camera_ui(ui, camera, e.index());
+                        // This camera's own shaders (used while it is the active camera).
+                        ui.add_space(4.0);
+                        ui.label(egui::RichText::new(t("Camera shaders")).family(crate::theme::bold_family()));
+                        let mut remove_fx = None;
+                        for (n, fx) in camera.effects.iter_mut().enumerate() {
+                            ui.horizontal(|ui| {
+                                ui.checkbox(&mut fx.enabled, "");
+                                egui::ComboBox::from_id_salt(("cam-fx", e.index(), n)).selected_text(if fx.shader.is_empty() { t("(choose a shader)").to_string() } else { fx.shader.rsplit('/').next().unwrap_or("").to_string() }).width(170.0).show_ui(ui, |ui| {
+                                    for sh in &fx_shaders {
+                                        ui.selectable_value(&mut fx.shader, sh.clone(), sh);
+                                    }
+                                });
+                                if crate::icons::button(ui, crate::icons::Icon::X, t("Remove"), false).clicked() {
+                                    remove_fx = Some(n);
+                                }
+                            });
+                            ui.horizontal(|ui| {
+                                ui.add_space(22.0);
+                                for v in fx.params.iter_mut() {
+                                    ui.add(egui::DragValue::new(v).speed(0.01));
+                                }
+                            });
+                        }
+                        if let Some(n) = remove_fx {
+                            camera.effects.remove(n);
+                        }
+                        if ui.button(t("+ Add shader")).clicked() {
+                            camera.effects.push(PostEffect::default());
+                        }
+                    }
+                    let label = if looking { t("Stop looking through") } else { t("Look through this camera") };
+                    if ui.button(label).on_hover_text(t("Shows the scene from this camera, with its shaders")).clicked() {
+                        self.look_through = if looking { None } else { Some(e) };
                     }
                 } else {
                     let id = format!("{}-{}", info.name, e.index());

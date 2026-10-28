@@ -106,6 +106,10 @@ pub struct Editor {
     pub play_center: Option<egui::Pos2>,
     /// The cursor was hidden by a running game.
     pub cursor_hidden: bool,
+    /// A script asked to quit; Play stops after the frame.
+    pub pending_stop: bool,
+    /// Viewing the scene through this camera (Inspector "Look through"), with its shaders.
+    pub look_through: Option<Entity>,
     /// Last valid viewport camera/physical dimensions, used for clean PNG export.
     pub last_view: Option<(kvas_render::View, [u32; 2])>,
     last_frame: Instant,
@@ -165,6 +169,8 @@ impl Editor {
             started: Instant::now(),
             play_center: None,
             cursor_hidden: false,
+            pending_stop: false,
+            look_through: None,
             last_view: None,
             last_frame: Instant::now(),
             last_refresh: Instant::now(),
@@ -815,6 +821,7 @@ impl Editor {
                 runtime.scene.audio.master_volume = self.project.config.master_volume;
                 runtime.set_bindings(&self.project.config.binding_defs());
                 runtime.log.extend(warnings);
+                runtime.input.set_storage(kvas_engine::storage::Storage::new(&self.project.root.join(".kvas/data")));
                 runtime.input.set_scene_path(self.scene_path.as_deref().unwrap_or(""));
                 self.play = Some(Play { runtime, paused: false, step: false, mouse: shell::MouseCapture::default() });
                 self.cursor_hidden = true;

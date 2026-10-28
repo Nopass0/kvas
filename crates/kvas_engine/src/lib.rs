@@ -43,6 +43,9 @@ pub mod gameplay;
 pub mod grass;
 pub mod tree;
 pub mod decal;
+pub mod canvas;
+pub mod storage;
+pub mod script_game;
 pub mod gui;
 pub mod hierarchy;
 pub mod input;
@@ -99,6 +102,8 @@ pub mod prelude {
     pub use crate::grass::Grass;
     pub use crate::tree::TreeStyle;
     pub use crate::decal::{DecalBlend, DecalShape};
+    pub use crate::canvas::{Align, ButtonStyle, Canvas};
+    pub use crate::storage::{SaveInfo, Storage};
     pub use crate::hierarchy;
     pub use crate::input::Hud;
     pub use crate::math::{approach, approach_degrees, damp, ease_smooth, ease_smoother, smooth_damp, delta_degrees, inverse_lerp, lerp, remap, remap_clamped, smoothstep, wrap_degrees};

@@ -98,6 +98,12 @@ impl MouseCapture {
             self.started = true;
             input.lock_cursor(true);
         }
+        // A menu drawn by scripts needs the pointer.
+        if input.canvas.wants_mouse() {
+            input.lock_cursor(false);
+            self.freed = false;
+            return;
+        }
         let (escape, click, focused) = ctx.input(|i| (i.key_pressed(egui::Key::Escape), i.pointer.primary_pressed(), i.focused));
         if !focused && input.cursor_locked() {
             input.lock_cursor(false);

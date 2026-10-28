@@ -149,6 +149,7 @@
             "aperture": 2.799999952316284,
             "autofocus": true,
             "dof": false,
+            "effects": [],
             "exposure_comp": 0.0,
             "far": 500.0,
             "focal_length": 0.0,

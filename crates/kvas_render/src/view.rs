@@ -156,6 +156,7 @@ pub fn game_view(scene: &Scene, aspect: f32) -> Option<View> {
         .filter(|(_, camera)| camera.primary)
         .chain(world.iter::<Camera>().filter(|(_, camera)| !camera.primary))
         .find_map(|(entity, camera)| {
+            // Same choice as `components::active_camera`.
             if !world.has::<kvas_engine::components::Transform>(entity) {
                 return None;
             }

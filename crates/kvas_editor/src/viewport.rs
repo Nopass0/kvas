@@ -77,7 +77,20 @@ impl Editor {
         }
 
         let aspect = rect.width() / rect.height();
-        let view = if playing { game_view(self.active(), aspect) } else { Some(self.camera.view(aspect)) };
+        // "Look through" a scene camera: the editor camera moving (or play starting) ends it.
+        if playing || resp.dragged_by(PointerButton::Secondary) || resp.dragged_by(PointerButton::Middle) || (resp.hovered() && ui.input(|i| i.smooth_scroll_delta.y != 0.0 || i.key_pressed(egui::Key::Escape))) {
+            self.look_through = None;
+        }
+        let look = self.look_through.filter(|e| self.scene.world.has::<Camera>(*e));
+        self.look_through = look;
+        let saved_primary: Vec<(Entity, bool)> = if let Some(cam) = look {
+            let saved = self.scene.world.iter::<Camera>().map(|(e, c)| (e, c.primary)).collect();
+            kvas_engine::components::set_active_camera(&mut self.scene.world, cam);
+            saved
+        } else {
+            Vec::new()
+        };
+        let view = if playing || look.is_some() { game_view(self.active(), aspect) } else { Some(self.camera.view(aspect)) };
         let Some(view) = view else {
             self.last_view = None;
             ui.painter().rect_filled(rect, 0.0, Color32::from_gray(25));
@@ -174,7 +187,7 @@ impl Editor {
 
         let ppp = ui.ctx().pixels_per_point();
         self.last_view = Some((view, [(rect.width() * ppp) as u32, (rect.height() * ppp) as u32]));
-        let frame = Frame { view, size: [(rect.width() * ppp) as u32, (rect.height() * ppp) as u32], time: self.elapsed(), dt: 1.0 / 60.0, debug: &draw, shadows: true, debug_view: self.debug_view, cinematic: playing };
+        let frame = Frame { view, size: [(rect.width() * ppp) as u32, (rect.height() * ppp) as u32], time: self.elapsed(), dt: 1.0 / 60.0, debug: &draw, shadows: true, debug_view: self.debug_view, cinematic: playing || look.is_some() };
         let scene = match &self.play {
             Some(p) => &p.runtime.scene,
             None => &self.scene,
@@ -184,6 +197,19 @@ impl Editor {
         if let Some(p) = preview {
             self.drag_preview_end(ui, rect, p);
         }
+        for (e, primary) in saved_primary {
+            if let Some(c) = self.scene.world.get_mut::<Camera>(e) {
+                c.primary = primary;
+            }
+        }
+        if let Some(cam) = look {
+            let name = hierarchy::name_of(&self.scene.world, cam).to_string();
+            let label = format!("{}: {name}  ·  Esc", crate::i18n::t("Viewing through"));
+            let galley = ui.painter().layout_no_wrap(label, egui::FontId::proportional(13.0), Color32::WHITE);
+            let pill = egui::Rect::from_min_size(egui::pos2(rect.center().x - galley.size().x * 0.5 - 12.0, rect.bottom() - 40.0), galley.size() + egui::vec2(24.0, 12.0));
+            ui.painter().rect_filled(pill, 8.0, crate::theme::ACCENT.gamma_multiply(0.85));
+            ui.painter().galley(pill.min + egui::vec2(12.0, 6.0), galley, Color32::WHITE);
+        }
         if !playing {
             resp.context_menu(|ui| self.viewport_context_menu(ui));
         }
@@ -192,9 +218,17 @@ impl Editor {
             p.mouse.update(ui.ctx(), &p.runtime.input, resp.hovered());
             kvas_render::shell::draw_hud(ui.painter(), rect, &p.runtime.input.hud());
             kvas_render::shell::apply_cursor(ui.ctx(), &p.runtime.input, rect.center());
+            kvas_render::script_ui::draw_script_ui(ui, rect, &p.runtime.input, &self.assets, true);
             if p.mouse.freed() {
                 kvas_render::shell::draw_capture_hint(ui.painter(), rect, crate::i18n::t("Click the game view to capture the mouse"));
             }
+            if p.runtime.input.quit_requested() {
+                self.pending_stop = true;
+            }
+            let _ = p.runtime.input.take_fullscreen_request();
+        }
+        if std::mem::take(&mut self.pending_stop) {
+            self.stop_play();
         }
         if let Some(p) = &mut self.play {
             for (entity, channel) in kvas_render::shell::draw_game_ui(ui, &p.runtime.scene, rect, Some(&view), true) {

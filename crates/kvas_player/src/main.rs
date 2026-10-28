@@ -73,6 +73,7 @@ fn start(loaded: &Loaded) -> Result<Runtime, String> {
     rt.scene.audio.master_volume = loaded.config.master_volume;
     rt.set_bindings(&loaded.config.binding_defs());
     rt.log.extend(warnings);
+    rt.input.set_storage(kvas_engine::storage::Storage::for_game(&loaded.config.name));
     rt.input.set_scene_path(&loaded.config.start_scene);
     Ok(rt)
 }
@@ -154,6 +155,13 @@ impl eframe::App for Player {
                     shell::draw_hud(ui.painter(), response.rect, &rt.input.hud());
                     for (entity, channel) in shell::draw_game_ui(ui, &rt.scene, response.rect, Some(&view), true) {
                         let _ = rt.scene.signals.send(&channel, serde_json::json!({"clicked": true}), Some(entity), None);
+                    }
+                    kvas_render::script_ui::draw_script_ui(ui, response.rect, &rt.input, &self.assets, true);
+                    if rt.input.quit_requested() {
+                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                    }
+                    if let Some(on) = rt.input.take_fullscreen_request() {
+                        ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(on));
                     }
                 }
                 None => {

@@ -30,7 +30,11 @@ fn fs_main(in: PIn) -> @location(0) vec4<f32> {
     let soft = 1.0 - smoothstep(0.25, 1.0, r);
     let tex = textureSample(albedo_tex, albedo_smp, in.uv);
     let tint = mix(object.user0, object.user1, life);
-    let alpha = tint.a * tex.a * soft;
+    var alpha = tint.a * tex.a * soft;
+    // Soft particles: fade where the quad cuts into a surface (object.params.x = distance).
+    if (object.params.x > 0.0) {
+        alpha *= smoothstep(0.0, object.params.x, scene_depth_behind(in.clip, in.world_pos));
+    }
     if (alpha < 0.003) {
         discard;
     }

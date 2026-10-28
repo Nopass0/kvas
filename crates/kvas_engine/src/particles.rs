@@ -74,6 +74,18 @@ pub struct ParticleEmitter {
     pub max_particles: i32,
     /// Random seed.
     pub seed: i32,
+    /// Stretches particles along their motion (rain streaks, sparks): extra length per m/s.
+    pub stretch: f32,
+    /// Particles die when they fall below `floor_height` (world Y).
+    pub collide_floor: bool,
+    /// World height of the floor for `collide_floor`.
+    pub floor_height: f32,
+    /// Little splash particles born where a particle hits the floor.
+    pub splash: i32,
+    /// The emitter keeps itself above the active camera (rain or snow around the player).
+    pub follow_camera: bool,
+    /// Soft fade where particles cut into surfaces, in metres (0 = hard edges).
+    pub soft: f32,
     #[serde(skip)]
     #[doc(hidden)]
     pub state: Option<ParticleState>,
@@ -103,6 +115,12 @@ impl Default for ParticleEmitter {
             duration: 5.0,
             max_particles: 600,
             seed: 7,
+            stretch: 0.0,
+            collide_floor: false,
+            floor_height: 0.0,
+            splash: 0,
+            follow_camera: false,
+            soft: 0.0,
             state: None,
         }
     }
@@ -132,12 +150,18 @@ impl Component for ParticleEmitter {
             Field::f32("duration", &mut self.duration),
             Field::i32("max_particles", &mut self.max_particles),
             Field::i32("seed", &mut self.seed),
+            Field::f32("stretch", &mut self.stretch),
+            Field::bool("collide_floor", &mut self.collide_floor),
+            Field::f32("floor_height", &mut self.floor_height),
+            Field::i32("splash", &mut self.splash),
+            Field::bool("follow_camera", &mut self.follow_camera),
+            Field::f32("soft", &mut self.soft),
         ]
     }
 }
 
 impl ParticleEmitter {
-    /// Ready-made emitters: "fire", "smoke", "sparks", "snow", "rain", "magic", "dust", "explosion",
+    /// Ready-made emitters: "fire", "smoke", "sparks", "snow", "rain", "heavy_rain", "drizzle", "magic", "dust", "explosion",
     /// "fog", "mist", "steam", "embers", "fireflies", "leaves", "bubbles", "campfire_smoke", "dust_storm".
     pub fn preset(name: &str) -> Self {
         let base = Self::default();
@@ -147,6 +171,8 @@ impl ParticleEmitter {
             "sparks" => Self { rate: 40.0, lifetime: 0.9, speed: 4.5, spread: 55.0, gravity: -9.0, drag: 0.1, size_start: 0.06, size_end: 0.02, color_start: [1.0, 0.85, 0.4, 1.0], color_end: [1.0, 0.3, 0.05, 0.0], glow: 4.0, ..base },
             "snow" => Self { rate: 120.0, lifetime: 7.0, speed: 0.2, spread: 180.0, gravity: -1.1, drag: 0.8, size_start: 0.07, size_end: 0.07, shape: EmitterShape::Box, shape_size: 10.0, color_start: [1.0, 1.0, 1.0, 0.9], color_end: [1.0, 1.0, 1.0, 0.0], glow: 1.2, max_particles: 1500, ..base },
             "rain" => Self { rate: 400.0, lifetime: 1.2, speed: 0.0, spread: 0.0, gravity: -18.0, drag: 0.0, size_start: 0.03, size_end: 0.03, shape: EmitterShape::Box, shape_size: 10.0, color_start: [0.7, 0.8, 1.0, 0.5], color_end: [0.7, 0.8, 1.0, 0.1], glow: 1.0, max_particles: 2500, ..base },
+            "heavy_rain" => Self { rate: 2600.0, lifetime: 1.0, lifetime_variation: 0.1, speed: 9.0, speed_variation: 0.15, spread: 4.0, gravity: -14.0, drag: 0.0, size_start: 0.012, size_end: 0.012, shape: EmitterShape::Box, shape_size: 14.0, color_start: [0.75, 0.82, 0.95, 0.35], color_end: [0.75, 0.82, 0.95, 0.25], glow: 1.6, max_particles: 6000, stretch: 0.045, collide_floor: true, splash: 2, follow_camera: true, ..base },
+            "drizzle" => Self { rate: 700.0, lifetime: 1.6, speed: 5.0, spread: 6.0, gravity: -8.0, drag: 0.0, size_start: 0.008, size_end: 0.008, shape: EmitterShape::Box, shape_size: 12.0, color_start: [0.8, 0.85, 0.95, 0.25], color_end: [0.8, 0.85, 0.95, 0.15], glow: 1.4, max_particles: 2400, stretch: 0.03, collide_floor: true, follow_camera: true, ..base },
             "magic" => Self { rate: 35.0, lifetime: 2.2, speed: 0.7, spread: 180.0, gravity: 0.4, drag: 0.7, size_start: 0.12, size_end: 0.0, shape: EmitterShape::Sphere, shape_size: 0.6, color_start: [0.5, 0.8, 1.0, 1.0], color_end: [0.8, 0.3, 1.0, 0.0], glow: 4.0, ..base },
             "dust" => Self { rate: 25.0, lifetime: 6.0, speed: 0.15, spread: 180.0, gravity: 0.0, drag: 0.9, size_start: 0.04, size_end: 0.04, shape: EmitterShape::Box, shape_size: 4.0, color_start: [1.0, 0.95, 0.8, 0.5], color_end: [1.0, 0.95, 0.8, 0.0], glow: 1.5, ..base },
             "fog" => Self { rate: 6.0, lifetime: 14.0, lifetime_variation: 0.4, speed: 0.12, spread: 180.0, gravity: 0.0, drag: 0.3, size_start: 4.0, size_end: 7.0, shape: EmitterShape::Box, shape_size: 9.0, color_start: [0.78, 0.82, 0.88, 0.0], color_end: [0.78, 0.82, 0.88, 0.0], glow: 0.9, max_particles: 160, ..base },
@@ -180,6 +206,8 @@ struct Particle {
     vel: Vec3,
     age: f32,
     life: f32,
+    /// A splash droplet (short, no further splashes, not stretched).
+    splash: bool,
 }
 
 /// Simulation state (internal).
@@ -234,19 +262,39 @@ fn spawn(e: &ParticleEmitter, st: &mut ParticleState, world: &Mat4) {
     let dir_local = random_in_cone(rng, Vec3::Y, e.spread);
     let speed = e.speed * (1.0 + (rng.f32() * 2.0 - 1.0) * e.speed_variation.clamp(0.0, 1.0));
     let life = (e.lifetime * (1.0 + (rng.f32() * 2.0 - 1.0) * e.lifetime_variation.clamp(0.0, 1.0))).max(0.05);
-    st.particles.push(Particle { pos: world.transform_point3(local), vel: world.transform_vector3(dir_local).normalize_or_zero() * speed, age: 0.0, life });
+    st.particles.push(Particle { pos: world.transform_point3(local), vel: world.transform_vector3(dir_local).normalize_or_zero() * speed, age: 0.0, life, splash: false });
 }
 
 fn step(e: &ParticleEmitter, st: &mut ParticleState, world: &Mat4, dt: f32) {
     st.elapsed += dt;
     let drag = (1.0 - e.drag.max(0.0) * dt).max(0.0);
+    let mut hits = Vec::new();
     for p in &mut st.particles {
         p.age += dt;
-        p.vel.y += e.gravity * dt;
+        p.vel.y += if p.splash { -9.0 } else { e.gravity } * dt;
         p.vel *= drag;
         p.pos += p.vel * dt;
+        if e.collide_floor && p.pos.y < e.floor_height && p.age < p.life {
+            if !p.splash {
+                hits.push(Vec3::new(p.pos.x, e.floor_height + 0.01, p.pos.z));
+            }
+            p.age = p.life;
+        }
     }
     st.particles.retain(|p| p.age < p.life);
+    // Splashes: a few droplets thrown up where a particle landed.
+    let budget = e.max_particles.clamp(1, 20_000) as usize;
+    for at in hits {
+        for _ in 0..e.splash.clamp(0, 8) {
+            if st.particles.len() >= budget {
+                break;
+            }
+            let a = st.rng.f32() * std::f32::consts::TAU;
+            let up = 0.8 + st.rng.f32() * 1.2;
+            let out = 0.3 + st.rng.f32() * 0.6;
+            st.particles.push(Particle { pos: at, vel: Vec3::new(a.cos() * out, up, a.sin() * out), age: 0.0, life: 0.18 + st.rng.f32() * 0.12, splash: true });
+        }
+    }
     let emitting = e.looping || st.elapsed <= e.duration;
     if emitting && e.rate > 0.0 {
         st.carry += e.rate * dt;
@@ -257,13 +305,18 @@ fn step(e: &ParticleEmitter, st: &mut ParticleState, world: &Mat4, dt: f32) {
     }
 }
 
+fn camera_position(world: &World) -> Option<Vec3> {
+    let entity = crate::components::active_camera(world)?;
+    Some(world.get::<GlobalTransform>(entity)?.0.w_axis.truncate())
+}
+
 fn camera_axes(world: &World) -> Option<(Vec3, Vec3)> {
     let (entity, _) = world.iter::<Camera>().find(|(_, c)| c.primary).or_else(|| world.iter::<Camera>().next())?;
     let m = world.get::<GlobalTransform>(entity)?.0;
     Some((m.x_axis.truncate().normalize_or_zero(), m.y_axis.truncate().normalize_or_zero()))
 }
 
-fn build_mesh(e: &ParticleEmitter, st: &ParticleState, to_local: &Mat4, axes: Option<(Vec3, Vec3)>) -> MeshData {
+fn build_mesh(e: &ParticleEmitter, st: &ParticleState, to_local: &Mat4, axes: Option<(Vec3, Vec3)>, eye: Option<Vec3>) -> MeshData {
     let mut m = MeshData::default();
     m.vertices.reserve(st.particles.len() * 4);
     // Without a camera (editor view of a scene that has none) draw two crossed quads instead.
@@ -273,10 +326,21 @@ fn build_mesh(e: &ParticleEmitter, st: &ParticleState, to_local: &Mat4, axes: Op
     };
     for p in &st.particles {
         let t = (p.age / p.life).clamp(0.0, 1.0);
-        let size = e.size_start + (e.size_end - e.size_start) * t;
+        let size = if p.splash { e.size_start.max(0.006) * 0.8 } else { e.size_start + (e.size_end - e.size_start) * t };
         let center = to_local.transform_point3(p.pos);
-        for (right, up) in &planes {
-            let (r, u) = (to_local.transform_vector3(*right) * size, to_local.transform_vector3(*up) * size);
+        // Stretched particles: one axis along the motion, the other across it facing the camera.
+        let streak = (e.stretch > 0.0 && !p.splash && p.vel.length_squared() > 1e-4).then(|| {
+            let along = p.vel.normalize();
+            let to_eye = eye.map_or(Vec3::Z, |c| (c - p.pos).normalize_or(Vec3::Z));
+            let across = along.cross(to_eye).normalize_or(Vec3::X);
+            (across, along, (p.vel.length() * e.stretch).max(size))
+        });
+        let one = [(Vec3::ZERO, Vec3::ZERO)];
+        for (right, up) in if streak.is_some() { &one[..] } else { &planes[..] } {
+            let (r, u) = match streak {
+                Some((across, along, len)) => (to_local.transform_vector3(across) * size, to_local.transform_vector3(along) * len),
+                None => (to_local.transform_vector3(*right) * size, to_local.transform_vector3(*up) * size),
+            };
             let base = m.vertices.len() as u32;
             for (qx, qy) in [(-1.0f32, -1.0f32), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)] {
                 m.vertices.push(Vertex { pos: (center + r * qx + u * qy).into(), normal: [qx, qy, t], uv: [qx * 0.5 + 0.5, qy * 0.5 + 0.5] });
@@ -292,7 +356,15 @@ fn build_mesh(e: &ParticleEmitter, st: &ParticleState, to_local: &Mat4, axes: Op
 pub fn update(world: &mut World, time: f32, dt: f32, simulate: bool) {
     for entity in world.entities_with::<ParticleEmitter>() {
         let Some(mut emitter) = world.get::<ParticleEmitter>(entity).cloned() else { continue };
-        let global = world.get::<GlobalTransform>(entity).map_or(Mat4::IDENTITY, |g| g.0);
+        let mut global = world.get::<GlobalTransform>(entity).map_or(Mat4::IDENTITY, |g| g.0);
+        let eye = camera_position(world);
+        if emitter.follow_camera {
+            if let Some(c) = eye {
+                // Keep the emitter's height, centre it over the camera.
+                let (s, r, t) = global.to_scale_rotation_translation();
+                global = Mat4::from_scale_rotation_translation(s, r, Vec3::new(c.x, t.y.max(c.y + 4.0), c.z));
+            }
+        }
         let mut st = emitter.state.take().unwrap_or_else(|| ParticleState::new(emitter.seed));
         let first = st.last_time.is_nan();
         let delta = if simulate { dt } else if first { 0.0 } else { (time - st.last_time).clamp(0.0, 0.1) };
@@ -309,7 +381,9 @@ pub fn update(world: &mut World, time: f32, dt: f32, simulate: bool) {
         }
         st.version += 1;
         let inverse = if global.determinant().abs() > 1e-9 { global.inverse() } else { Mat4::IDENTITY };
-        let mesh = build_mesh(&emitter, &st, &inverse, camera_axes(world));
+        let real = world.get::<GlobalTransform>(entity).map_or(Mat4::IDENTITY, |g| g.0);
+        let inverse = if emitter.follow_camera && real.determinant().abs() > 1e-9 { real.inverse() } else { inverse };
+        let mesh = build_mesh(&emitter, &st, &inverse, camera_axes(world), eye);
         let version = st.version;
         emitter.state = Some(st);
         if let Some(slot) = world.get_mut::<ParticleEmitter>(entity) {
@@ -325,6 +399,7 @@ pub fn update(world: &mut World, time: f32, dt: f32, simulate: bool) {
         m.color = [1.0, 1.0, 1.0, 0.99];
         m.texture = emitter.texture.clone();
         m.emissive = emitter.glow;
+        m.roughness = emitter.soft;
         m.user = [
             emitter.color_start[0], emitter.color_start[1], emitter.color_start[2], emitter.color_start[3],
             emitter.color_end[0], emitter.color_end[1], emitter.color_end[2], emitter.color_end[3],
