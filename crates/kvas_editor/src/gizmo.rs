@@ -19,6 +19,7 @@ struct Drag {
     start_mouse: Pos2,
     start_local: Transform,
     start_global: Mat4,
+    group: Vec<(Entity, Mat4)>,
 }
 
 #[derive(Default)]
@@ -145,7 +146,8 @@ impl Editor {
             if let (Some(axis), Some(m)) = (self.gizmo.press_hot.take(), ctx.input(|i| i.pointer.press_origin())) {
                 if let Some(t) = self.active().world.get::<Transform>(sel).copied() {
                     self.begin_edit();
-                    self.gizmo.drag = Some(Drag { axis, start_mouse: m, start_local: t, start_global: global });
+                    let group = self.selection_roots().into_iter().map(|e| (e, hierarchy::global_matrix(&self.active().world, e))).collect();
+                    self.gizmo.drag = Some(Drag { axis, start_mouse: m, start_local: t, start_global: global, group });
                 }
             }
         }
@@ -224,6 +226,7 @@ impl Editor {
             if let Some(t) = self.active_mut().world.get_mut::<Transform>(sel) {
                 *t = new_t;
             }
+            self.apply_group_transform(sel);
             if resp.drag_stopped() || !ctx.input(|i| i.pointer.primary_down()) {
                 self.gizmo.drag = None;
             }
@@ -274,6 +277,22 @@ impl Editor {
         t.rotation = local.rotation;
         if let Some(target) = self.active_mut().world.get_mut::<Transform>(sel) {
             *target = t;
+        }
+        self.apply_group_transform(sel);
+    }
+
+    fn apply_group_transform(&mut self, primary: Entity) {
+        let Some(drag) = &self.gizmo.drag else { return };
+        if drag.group.len() == 1 && drag.group[0].0 == primary { return; }
+        let delta = hierarchy::global_matrix(&self.active().world, primary) * drag.start_global.inverse();
+        let group = drag.group.clone();
+        let original_local = drag.start_local;
+        if !delta.is_finite() { return; }
+        // A selected ancestor already carries its selected descendants along.
+        if !group.iter().any(|(e, _)| *e == primary) { self.active_mut().world.insert(primary, original_local); }
+        for (entity, start) in group {
+            let parent = hierarchy::parent_of(&self.active().world, entity).map_or(Mat4::IDENTITY, |p| hierarchy::global_matrix(&self.active().world, p));
+            if let Some(pose) = Transform::try_from_matrix(parent.inverse() * delta * start) { self.active_mut().world.insert(entity, pose); }
         }
     }
 }

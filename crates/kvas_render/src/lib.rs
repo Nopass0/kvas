@@ -108,6 +108,7 @@ struct Globals {
     sky_b: [f32; 4],
     sky_c: [f32; 4],
     environment: [f32; 4],
+    viewport: [f32; 4],
     point_pos: [[f32; 4]; MAX_POINT_LIGHTS],
     point_color: [[f32; 4]; MAX_POINT_LIGHTS],
     point_dir: [[f32; 4]; MAX_POINT_LIGHTS],
@@ -1543,7 +1544,7 @@ impl Renderer {
         let want_up = scale < 0.99 && matches!(scene.settings.upscaler, Upscaler::Fsr | Upscaler::Dlss);
         let full_size = [frame.size[0].clamp(8, limit), frame.size[1].clamp(8, limit)];
         let want_full = want_up.then_some(full_size);
-        let nearest = scale < 0.99 && !want_up;
+        let nearest = scene.settings.psx && !want_up;
         let resized = self.targets.as_ref().is_none_or(|t| t.size != size || t.full != want_full) || nearest != self.egui_nearest;
         if resized {
             self.targets = Some(make_targets(&self.device, size, want_full));
@@ -1879,9 +1880,10 @@ impl Renderer {
             .map(|s| Self::shadow_matrix(&frame.view, s.dir, scene.settings.shadows.range));
         let (environment_view, environment_ready, average) = self.environment.select(&self.device, &self.queue, &self.assets, &mut self.errors, &scene.settings.environment_map);
         let mut globals = Self::globals(scene, frame, sun.as_ref(), shadow);
+        globals.viewport = [targets.size[0] as f32, targets.size[1] as f32, 1.0 / targets.size[0] as f32, 1.0 / targets.size[1] as f32];
         if environment_ready {
             let intensity = scene.settings.environment_intensity.clamp(0.0, 100.0);
-            globals.environment = [1.0, scene.settings.environment_rotation.to_radians(), intensity, 0.0];
+            globals.environment = [1.0, scene.settings.environment_rotation.to_radians(), intensity, environment_view.texture().mip_level_count().saturating_sub(1) as f32];
             for (c, value) in average.iter().enumerate() { globals.ambient[c] = value * intensity * 0.3; }
         }
         self.globals_bg = self.device.create_bind_group(&wgpu::BindGroupDescriptor {

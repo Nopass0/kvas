@@ -203,6 +203,7 @@ impl Runtime {
         crate::modifiers::update(&mut self.scene.world, self.time.elapsed, dt);
         crate::tween::update(&mut self.scene.world, dt);
         crate::animation::update(&mut self.scene.world, dt);
+        crate::neural::update(&mut self.scene.world, dt);
         crate::procedural::update(&mut self.scene.world, self.time.elapsed, dt, true);
 
         self.accumulator += dt;

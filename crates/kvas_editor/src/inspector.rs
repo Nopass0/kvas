@@ -126,6 +126,7 @@ fn component_icon(name: &str) -> Option<Icon> {
         "Scripts" => Icon::FileCode,
         "AudioSource" => Icon::Volume,
         "MeshModifiers" => Icon::Layers,
+        "EditableMesh" => Icon::VertexSnap,
         "TexturePaint" => Icon::Brush,
         "Cloth" => Icon::Shirt,
         "Grass" => Icon::Wind,
@@ -133,6 +134,8 @@ fn component_icon(name: &str) -> Option<Icon> {
         "VoxelSmoke" => Icon::Flame,
         "VoxelClouds" => Icon::Cloud,
         "Tags" => Icon::Tag,
+        "UiElement" => Icon::LayoutGrid,
+        "NeuralAgent" => Icon::Sparkles,
         "ParticleEmitter" => Icon::Sparkles,
         "Spin" | "Bob" | "Pulse" | "Wobble" | "ColorCycle" | "MoveTween" | "TransformAnimation" => Icon::Sliders,
         _ => Icon::Sliders,
@@ -144,9 +147,9 @@ fn category(name: &str) -> &'static str {
         "MeshRenderer" | "Shape" | "Camera" | "Light" | "Visibility" => "Rendering",
         "RigidBody" | "Collider" | "Joint" => "Physics",
         "Spin" | "Bob" | "Pulse" | "Wobble" | "ColorCycle" | "MoveTween" | "TransformAnimation" => "Modifiers",
-        "MeshModifiers" => "Mesh",
+        "MeshModifiers" | "EditableMesh" => "Mesh",
         "Cloth" | "Grass" | "VoxelSmoke" | "VoxelClouds" | "VoxelWater" | "AudioSource" | "ParticleEmitter" => "Effects",
-        "Switch" | "Slider" | "Tags" | "Lifetime" => "Gameplay",
+        "Switch" | "Slider" | "Tags" | "Lifetime" | "NeuralAgent" | "UiElement" => "Gameplay",
         _ => "Scripting",
     }
 }
@@ -579,9 +582,16 @@ impl Editor {
         ui.separator();
 
         let mut remove: Option<&'static str> = None;
+        let mut tags = self.active().world.get::<Tags>(e).cloned().unwrap_or_default();
+        ui.horizontal(|ui| {
+            ui.label("Теги");
+            if ui.add(egui::TextEdit::singleline(&mut tags.value).hint_text("enemy damageable").desired_width(f32::INFINITY)).on_hover_text("Через пробел; ctx.tagged(\"enemy\"), ctx.has_tag(entity, \"enemy\")").changed() { self.active_mut().world.insert(e, tags); }
+        });
+        let count = self.selected_entities().len();
+        if count > 1 { ui.weak(format!("Выделено: {count}. Инспектор — активный объект; gizmo и Ctrl+D/Delete — группа.")); }
         let mut reset: Option<&'static str> = None;
         for info in &registry.components {
-            if info.name == "Name" || !(info.has)(&self.active().world, e) {
+            if matches!(info.name, "Name" | "Tags") || !(info.has)(&self.active().world, e) {
                 continue;
             }
             let header = crate::ui_kit::section(ui, ui.make_persistent_id(("component", info.name)), component_icon(info.name), &td(info.name), true, |ui| {
@@ -605,6 +615,11 @@ impl Editor {
                     });
                     if info.name == "MeshRenderer" {
                         self.material_preview(ui, e);
+                        if ui.button("Редактировать геометрию / Sculpt").clicked() { self.start_mesh_edit(); }
+                    }
+                    if info.name == "NeuralAgent" {
+                        if ui.button("Обучение AI / веса").clicked() { self.training.open = true; }
+                        ui.weak("CPU steering: задайте target, обучите/примените веса и включите enabled. Без навигации и RigidBody.");
                     }
                 }
             });

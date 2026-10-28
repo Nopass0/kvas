@@ -8,7 +8,7 @@ use std::f32::consts::{PI, TAU};
 
 /// Interleaved CPU/GPU vertex layout: position, normal and UV, all 32-bit floats.
 #[repr(C)]
-#[derive(Clone, Copy, Debug, Pod, Zeroable)]
+#[derive(Clone, Copy, Debug, Pod, Zeroable, serde::Serialize, serde::Deserialize)]
 pub struct Vertex {
     /// Local-space position in metres.
     pub pos: [f32; 3],

@@ -1,8 +1,11 @@
 /target
 **/.kvas/
+**/.node_preview/
 **/build/
 /.test_assets/
 /tools/*.log
+/tools/session-*.json
+/tools/session-*.png
 /tools/*capture*.png
 /third_party/nvidia/
 **/target/
@@ -21,3 +24,6 @@ __pycache__/
 /games/village/assets/sounds/
 /games/village/assets/textures/
 /games/showcase/assets/music/
+/docs/node_modules/
+/docs/.vitepress/dist/
+/docs/.vitepress/cache/

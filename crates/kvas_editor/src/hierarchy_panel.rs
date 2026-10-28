@@ -9,6 +9,7 @@ use kvas_engine::prelude::*;
 pub fn kind_icon(world: &World, e: Entity) -> (Icon, Color32) {
     let green = Color32::from_rgb(110, 200, 120);
     let blue = Color32::from_rgb(90, 150, 230);
+    if world.has::<UiElement>(e) { return (Icon::LayoutGrid, Color32::from_rgb(190, 140, 240)); }
     if world.has::<Camera>(e) {
         return (Icon::Camera, green);
     }
@@ -158,7 +159,8 @@ impl Editor {
             // Empty space below the list: drop here to unparent, right-click to create.
             let rest = ui.allocate_response(ui.available_size().max(egui::vec2(10.0, 40.0)), Sense::click());
             if let Some(dragged) = rest.dnd_release_payload::<Entity>() {
-                self.reparent(*dragged, None);
+                let roots = if self.selected_entities().contains(&dragged) { self.selection_roots() } else { vec![*dragged] };
+                for root in roots { self.reparent(root, None); }
             }
             if rest.clicked() {
                 self.selection = None;

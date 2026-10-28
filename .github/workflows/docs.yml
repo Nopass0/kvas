@@ -1,0 +1,81 @@
+name: Docs
+
+# Builds the documentation site (VitePress) and the Rust API docs (rustdoc),
+# then publishes both to GitHub Pages: https://nopass0.github.io/kvas/
+# One-time setup: Settings > Pages > Build and deployment > Source: "GitHub Actions".
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "crates/**"
+      - "README.md"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # "last updated" dates on the pages
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install system libraries for the Rust crates
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libasound2-dev libudev-dev pkg-config
+
+      - name: Regenerate the node reference from the node library
+        run: cargo run -q -p kvas_engine --example gen_node_docs -- docs/nodes/reference.md
+
+      - name: Test that the script cookbook compiles and runs
+        run: cargo test -p kvas_engine --test cookbook
+
+      - name: Build the site
+        working-directory: docs
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build the Rust API docs
+        run: cargo doc --no-deps -p kvas_ecs -p kvas_engine -p kvas_render
+
+      - name: Add the Rust API docs to the site
+        run: |
+          mkdir -p docs/.vitepress/dist/api
+          cp -r target/doc/. docs/.vitepress/dist/api/
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/.vitepress/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

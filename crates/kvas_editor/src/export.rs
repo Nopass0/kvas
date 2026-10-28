@@ -121,6 +121,8 @@ fn say(log: &Log, level: Level, msg: impl Into<String>) {
 
 /// Builds `<project>/build/`: the player renamed to the game, `game.pak` with all assets, and the scripts library.
 pub fn build_game(project: &Project, log: &Log) -> Result<PathBuf, String> {
+    let issues = project.config.validate();
+    if !issues.is_empty() { return Err(issues.join("\n")); }
     let io = |what: &str| {
         let what = what.to_string();
         move |e: std::io::Error| format!("{what}: {e}")
@@ -135,8 +137,7 @@ pub fn build_game(project: &Project, log: &Log) -> Result<PathBuf, String> {
         .and_then(|d| d.parent().map(|p| p.to_path_buf()))
         .unwrap_or_else(|| engine_root().join("target"));
     let player = target.join(profile).join(player_name);
-    let own_profile = if cfg!(debug_assertions) { "debug" } else { "release" };
-    if !player.exists() || profile != own_profile {
+    {
         say(log, Level::Info, format!("Building the player ({profile})..."));
         let mut cmd = std::process::Command::new("cargo");
         cmd.args(["build", "-p", "kvas_player"]).current_dir(engine_root());
@@ -192,29 +193,32 @@ Run {exe_name}. Keep game.pak, {} and icon.png in the same folder.
         project.script_lib_name()
     );
     let _ = std::fs::write(out.join("README.txt"), readme);
-    verify_build(&out, &exe_name, log);
+    verify_build(&out, &exe_name, log)?;
     say(log, Level::Info, format!("Game built: {}", out.join(&exe_name).display()));
     Ok(out)
 }
 
 /// Starts the built game for a few seconds and reports whether it stayed up (a smoke test of the standalone build).
-fn verify_build(out: &Path, exe_name: &str, log: &Log) {
+fn verify_build(out: &Path, exe_name: &str, log: &Log) -> Result<(), String> {
+    let report = out.join(format!("smoke-report-{}.json", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|e| e.to_string())?.as_millis()));
     let mut cmd = std::process::Command::new(out.join(exe_name));
+    cmd.arg("--smoke-report").arg(&report);
     cmd.current_dir(out).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null());
-    let Ok(mut child) = cmd.spawn() else {
-        say(log, Level::Warn, "The built game could not be started");
-        return;
-    };
-    for _ in 0..30 {
+    let mut child = cmd.spawn().map_err(|e| format!("built game cannot start: {e}"))?;
+    for _ in 0..240 {
         std::thread::sleep(std::time::Duration::from_millis(250));
         if let Ok(Some(status)) = child.try_wait() {
-            say(log, Level::Error, format!("The built game exited right away ({status})"));
-            return;
+            if !status.success() { return Err(format!("built game smoke exited with {status}")); }
+            let text = std::fs::read_to_string(&report).map_err(|e| format!("smoke report missing: {e}"))?;
+            let result: serde_json::Value = serde_json::from_str(&text).map_err(|e| e.to_string())?;
+            if result["ok"] != true { return Err(format!("built game smoke failed: {}", result["errors"])); }
+            say(log, Level::Info, format!("Smoke passed: {} rendered frames; report {}", result["rendered_frames"], report.display()));
+            return Ok(());
         }
     }
     let _ = child.kill();
     let _ = child.wait();
-    say(log, Level::Info, "Smoke test passed: the built game starts and keeps running");
+    Err("built game did not produce a successful rendered-frame report within 60 seconds".into())
 }
 
 /// The icon of the built game: `icon.png` (or `icon.ico`) in the project folder, else the Kvas logo.

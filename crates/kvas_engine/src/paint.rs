@@ -96,6 +96,16 @@ impl PaintMaps {
         Some(([m.width, m.height], m.rgba.clone(), m.version))
     }
 
+    /// Restores an undo snapshot, incrementing the version so the renderer uploads it again.
+    /// Rejects empty/oversized images and mismatched RGBA lengths without changing the map.
+    pub fn restore(&self, name: &str, size: [u32; 2], rgba: Vec<u8>) -> bool {
+        if size.iter().any(|&v| v == 0 || v > 8192) || rgba.len() != size[0] as usize * size[1] as usize * 4 { return false; }
+        let mut maps = self.maps.lock().unwrap();
+        let version = maps.get(name).map_or(1, |m| m.version.saturating_add(1));
+        maps.insert(name.into(), PaintMap { width: size[0], height: size[1], rgba, version, dirty: true });
+        true
+    }
+
     /// Current version of a mask (0 when missing).
     pub fn version(&self, name: &str) -> u64 {
         self.maps.lock().unwrap().get(name).map_or(0, |m| m.version)

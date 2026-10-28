@@ -757,6 +757,9 @@ macro_rules! name_components {
 }
 
 pub use crate::audio::AudioSource;
+pub use crate::gui::{UiElement, UiKind};
+pub use crate::mesh_edit::EditableMesh;
+pub use crate::neural::NeuralAgent;
 pub use crate::animation::TransformAnimation;
 pub use crate::cloth::Cloth;
 pub use crate::gameplay::{Lifetime, Tags, Visibility};
@@ -771,6 +774,9 @@ pub use crate::voxel::{VoxelClouds, VoxelSmoke};
 pub use crate::water::VoxelWater;
 
 name_components!(
+    UiElement,
+    EditableMesh,
+    NeuralAgent,
     TransformAnimation,
     ParticleEmitter,
     TexturePaint,

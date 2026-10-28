@@ -30,22 +30,22 @@ pub const MORE_SPECS: &[NodeSpec] = &[
     // ---- utility
     node!("Reroute", "Utility", [("Value", ZERO)], [], "{0}"),
     node!("Comment", "Utility", [], [], "vec3<f32>(0.0)"),
-    node!("Inspector number", "Utility", [], [("slot 0-7 (user N)", 0.0, 0.0, 7.0), ("default", 1.0, -1000.0, 1000.0)], "vec3<f32>(0.0)"),
+    node!("Inspector number", "Utility", [], [("slot 0-7 (user N)", 0.0, 0.0, 7.0), ("default", 1.0, -1000.0, 1000.0), ("zero uses default (0/1)", 1.0, 0.0, 1.0)], "vec3<f32>(0.0)"),
     node!("Time scaled", "Utility", [], [("speed", 1.0, -50.0, 50.0)], "vec3<f32>(globals.time.x * {p0})"),
     node!("Pulse", "Utility", [], [("hertz", 1.0, 0.0, 20.0)], "vec3<f32>(0.5 + 0.5 * sin(globals.time.x * {p0} * 6.2831853))"),
     // ---- scene inputs (surface shaders)
-    node!("View direction", "Input", [], [], "view"),
-    node!("Reflection", "Input", [], [], "reflect(-view, n)"),
-    node!("Sky reflection", "Input", [], [], "env_color(reflect(-view, n))"),
-    node!("Sun direction", "Input", [], [], "normalize(globals.sun_dir.xyz)"),
-    node!("Sun colour", "Input", [], [], "globals.sun_color.rgb"),
-    node!("Ambient light", "Input", [], [], "globals.ambient.rgb"),
-    node!("Shadow", "Input", [], [], "vec3<f32>(shadow_factor(in.world_pos, n))"),
-    node!("Lighting", "Input", [("Base", "vec3<f32>(0.8)")], [("roughness", 0.6, 0.0, 1.0)], "lighting(in.world_pos, n, {0}, {p0})"),
-    node!("Camera position", "Input", [], [], "globals.camera_pos.xyz"),
-    node!("Object position", "Input", [], [], "object.model[3].xyz"),
-    node!("Object random", "Input", [], [], "vec3<f32>(hash31(object.model[3].xyz))"),
-    node!("Screen position", "Input", [], [], "vec3<f32>(in.clip.xy / 1000.0, 0.0)"),
+    node!("View direction", "Geometry", [], [], "view"),
+    node!("Reflection", "Geometry", [], [], "reflect(-view, n)"),
+    node!("Sky reflection", "Light", [], [], "env_color(reflect(-view, n))"),
+    node!("Sun direction", "Light", [], [], "normalize(globals.sun_dir.xyz)"),
+    node!("Sun colour", "Light", [], [], "globals.sun_color.rgb"),
+    node!("Ambient light", "Light", [], [], "globals.ambient.rgb"),
+    node!("Shadow", "Light", [], [], "vec3<f32>(shadow_factor(in.world_pos, n))"),
+    node!("Lighting", "Light", [("Base", "vec3<f32>(0.8)")], [("roughness", 0.6, 0.0, 1.0)], "lighting(in.world_pos, n, {0}, {p0})"),
+    node!("Camera position", "Geometry", [], [], "globals.camera_pos.xyz"),
+    node!("Object position", "Geometry", [], [], "object.model[3].xyz"),
+    node!("Object random", "Geometry", [], [], "vec3<f32>(hash31(object.model[3].xyz))"),
+    node!("Screen position", "Geometry", [], [], "vec3<f32>(in.clip.xy * globals.viewport.zw, 0.0)"),
     // ---- camera effect inputs
     node!("Screen color", "Effect", [("Coords", COORD)], [], "scene_color(({0}).xy)"),
     node!("Pixel colour", "Effect", [], [], "color"),
@@ -83,7 +83,7 @@ pub const MORE_SPECS: &[NodeSpec] = &[
     node!("Distance", "Vector", [("A", ZERO), ("B", ZERO)], [], "vec3<f32>(distance({0}, {1}))"),
     node!("Dot", "Vector", [("A", ZERO), ("B", ZERO)], [], "vec3<f32>(dot({0}, {1}))"),
     node!("Cross", "Vector", [("A", ZERO), ("B", ZERO)], [], "cross({0}, {1})"),
-    node!("Normalize", "Vector", [("Vector", "vec3<f32>(0.0, 1.0, 0.0)")], [], "normalize({0} + vec3<f32>(0.00001))"),
+    node!("Normalize", "Vector", [("Vector", "vec3<f32>(0.0, 1.0, 0.0)")], [], "({0} / max(length({0}), 0.00001))"),
     node!("Reflect", "Vector", [("Incident", "vec3<f32>(0.0, -1.0, 0.0)"), ("Normal", "vec3<f32>(0.0, 1.0, 0.0)")], [], "reflect({0}, normalize({1} + vec3<f32>(0.00001)))"),
     node!("Rotate coords", "Vector", [("Coords", COORD)], [("angle", 0.0, -6.3, 6.3)], "vec3<f32>(lib_rot2(({0}).xy - vec2<f32>(0.5), {p0}) + vec2<f32>(0.5), 0.0)"),
     node!("Scale offset coords", "Vector", [("Coords", COORD)], [("scale x", 1.0, 0.01, 100.0), ("scale y", 1.0, 0.01, 100.0), ("offset x", 0.0, -100.0, 100.0), ("offset y", 0.0, -100.0, 100.0)], "vec3<f32>((({0}).xy - vec2<f32>(0.5)) * vec2<f32>({p0}, {p1}) + vec2<f32>(0.5) + vec2<f32>({p2}, {p3}), 0.0)"),
@@ -92,8 +92,8 @@ pub const MORE_SPECS: &[NodeSpec] = &[
     node!("Mirror tile", "Vector", [("Coords", COORD)], [("tiles", 2.0, 0.1, 50.0)], "vec3<f32>(abs(fract(({0}).xy * {p0} * 0.5) * 2.0 - vec2<f32>(1.0)), 0.0)"),
     node!("Flipbook", "Vector", [("Coords", COORD)], [("columns", 4.0, 1.0, 32.0), ("rows", 4.0, 1.0, 32.0), ("frames per second", 8.0, 0.0, 60.0)], "vec3<f32>(lib_flipbook(({0}).xy, {p0}, {p1}, floor(globals.time.x * {p2})), 0.0)"),
     node!("Distort coords", "Vector", [("Coords", COORD), ("Amount", "vec3<f32>(0.05)")], [("scale", 4.0, 0.1, 100.0)], "({0} + vec3<f32>(lib_noise(({0}).xy * {p0}) - 0.5, lib_noise(({0}).xy * {p0} + vec2<f32>(7.3, 1.7)) - 0.5, 0.0) * ({1}).x)"),
-    node!("Normal map", "Vector", [("Map", "vec3<f32>(0.5, 0.5, 1.0)"), ("UV", COORD)], [("strength", 1.0, 0.0, 4.0)], "lib_normal_map(n, in.world_pos, ({1}).xy, {0}, {p0})"),
-    node!("Bump from height", "Vector", [("Height", ZERO)], [("strength", 1.0, 0.0, 10.0)], "lib_bump(({0}).x, in.world_pos, n, {p0})"),
+    node!("Normal map", "Normal", [("Map", "vec3<f32>(0.5, 0.5, 1.0)"), ("UV", COORD)], [("strength", 1.0, 0.0, 4.0)], "lib_normal_map(n, in.world_pos, ({1}).xy, {0}, {p0})"),
+    node!("Bump from height", "Normal", [("Height", ZERO)], [("strength", 1.0, 0.0, 10.0)], "lib_bump(({0}).x, in.world_pos, n, {p0})"),
     // ---- colour
     node!("Overlay", "Colour", [("Base", HALF), ("Blend", HALF)], [], "lib_overlay(clamp({0}, vec3<f32>(0.0), vec3<f32>(1.0)), {1})"),
     node!("Screen blend", "Colour", [("Base", HALF), ("Blend", HALF)], [], "lib_screen({0}, {1})"),
@@ -105,11 +105,11 @@ pub const MORE_SPECS: &[NodeSpec] = &[
     node!("Threshold", "Colour", [("Colour", HALF)], [("level", 0.5, 0.0, 1.0)], "vec3<f32>(step({p0}, lib_luma({0})))"),
     node!("Tone map", "Colour", [("Colour", HALF)], [], "lib_tonemap({0})"),
     // ---- procedural
-    node!("Noise 3D", "Procedural", [("Coords", WORLD)], [("scale", 2.0, 0.01, 100.0)], "vec3<f32>(fbm3({0} * {p0}, 4))"),
-    node!("Ridged noise", "Procedural", [("Coords", WORLD)], [("scale", 2.0, 0.01, 100.0)], "vec3<f32>(lib_ridged(({0}).xz * {p0}))"),
-    node!("Turbulence", "Procedural", [("Coords", WORLD)], [("scale", 2.0, 0.01, 100.0)], "vec3<f32>(lib_turbulence(({0}).xz * {p0}))"),
-    node!("White noise", "Procedural", [("Coords", COORD)], [("cells", 64.0, 1.0, 1000.0)], "vec3<f32>(lib_hash21(floor(({0}).xy * {p0})))"),
-    node!("Sparkle", "Procedural", [("Coords", COORD)], [("cells", 80.0, 4.0, 1000.0), ("density", 0.03, 0.0, 1.0)], "vec3<f32>(step(1.0 - {p1}, lib_hash21(floor(({0}).xy * {p0}))))"),
+    node!("Noise 3D", "Noise", [("Coords", WORLD)], [("scale", 2.0, 0.01, 100.0)], "vec3<f32>(fbm3({0} * {p0}, 4))"),
+    node!("Ridged noise", "Noise", [("Coords", WORLD)], [("scale", 2.0, 0.01, 100.0)], "vec3<f32>(lib_ridged(({0}).xz * {p0}))"),
+    node!("Turbulence", "Noise", [("Coords", WORLD)], [("scale", 2.0, 0.01, 100.0)], "vec3<f32>(lib_turbulence(({0}).xz * {p0}))"),
+    node!("White noise", "Noise", [("Coords", COORD)], [("cells", 64.0, 1.0, 1000.0)], "vec3<f32>(lib_hash21(floor(({0}).xy * {p0})))"),
+    node!("Sparkle", "Noise", [("Coords", COORD)], [("cells", 80.0, 4.0, 1000.0), ("density", 0.03, 0.0, 1.0)], "vec3<f32>(step(1.0 - {p1}, lib_hash21(floor(({0}).xy * {p0}))))"),
     node!("Caustics", "Procedural", [("Coords", WORLD)], [("scale", 1.5, 0.05, 50.0), ("speed", 0.6, 0.0, 10.0)], "vec3<f32>(lib_caustic(({0}).xz * {p0}, globals.time.x * {p1}))"),
     node!("Hexagons", "Procedural", [("Coords", COORD)], [("scale", 6.0, 0.5, 100.0), ("edge width", 0.06, 0.0, 0.5)], "vec3<f32>(smoothstep(0.5 - {p1}, 0.5, lib_hex(({0}).xy * {p0})))"),
     node!("Wave rings", "Procedural", [("Coords", COORD)], [("frequency", 20.0, 1.0, 200.0), ("speed", 2.0, -20.0, 20.0)], "vec3<f32>(sin(length(({0}).xy - vec2<f32>(0.5)) * {p0} - globals.time.x * {p1}) * 0.5 + 0.5)"),
@@ -124,7 +124,7 @@ pub const MORE_SPECS: &[NodeSpec] = &[
 
 /// Nodes that only exist for surfaces (they read the mesh, light or camera).
 pub const MESH_ONLY: &[&str] = &[
-    "Texture", "UV", "World position", "Normal", "Height", "Object colour", "Fresnel", "Slope mask", "Sun light", "Camera distance", "View direction", "Reflection", "Sky reflection", "Sun direction", "Sun colour",
+    "Texture", "World position", "Normal", "Height", "Object colour", "Fresnel", "Slope mask", "Sun light", "Camera distance", "View direction", "Reflection", "Sky reflection", "Sun direction", "Sun colour",
     "Ambient light", "Shadow", "Lighting", "Camera position", "Object position", "Object random", "Screen position", "Normal map", "Bump from height", "Noise 3D", "Ridged noise", "Turbulence", "Caustics", "Wood rings",
     "Marble veins",
 ];
@@ -178,4 +178,9 @@ pub fn help(kind: &str) -> &'static str {
         "Sky reflection" => "What the sky looks like in the mirror direction.",
         _ => "",
     }
+}
+
+/// Help text in the requested language (new nodes have Russian text; the rest fall back to English).
+pub fn help_for(kind: &str, russian: bool) -> &'static str {
+    crate::material_nodes_ext::help(kind, russian).unwrap_or_else(|| help(kind))
 }

@@ -79,7 +79,7 @@ pub fn available(kind: &str, mode: GraphMode) -> bool {
         return kind == mode.output_kind();
     }
     match mode {
-        GraphMode::Effect => !MESH_ONLY.contains(&kind),
+        GraphMode::Effect => !MESH_ONLY.contains(&kind) && !crate::material_nodes_ext::MESH_ONLY.contains(&kind),
         _ => !EFFECT_ONLY.contains(&kind),
     }
 }
@@ -108,6 +108,9 @@ pub struct MatNode {
     /// Frame size on the canvas (Comment nodes).
     #[serde(default)]
     pub size: [f32; 2],
+    /// Show a small live preview of this node's result inside the node (editor only).
+    #[serde(default)]
+    pub preview: bool,
 }
 
 /// A whole material.
@@ -151,23 +154,23 @@ const ZERO: &str = "vec3<f32>(0.0)";
 
 /// Every node type.
 pub const SPECS: &[NodeSpec] = &[
-    NodeSpec { kind: "Output", category: "Output", inputs: &[("Base color", "vec3<f32>(0.8)"), ("Roughness", "vec3<f32>(0.6)"), ("Metallic", "vec3<f32>(0.0)"), ("Emission", "vec3<f32>(0.0)"), ("Alpha", "vec3<f32>(1.0)"), ("Occlusion", "vec3<f32>(1.0)"), ("Normal", "n")], params: &[], expr: "", color: false },
+    NodeSpec { kind: "Output", category: "Output", inputs: &[("Base color", "vec3<f32>(0.8)"), ("Roughness", "vec3<f32>(0.6)"), ("Metallic", "vec3<f32>(0.0)"), ("Emission", "vec3<f32>(0.0)"), ("Alpha", "vec3<f32>(1.0)"), ("Occlusion", "vec3<f32>(1.0)"), ("Normal", "n"), ("Height", "vec3<f32>(0.0)")], params: &[], expr: "", color: false },
     // inputs
     NodeSpec { kind: "Color", category: "Input", inputs: &[], params: &[("r", 0.8, 0.0, 1.0), ("g", 0.8, 0.0, 1.0), ("b", 0.8, 0.0, 1.0)], expr: "vec3<f32>({p0}, {p1}, {p2})", color: true },
     NodeSpec { kind: "Value", category: "Input", inputs: &[], params: &[("value", 0.5, -100.0, 100.0)], expr: "vec3<f32>({p0})", color: false },
     NodeSpec { kind: "Texture", category: "Input", inputs: &[("UV", COORD)], params: &[("slot (0 albedo, 1 normal, 2 ORM)", 0.0, 0.0, 2.0), ("tiling", 1.0, 0.01, 100.0)], expr: "", color: false },
-    NodeSpec { kind: "UV", category: "Input", inputs: &[], params: &[], expr: "vec3<f32>(in.uv, 0.0)", color: false },
-    NodeSpec { kind: "World position", category: "Input", inputs: &[], params: &[], expr: "in.world_pos", color: false },
-    NodeSpec { kind: "Normal", category: "Input", inputs: &[], params: &[], expr: "n", color: false },
-    NodeSpec { kind: "Height", category: "Input", inputs: &[], params: &[], expr: "vec3<f32>(in.world_pos.y)", color: false },
+    NodeSpec { kind: "UV", category: "Geometry", inputs: &[], params: &[], expr: "vec3<f32>(in.uv, 0.0)", color: false },
+    NodeSpec { kind: "World position", category: "Geometry", inputs: &[], params: &[], expr: "in.world_pos", color: false },
+    NodeSpec { kind: "Normal", category: "Geometry", inputs: &[], params: &[], expr: "n", color: false },
+    NodeSpec { kind: "Height", category: "Geometry", inputs: &[], params: &[], expr: "vec3<f32>(in.world_pos.y)", color: false },
     NodeSpec { kind: "Time", category: "Input", inputs: &[], params: &[], expr: "vec3<f32>(globals.time.x)", color: false },
     NodeSpec { kind: "Object colour", category: "Input", inputs: &[], params: &[], expr: "object.color.rgb", color: false },
-    NodeSpec { kind: "Fresnel", category: "Input", inputs: &[("Power", "vec3<f32>(3.0)")], params: &[], expr: "vec3<f32>(pow(1.0 - max(dot(n, view), 0.0), max({0}.x, 0.01)))", color: false },
+    NodeSpec { kind: "Fresnel", category: "Light", inputs: &[("Power", "vec3<f32>(3.0)")], params: &[], expr: "vec3<f32>(pow(1.0 - max(dot(n, view), 0.0), max({0}.x, 0.01)))", color: false },
     // maths
     NodeSpec { kind: "Add", category: "Math", inputs: &[("A", ZERO), ("B", ZERO)], params: &[], expr: "({0} + {1})", color: false },
     NodeSpec { kind: "Subtract", category: "Math", inputs: &[("A", ZERO), ("B", ZERO)], params: &[], expr: "({0} - {1})", color: false },
     NodeSpec { kind: "Multiply", category: "Math", inputs: &[("A", "vec3<f32>(1.0)"), ("B", "vec3<f32>(1.0)")], params: &[], expr: "({0} * {1})", color: false },
-    NodeSpec { kind: "Divide", category: "Math", inputs: &[("A", "vec3<f32>(1.0)"), ("B", "vec3<f32>(1.0)")], params: &[], expr: "({0} / max({1}, vec3<f32>(0.0001)))", color: false },
+    NodeSpec { kind: "Divide", category: "Math", inputs: &[("A", "vec3<f32>(1.0)"), ("B", "vec3<f32>(1.0)")], params: &[], expr: "({0} / select(vec3<f32>(0.0001), {1}, abs({1}) >= vec3<f32>(0.0001)))", color: false },
     NodeSpec { kind: "Mix", category: "Math", inputs: &[("A", ZERO), ("B", "vec3<f32>(1.0)"), ("Factor", "vec3<f32>(0.5)")], params: &[], expr: "mix({0}, {1}, clamp({2}.x, 0.0, 1.0))", color: false },
     NodeSpec { kind: "Power", category: "Math", inputs: &[("Value", "vec3<f32>(0.5)"), ("Exponent", "vec3<f32>(2.0)")], params: &[], expr: "pow(max({0}, vec3<f32>(0.0)), {1})", color: false },
     NodeSpec { kind: "Clamp", category: "Math", inputs: &[("Value", ZERO)], params: &[("min", 0.0, -100.0, 100.0), ("max", 1.0, -100.0, 100.0)], expr: "clamp({0}, vec3<f32>({p0}), vec3<f32>({p1}))", color: false },
@@ -185,15 +188,15 @@ pub const SPECS: &[NodeSpec] = &[
     NodeSpec { kind: "Gradient", category: "Colour", inputs: &[("Position", "vec3<f32>(0.5)"), ("From", "vec3<f32>(0.05, 0.1, 0.3)"), ("To", "vec3<f32>(0.9, 0.6, 0.2)")], params: &[], expr: "mix({1}, {2}, clamp({0}.x, 0.0, 1.0))", color: false },
     NodeSpec { kind: "To grey", category: "Colour", inputs: &[("Colour", "vec3<f32>(0.5)")], params: &[], expr: "vec3<f32>(lib_luma({0}))", color: false },
     // procedural
-    NodeSpec { kind: "Noise", category: "Procedural", inputs: &[("Coords", "in.world_pos")], params: &[("scale", 2.0, 0.01, 100.0)], expr: "vec3<f32>(lib_fbm({0}.xz * {p0}))", color: false },
+    NodeSpec { kind: "Noise", category: "Noise", inputs: &[("Coords", "in.world_pos")], params: &[("scale", 2.0, 0.01, 100.0)], expr: "vec3<f32>(lib_fbm({0}.xz * {p0}))", color: false },
     NodeSpec { kind: "Checker", category: "Procedural", inputs: &[("Coords", COORD)], params: &[("scale", 8.0, 1.0, 200.0)], expr: "vec3<f32>(abs((floor({0}.x * {p0}) + floor({0}.y * {p0})) % 2.0))", color: false },
     NodeSpec { kind: "Stripes", category: "Procedural", inputs: &[("Coords", COORD)], params: &[("scale", 10.0, 1.0, 200.0), ("sharpness", 0.5, 0.0, 1.0)], expr: "vec3<f32>(smoothstep(0.5 - {p1} * 0.5, 0.5 + {p1} * 0.5 + 0.001, abs(fract({0}.x * {p0}) - 0.5) * 2.0))", color: false },
-    NodeSpec { kind: "Voronoi", category: "Procedural", inputs: &[("Coords", "in.world_pos")], params: &[("scale", 3.0, 0.01, 100.0)], expr: "vec3<f32>(lib_voronoi({0}.xz * {p0}).x)", color: false },
-    NodeSpec { kind: "Cell colour", category: "Procedural", inputs: &[("Coords", "in.world_pos")], params: &[("scale", 3.0, 0.01, 100.0)], expr: "vec3<f32>(lib_voronoi({0}.xz * {p0}).y, lib_voronoi({0}.xz * {p0} + 11.0).y, lib_voronoi({0}.xz * {p0} + 23.0).y)", color: false },
+    NodeSpec { kind: "Voronoi", category: "Noise", inputs: &[("Coords", "in.world_pos")], params: &[("scale", 3.0, 0.01, 100.0)], expr: "vec3<f32>(lib_voronoi({0}.xz * {p0}).x)", color: false },
+    NodeSpec { kind: "Cell colour", category: "Noise", inputs: &[("Coords", "in.world_pos")], params: &[("scale", 3.0, 0.01, 100.0)], expr: "vec3<f32>(lib_voronoi({0}.xz * {p0}).y, lib_voronoi({0}.xz * {p0} + 11.0).y, lib_voronoi({0}.xz * {p0} + 23.0).y)", color: false },
     NodeSpec { kind: "Bricks", category: "Procedural", inputs: &[("Coords", COORD)], params: &[("scale", 6.0, 1.0, 100.0), ("mortar", 0.06, 0.0, 0.3)], expr: "vec3<f32>(smoothstep({p1}, {p1} + 0.02, min(min(fract({0}.x * {p0} + 0.5 * (floor({0}.y * {p0} * 2.0) % 2.0)), 1.0 - fract({0}.x * {p0} + 0.5 * (floor({0}.y * {p0} * 2.0) % 2.0))), min(fract({0}.y * {p0} * 2.0), 1.0 - fract({0}.y * {p0} * 2.0)))))", color: false },
-    NodeSpec { kind: "Slope mask", category: "Procedural", inputs: &[], params: &[("from", 0.5, 0.0, 1.0), ("to", 0.9, 0.0, 1.0)], expr: "vec3<f32>(smoothstep({p0}, {p1} + 0.001, n.y))", color: false },
-    NodeSpec { kind: "Sun light", category: "Input", inputs: &[], params: &[], expr: "vec3<f32>(max(dot(n, normalize(globals.sun_dir.xyz)), 0.0))", color: false },
-    NodeSpec { kind: "Camera distance", category: "Input", inputs: &[], params: &[("range", 50.0, 1.0, 1000.0)], expr: "vec3<f32>(clamp(distance(globals.camera_pos.xyz, in.world_pos) / {p0}, 0.0, 1.0))", color: false },
+    NodeSpec { kind: "Slope mask", category: "Geometry", inputs: &[], params: &[("from", 0.5, 0.0, 1.0), ("to", 0.9, 0.0, 1.0)], expr: "vec3<f32>(smoothstep({p0}, {p1} + 0.001, n.y))", color: false },
+    NodeSpec { kind: "Sun light", category: "Light", inputs: &[], params: &[], expr: "vec3<f32>(max(dot(n, normalize(globals.sun_dir.xyz)), 0.0))", color: false },
+    NodeSpec { kind: "Camera distance", category: "Geometry", inputs: &[], params: &[("range", 50.0, 1.0, 1000.0)], expr: "vec3<f32>(clamp(distance(globals.camera_pos.xyz, in.world_pos) / {p0}, 0.0, 1.0))", color: false },
     NodeSpec { kind: "Fract", category: "Math", inputs: &[("Value", "vec3<f32>(0.5)")], params: &[], expr: "fract({0})", color: false },
     NodeSpec { kind: "Step", category: "Math", inputs: &[("Value", "vec3<f32>(0.5)")], params: &[("edge", 0.5, 0.0, 1.0)], expr: "step(vec3<f32>({p0}), {0})", color: false },
     NodeSpec { kind: "Remap", category: "Math", inputs: &[("Value", "vec3<f32>(0.5)")], params: &[("in min", 0.0, -10.0, 10.0), ("in max", 1.0, -10.0, 10.0), ("out min", 0.0, -10.0, 10.0), ("out max", 1.0, -10.0, 10.0)], expr: "(({0}) - vec3<f32>({p0})) / vec3<f32>({p1} - {p0} + 0.00001) * vec3<f32>({p3} - {p2}) + vec3<f32>({p2})", color: false },
@@ -202,12 +205,12 @@ pub const SPECS: &[NodeSpec] = &[
 
 /// Looks a node type up by name.
 pub fn spec(kind: &str) -> Option<&'static NodeSpec> {
-    SPECS.iter().chain(crate::material_nodes::MORE_SPECS.iter()).find(|s| s.kind == kind)
+    all_specs().find(|s| s.kind == kind)
 }
 
 /// Every node type of both lists.
 pub fn all_specs() -> impl Iterator<Item = &'static NodeSpec> {
-    SPECS.iter().chain(crate::material_nodes::MORE_SPECS.iter())
+    SPECS.iter().chain(crate::material_nodes::MORE_SPECS.iter()).chain(crate::material_nodes_ext::EXT_SPECS.iter())
 }
 
 impl MaterialGraph {
@@ -241,6 +244,7 @@ impl MaterialGraph {
             params: spec.params.iter().map(|p| p.1).collect(),
             text: if kind == "Comment" { "Comment".into() } else { String::new() },
             size: if kind == "Comment" { [260.0, 160.0] } else { [0.0, 0.0] },
+            preview: matches!(spec.category, "Noise" | "Procedural"),
         });
         id
     }
@@ -298,6 +302,7 @@ impl MaterialGraph {
     /// Parses a `.kmat` file.
     pub fn from_json(text: &str) -> Result<Self, String> {
         let mut g: MaterialGraph = serde_json::from_str(text).map_err(|e| e.to_string())?;
+        if g.nodes.iter().any(|n| n.id >= u32::MAX - 1) { return Err("node id space is exhausted".into()); }
         // Files written by older or hand-edited versions may have too few sockets or parameters.
         for n in &mut g.nodes {
             if let Some(spec) = spec(&n.kind) {
@@ -419,7 +424,7 @@ impl Gen<'_> {
         if !available(&node.kind, self.graph.mode) {
             return Err(format!("the node '{}' cannot be used in this kind of graph", node.kind));
         }
-        if self.vertex && matches!(node.kind.as_str(), "Texture" | "Normal map" | "Bump from height" | "Shadow" | "Lighting" | "Sky reflection") {
+        if self.vertex && (matches!(node.kind.as_str(), "Texture" | "Normal map" | "Bump from height" | "Shadow" | "Lighting" | "Sky reflection" | "Screen position") || crate::material_nodes_ext::FRAGMENT_ONLY.contains(&node.kind.as_str())) {
             return Err(format!("'{}' requires fragment-stage sampling or derivatives and cannot feed Vertex offset", node.kind));
         }
         self.visiting.push(id);
@@ -439,12 +444,18 @@ impl Gen<'_> {
             format!("textureSample({tex}, albedo_smp, ({}).xy * {tiling}).rgb", inputs[0])
         } else if node.kind == "Inspector number" {
             let slot = node.params.first().copied().unwrap_or(0.0).round().clamp(0.0, 7.0) as usize;
+            if self.graph.mode == GraphMode::Effect && slot > 3 { return Err("camera effect Inspector number has only slots 0..3 (params.xyzw)".into()); }
             let default = f(node.params.get(1).copied().unwrap_or(1.0));
             let comp = ["x", "y", "z", "w"][slot % 4];
             let source = if self.graph.mode == GraphMode::Effect { format!("params.{comp}") } else { format!("object.user{}.{comp}", slot / 4) };
-            format!("vec3<f32>(select({source}, {default}, {source} == 0.0))")
+            if node.params.get(2).copied().unwrap_or(1.0) >= 0.5 { format!("vec3<f32>(select({source}, {default}, {source} == 0.0))") }
+            else { format!("vec3<f32>({source})") }
         } else {
             let mut e = spec.expr.to_string();
+            if e.contains("{tex}") {
+                let slot = node.params.first().copied().unwrap_or(0.0).round() as i32;
+                e = e.replace("{tex}", match slot { 1 => "normal_tex", 2 => "orm_tex", _ => "albedo_tex" });
+            }
             for (i, input) in inputs.iter().enumerate() {
                 e = e.replace(&format!("{{{i}}}"), &format!("({input})"));
             }
@@ -501,13 +512,14 @@ fn fs_main(in: VsOut) -> @location(0) vec4<f32> {{
     let emission = max({3}, vec3<f32>(0.0));
     let alpha = clamp(({4}).x, 0.0, 1.0);
     let occlusion = clamp(({5}).x, 0.0, 1.0);
-    let nrm = normalize({6} + vec3<f32>(0.00001));
+    let bumped = lib_bump(({7}).x, in.world_pos, n, 1.0);
+    let nrm = normalize({6} + (bumped - n) + vec3<f32>(0.00001));
     if (alpha < 0.003) {{ discard; }}
     let lit = lighting_pbr(in.world_pos, nrm, albedo, rough, metal, occlusion) + emission;
     return vec4<f32>(to_display_at(apply_fog(lit, in.world_pos), in.clip), alpha * object.color.a);
 }}
 ",
-            results[0], results[1], results[2], results[3], results[4], results[5], results[6]
+            results[0], results[1], results[2], results[3], results[4], results[5], results[6], results[7]
         )),
         GraphMode::Shader => {
             // Vertex stage: runs the nodes feeding "Vertex offset" with the standard vertex output as `in`.

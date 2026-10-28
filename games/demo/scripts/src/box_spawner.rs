@@ -1,6 +1,7 @@
 //! BoxSpawner script.
 
 use kvas_engine::prelude::*;
+use kvas_engine::timer::*;
 
 /// Press E to drop a physics box from above the spawner: shows runtime spawning.
 #[derive(Default)]

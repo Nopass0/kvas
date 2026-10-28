@@ -12,6 +12,7 @@ use glam::Vec3;
 use kvas_ecs::World;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+pub use crate::voxel_mesh::mesh_grid_greedy;
 
 const FACES: [(Vec3, Vec3, Vec3); 6] = [
     (Vec3::X, Vec3::Y, Vec3::Z),
@@ -33,6 +34,7 @@ pub fn mesh_grid(
     shrink: bool,
     density: impl Fn(usize, usize, usize) -> f32,
 ) -> MeshData {
+    if !shrink { return mesh_grid_greedy(dim, cell, origin, threshold, density); }
     let filled = |x: i64, y: i64, z: i64| -> f32 {
         if x < 0 || y < 0 || z < 0 || x >= dim[0] as i64 || y >= dim[1] as i64 || z >= dim[2] as i64 {
             return 0.0;
@@ -425,14 +427,14 @@ mod tests {
         let one = mesh_grid([1, 1, 1], 1.0, Vec3::ZERO, 0.5, false, |_, _, _| 1.0);
         assert_eq!(one.indices.len() / 3, 12);
         let two = mesh_grid([2, 1, 1], 1.0, Vec3::ZERO, 0.5, false, |_, _, _| 1.0);
-        assert_eq!(two.indices.len() / 3, 20, "10 visible quads, the shared pair is culled");
+        assert_eq!(two.indices.len() / 3, 12, "coplanar outer faces merge into six quads");
     }
 
     #[test]
     fn solid_block_only_pays_for_its_surface() {
         let n = 10;
         let m = mesh_grid([n, n, n], 1.0, Vec3::ZERO, 0.5, false, |_, _, _| 1.0);
-        assert_eq!(m.indices.len() / 3, 6 * n * n * 2, "only the outer shell is meshed");
+        assert_eq!(m.indices.len() / 3, 12, "the entire shell merges into six quads");
     }
 
     #[test]

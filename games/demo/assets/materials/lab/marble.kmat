@@ -1,0 +1,171 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "Output",
+      "pos": [
+        420.0,
+        80.0
+      ],
+      "inputs": [
+        {
+          "link": 4,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "id": 2,
+      "kind": "Color",
+      "pos": [
+        60.0,
+        60.0
+      ],
+      "inputs": [],
+      "params": [
+        0.8,
+        0.83,
+        0.9
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "id": 3,
+      "kind": "Marble veins",
+      "pos": [
+        10.0,
+        220.0
+      ],
+      "inputs": [
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        1.5,
+        4.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "id": 4,
+      "kind": "Multiply",
+      "pos": [
+        220.0,
+        80.0
+      ],
+      "inputs": [
+        {
+          "link": 2,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 3,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "textures": [
+    "",
+    "",
+    ""
+  ],
+  "next_id": 5,
+  "mode": "material"
+}

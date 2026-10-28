@@ -5,6 +5,45 @@ use glam::Vec2;
 use kvas_engine::input::{Hud, Input, Key, MouseButton};
 use std::collections::HashSet;
 
+/// Bounds of a GUI component in a viewport, or `None` when hidden/invalid/behind the camera.
+pub fn ui_bounds(scene: &kvas_engine::scene::Scene, entity: kvas_ecs::Entity, element: &kvas_engine::gui::UiElement, viewport: egui::Rect, view: Option<&crate::View>) -> Option<egui::Rect> {
+    if !element.visible || !element.anchor.is_finite() || !element.offset.is_finite() || !element.size.is_finite() || element.size.x <= 0.0 || element.size.y <= 0.0 || !kvas_engine::hierarchy::is_visible(&scene.world, entity) { return None; }
+    let anchor = if element.world_space {
+        let position = kvas_engine::hierarchy::global_matrix(&scene.world, entity).w_axis.truncate();
+        let ndc = view?.project_visible(position)?;
+        viewport.min + egui::vec2((ndc.x * 0.5 + 0.5) * viewport.width(), (0.5 - ndc.y * 0.5) * viewport.height())
+    } else { viewport.min + egui::vec2(element.anchor.x * viewport.width(), element.anchor.y * viewport.height()) };
+    Some(egui::Rect::from_center_size(anchor + egui::vec2(element.offset.x, element.offset.y), egui::vec2(element.size.x.min(8192.0), element.size.y.min(8192.0))))
+}
+
+/// Draws screen UI and world-anchored labels; returns clicked `(entity, signal channel)` pairs.
+/// The host should send these through `Scene.signals` for delivery on the next simulation tick.
+pub fn draw_game_ui(ui: &mut egui::Ui, scene: &kvas_engine::scene::Scene, viewport: egui::Rect, view: Option<&crate::View>, interactive: bool) -> Vec<(kvas_ecs::Entity, String)> {
+    use kvas_engine::gui::UiKind;
+    let mut elements: Vec<_> = scene.world.iter::<kvas_engine::gui::UiElement>().collect();
+    elements.sort_by(|(ea, a), (eb, b)| a.anchor.z.total_cmp(&b.anchor.z).then(ea.cmp(eb)));
+    let color = |rgba: [f32; 4]| egui::Color32::from_rgba_unmultiplied((rgba[0].clamp(0.0, 1.0) * 255.0) as u8, (rgba[1].clamp(0.0, 1.0) * 255.0) as u8, (rgba[2].clamp(0.0, 1.0) * 255.0) as u8, (rgba[3].clamp(0.0, 1.0) * 255.0) as u8);
+    let painter = ui.painter().with_clip_rect(viewport);
+    let mut actions = Vec::new();
+    for (entity, element) in elements {
+        let Some(rect) = ui_bounds(scene, entity, element, viewport, view) else { continue };
+        let is_button = element.kind == UiKind::Button && element.interactable && interactive;
+        let response = ui.interact(rect.intersect(viewport), egui::Id::unique(("game-ui-element", entity.to_bits())), if is_button { egui::Sense::click() } else { egui::Sense::hover() });
+        let mut background = color(element.background);
+        if is_button && response.hovered() { background = background.gamma_multiply(1.25); }
+        painter.rect_filled(rect, 7.0, background);
+        if element.kind == UiKind::Progress {
+            let progress = egui::Rect::from_min_size(rect.min, egui::vec2(rect.width() * element.value.clamp(0.0, 1.0), rect.height()));
+            painter.rect_filled(progress, 7.0, color(element.foreground).gamma_multiply(0.7));
+        }
+        let text = painter.layout(element.text.clone(), egui::FontId::proportional(element.font_size.clamp(6.0, 200.0)), color(element.foreground), (rect.width() - 12.0).max(1.0));
+        painter.galley(rect.center() - text.size() * 0.5, text, color(element.foreground));
+        if is_button { response.clone().on_hover_cursor(egui::CursorIcon::PointingHand); }
+        if is_button && response.clicked() && !element.signal.trim().is_empty() { actions.push((entity, element.signal.clone())); }
+    }
+    actions
+}
+
 /// Feeds the current egui frame into the engine's `Input`. While a script has locked the cursor the
 /// mouse delta is the distance from `center`, where `apply_cursor` keeps the pointer.
 pub fn feed_input(input: &mut Input, i: &egui::InputState, center: Option<egui::Pos2>) {

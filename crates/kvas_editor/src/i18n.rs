@@ -63,7 +63,7 @@ pub fn current() -> Lang {
 
 fn ru() -> &'static HashMap<&'static str, &'static str> {
     static MAP: OnceLock<HashMap<&'static str, &'static str>> = OnceLock::new();
-    MAP.get_or_init(|| crate::lang_ru::RU.iter().copied().collect())
+    MAP.get_or_init(|| crate::lang_ru::RU.iter().chain(crate::lang_ru_nodes::RU_NODES.iter()).copied().collect())
 }
 
 /// Translates a UI string.

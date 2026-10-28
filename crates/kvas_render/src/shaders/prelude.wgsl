@@ -18,6 +18,7 @@ struct Globals {
     sky_b: vec4<f32>,        // x = cloud speed, y = debug view mode, z = PSX look
     sky_c: vec4<f32>,        // x = haze (turbidity), y = moon phase (0.5 full), z = aurora, w = milky way
     environment: vec4<f32>, // x enabled, y rotation radians, z intensity
+    viewport: vec4<f32>,    // physical width/height, reciprocal width/height
     point_pos: array<vec4<f32>, 8>,    // xyz position, w range
     point_color: array<vec4<f32>, 8>,  // rgb premultiplied by intensity, w = cos(inner cone) for spots
     point_dir: array<vec4<f32>, 8>,    // xyz spot direction, w = cos(outer cone); w < -1.5 means point light

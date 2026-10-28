@@ -59,6 +59,11 @@ pub struct Editor {
     pub selection: Option<Entity>,
     pub multi_selection: Vec<Entity>,
     pub animation_open: bool,
+    pub gui_open: bool,
+    pub help: crate::help::HelpState,
+    pub mesh_edit: crate::mesh_editor::MeshEditState,
+    pub image_editor: crate::image_editor::ImageEditorState,
+    pub training: crate::neural_editor::NeuralTraining,
     pub console: Console,
     pub scripts: ScriptState,
     pub prefs: crate::prefs::Prefs,
@@ -122,6 +127,11 @@ impl Editor {
             selection: None,
             multi_selection: Vec::new(),
             animation_open: false,
+            gui_open: false,
+            help: Default::default(),
+            mesh_edit: Default::default(),
+            image_editor: Default::default(),
+            training: Default::default(),
             console: Console::default(),
             scripts: ScriptState::new(),
             browser: Default::default(),
@@ -504,11 +514,18 @@ impl Editor {
     /// Gives a model object a box collider that matches the model bounds (a child, so the object can
     /// still get a RigidBody and the pivot does not matter).
     pub fn fit_collider(&mut self, e: Entity) -> bool {
-        let Some(mesh) = self.active().world.get::<MeshRenderer>(e).map(|m| m.mesh.clone()).filter(|m| !m.is_empty()) else { return false };
-        let Ok(data) = kvas_engine::mesh::MeshData::load(&self.assets, &mesh) else { return false };
+        let data = if let Some(dynamic) = self.active().world.get::<DynamicMesh>(e) { dynamic.data.clone() }
+            else {
+                let Some(mesh) = kvas_engine::components::mesh_key(&self.active().world, e) else { return false };
+                let Ok(data) = kvas_engine::mesh::MeshData::load(&self.assets, &mesh) else { return false };
+                std::sync::Arc::new(data)
+            };
         let (min, max) = data.bounds();
+        if !min.is_finite() || !max.is_finite() { return false; }
         let size = (max - min).max(Vec3::splat(0.02));
-        let child = hierarchy::spawn_named(&mut self.active_mut().world, "Collider");
+        self.begin_edit();
+        let existing = hierarchy::children(&self.active().world, e).into_iter().find(|&c| hierarchy::name_of(&self.active().world, c) == "Auto Collider" && self.active().world.has::<Collider>(c));
+        let child = existing.unwrap_or_else(|| hierarchy::spawn_named(&mut self.active_mut().world, "Auto Collider"));
         let world = &mut self.active_mut().world;
         world.insert(child, Transform::at((min + max) * 0.5));
         world.insert(child, Collider { size, ..Default::default() });

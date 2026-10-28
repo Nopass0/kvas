@@ -6,17 +6,24 @@ mod editor;
 mod export;
 mod fields;
 mod gizmo;
+mod gui_editor;
 mod hierarchy_panel;
 mod hub;
+mod help;
 mod i18n;
 mod icons;
 mod library;
 mod inspector;
+mod image_document;
+mod image_editor;
 mod lang_ru;
+mod lang_ru_nodes;
 mod build_dialog;
 mod code_editor;
 mod wgsl_edit;
 mod node_editor;
+mod mesh_editor;
+mod neural_editor;
 mod paint_tool;
 mod prefs;
 mod script_files;
@@ -153,7 +160,8 @@ struct App {
 
 impl App {
     fn shortcuts(&mut self, ctx: &egui::Context) {
-        if ctx.egui_wants_keyboard_input() || self.editor.mat.open || self.editor.code.open {
+        if ctx.input_mut(|i| i.consume_key(Modifiers::NONE, Key::F1)) { self.editor.help.open = true; }
+        if ctx.egui_wants_keyboard_input() || self.editor.mat.open || self.editor.code.open || self.editor.image_editor.open {
             return;
         }
         let ed = &mut self.editor;
@@ -166,9 +174,9 @@ impl App {
             ed.save_scene(false);
         }
         if consume(Modifiers::COMMAND | Modifiers::SHIFT, Key::Z) || consume(Modifiers::COMMAND, Key::Y) {
-            ed.redo();
+            if ed.paint.active { ed.paint_history(false); } else { ed.redo(); }
         } else if consume(Modifiers::COMMAND, Key::Z) {
-            ed.undo();
+            if ed.paint.active { ed.paint_history(true); } else { ed.undo(); }
         }
         if consume(Modifiers::COMMAND, Key::P) {
             if ed.is_playing() {
@@ -300,12 +308,18 @@ impl App {
                 }
             });
             ui.menu_button(t("Window"), |ui| {
+                if ui.button("GUI — интерфейс игры").clicked() { ed.gui_open = true; ui.close(); }
+                if ui.button("Изображения — слои и кисти").clicked() { ed.image_editor.open = true; ui.close(); }
+                if ui.button("Геометрия — редактировать выбранный объект").clicked() { ed.start_mesh_edit(); ui.close(); }
+                if ui.button("Анимация — таймлайн").clicked() { ed.animation_open = true; ui.close(); }
+                if ui.button("AI — обучение / веса").clicked() { ed.training.open = true; ui.close(); }
                 if ui.button(t("Reset Layout")).clicked() {
                     self.dock = default_layout();
                     ui.close();
                 }
             });
             ui.menu_button(t("Help"), |ui| {
+                if ui.button("Документация (F1)").clicked() { ed.help.open = true; ui.close(); }
                 ui.label(t("Scene view: RMB + WASD fly, MMB pan, scroll zoom,"));
                 ui.label(t("Alt+LMB orbit, F focus, W/E/R move/rotate/scale."));
                 ui.label(t("Ctrl while dragging a handle snaps."));
@@ -545,6 +559,11 @@ impl eframe::App for App {
         self.editor.build_dialog_ui(&ctx);
         self.editor.code_editor_ui(&ctx);
         self.editor.animation_window(&ctx);
+        self.editor.neural_training_window(&ctx);
+        self.editor.mesh_editor_window(&ctx);
+        self.editor.image_editor_window(&ctx);
+        self.editor.gui_window(&ctx);
+        self.editor.help_window(&ctx);
         ui_kit::drag_ghost(&ctx);
     }
 
@@ -621,6 +640,9 @@ fn main() -> eframe::Result {
             icons::install(&cc.egui_ctx);
             let rs = cc.wgpu_render_state.as_ref().expect("wgpu backend required");
             let mut editor = Editor::new(rs, project);
+            if let Some(i) = std::env::args().position(|a| a == "--scene") {
+                if let Some(path) = std::env::args().nth(i + 1) { editor.open_scene(&path); }
+            }
             if autoplay {
                 editor.start_play();
             }

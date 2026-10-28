@@ -1,7 +1,7 @@
 # Kvas: руководство с примерами
 
 Это подробный путеводитель по редактору и движку. Справочник по Rust API лежит в
-[ENGINE_API.md](ENGINE_API.md), список планов и ограничений - в [../ROADMAP.md](../ROADMAP.md).
+[ENGINE_API.md](ENGINE_API.md), список планов и ограничений - в [ROADMAP.md](https://github.com/Nopass0/kvas/blob/main/ROADMAP.md).
 
 Содержание
 
@@ -283,7 +283,8 @@ fn effect(uv: vec2<f32>, color: vec3<f32>, params: vec4<f32>, time: f32) -> vec3
 - правый клик по полю - добавить узел; тяните от круглого гнезда к другому, чтобы соединить;
 - Delete удаляет выбранный узел; колесо мыши приближает;
 - справа - живой предпросмотр и список изображений для узлов «Текстура»;
-- результат подключается к узлу **Output** (Base color, Roughness, Metallic, Emission, Alpha, Occlusion).
+- результат подключается к узлу **Output** (Base color, Roughness, Metallic, Emission, Alpha, Occlusion, Normal, Height);
+- шумы и узоры показывают превью прямо в узле; **Color ramp**, режимы наложения, карты нормалей и высот, свет и углы поверхности - см. [нодовый редактор](nodes/index.md) и [справочник нод](nodes/reference.md).
 
 Назначить материал: перетащить `.kmat` на объект. Из Blender материал можно перенести скриптом
 `tools/blender/export_kmat.py` (Scripting -> Run Script в Blender).

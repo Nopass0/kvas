@@ -189,6 +189,187 @@ fn lib_normal_map(n: vec3<f32>, p: vec3<f32>, uv: vec2<f32>, m: vec3<f32>, stren
     let tm = m * 2.0 - vec3<f32>(1.0);
     return normalize(t * invmax * tm.x * strength + b * invmax * tm.y * strength + n * tm.z);
 }
+
+// ---- third wave: 3D noises, patterns, blend modes
+fn lib_h31(p: vec3<f32>) -> f32 {
+    var q = fract(p * 0.1031);
+    q = q + dot(q, q.zyx + vec3<f32>(31.32));
+    return fract((q.x + q.y) * q.z);
+}
+fn lib_h33(p: vec3<f32>) -> vec3<f32> {
+    var q = fract(p * vec3<f32>(0.1031, 0.1030, 0.0973));
+    q = q + dot(q, q.yxz + vec3<f32>(33.33));
+    return fract((q.xxy + q.yxx) * q.zyx);
+}
+fn lib_vnoise3(p: vec3<f32>) -> f32 {
+    let i = floor(p);
+    let f = fract(p);
+    let u = f * f * (3.0 - 2.0 * f);
+    let a = mix(mix(lib_h31(i), lib_h31(i + vec3<f32>(1.0, 0.0, 0.0)), u.x), mix(lib_h31(i + vec3<f32>(0.0, 1.0, 0.0)), lib_h31(i + vec3<f32>(1.0, 1.0, 0.0)), u.x), u.y);
+    let b = mix(mix(lib_h31(i + vec3<f32>(0.0, 0.0, 1.0)), lib_h31(i + vec3<f32>(1.0, 0.0, 1.0)), u.x), mix(lib_h31(i + vec3<f32>(0.0, 1.0, 1.0)), lib_h31(i + vec3<f32>(1.0, 1.0, 1.0)), u.x), u.y);
+    return mix(a, b, u.z);
+}
+fn lib_grad(i: vec3<f32>, f: vec3<f32>) -> f32 {
+    let g = normalize(lib_h33(i) * 2.0 - vec3<f32>(1.0) + vec3<f32>(0.0001));
+    return dot(g, f);
+}
+fn lib_gnoise3(p: vec3<f32>) -> f32 {
+    let i = floor(p);
+    let f = fract(p);
+    let u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+    let x0 = mix(mix(lib_grad(i, f), lib_grad(i + vec3<f32>(1.0, 0.0, 0.0), f - vec3<f32>(1.0, 0.0, 0.0)), u.x), mix(lib_grad(i + vec3<f32>(0.0, 1.0, 0.0), f - vec3<f32>(0.0, 1.0, 0.0)), lib_grad(i + vec3<f32>(1.0, 1.0, 0.0), f - vec3<f32>(1.0, 1.0, 0.0)), u.x), u.y);
+    let x1 = mix(mix(lib_grad(i + vec3<f32>(0.0, 0.0, 1.0), f - vec3<f32>(0.0, 0.0, 1.0)), lib_grad(i + vec3<f32>(1.0, 0.0, 1.0), f - vec3<f32>(1.0, 0.0, 1.0)), u.x), mix(lib_grad(i + vec3<f32>(0.0, 1.0, 1.0), f - vec3<f32>(0.0, 1.0, 1.0)), lib_grad(i + vec3<f32>(1.0, 1.0, 1.0), f - vec3<f32>(1.0, 1.0, 1.0)), u.x), u.y);
+    return clamp(mix(x0, x1, u.z) * 0.9 + 0.5, 0.0, 1.0);
+}
+// kind: 0 fBm, 1 ridged, 2 billow.
+fn lib_fractal(p: vec3<f32>, octaves: f32, lacunarity: f32, gain: f32, kind: f32) -> f32 {
+    var amp = 0.5;
+    var sum = 0.0;
+    var norm = 0.0;
+    var q = p;
+    for (var i = 0; i < 8; i = i + 1) {
+        if (f32(i) >= octaves) { break; }
+        var n = lib_vnoise3(q);
+        if (kind > 1.5) {
+            n = abs(n * 2.0 - 1.0);
+        } else if (kind > 0.5) {
+            n = 1.0 - abs(n * 2.0 - 1.0);
+            n = n * n;
+        }
+        sum = sum + n * amp;
+        norm = norm + amp;
+        q = q * lacunarity + vec3<f32>(17.0, 9.0, 13.0);
+        amp = amp * gain;
+    }
+    return sum / max(norm, 0.0001);
+}
+// x = nearest distance, y = second nearest, z = random id of the nearest cell.
+fn lib_voronoi3(p: vec3<f32>, randomness: f32) -> vec3<f32> {
+    let i = floor(p);
+    let f = fract(p);
+    var f1 = 8.0;
+    var f2 = 8.0;
+    var id = 0.0;
+    for (var z = -1; z <= 1; z = z + 1) {
+        for (var y = -1; y <= 1; y = y + 1) {
+            for (var x = -1; x <= 1; x = x + 1) {
+                let g = vec3<f32>(f32(x), f32(y), f32(z));
+                let o = vec3<f32>(0.5) + (lib_h33(i + g) - vec3<f32>(0.5)) * randomness;
+                let d = length(g + o - f);
+                if (d < f1) {
+                    f2 = f1;
+                    f1 = d;
+                    id = lib_h31(i + g + vec3<f32>(3.1, 7.7, 1.3));
+                } else if (d < f2) {
+                    f2 = d;
+                }
+            }
+        }
+    }
+    return vec3<f32>(f1, f2, id);
+}
+fn lib_voro_out(v: vec3<f32>, mode: f32) -> f32 {
+    if (mode < 0.5) { return clamp(v.x, 0.0, 1.0); }
+    if (mode < 1.5) { return clamp(v.y - v.x, 0.0, 1.0); }
+    if (mode < 2.5) { return v.z; }
+    return clamp(v.y * 0.5, 0.0, 1.0);
+}
+fn lib_cracks(p: vec3<f32>, width: f32) -> f32 {
+    let v = lib_voronoi3(p, 1.0);
+    return 1.0 - smoothstep(0.0, width, v.y - v.x);
+}
+fn lib_warp(p: vec3<f32>, amount: f32) -> f32 {
+    let q = vec3<f32>(lib_fractal(p + vec3<f32>(5.2, 1.3, 8.1), 3.0, 2.0, 0.5, 0.0), lib_fractal(p + vec3<f32>(1.7, 9.2, 3.4), 3.0, 2.0, 0.5, 0.0), lib_fractal(p + vec3<f32>(8.3, 2.8, 4.1), 3.0, 2.0, 0.5, 0.0));
+    return lib_fractal(p + (q - vec3<f32>(0.5)) * 2.0 * amount, 4.0, 2.0, 0.5, 0.0);
+}
+fn lib_scratches(uv: vec2<f32>, density: f32, angle: f32) -> f32 {
+    let p = lib_rot2(uv, angle) * vec2<f32>(density * 0.05, density);
+    let line = pow(1.0 - abs(lib_noise(p) * 2.0 - 1.0), 14.0);
+    return line * step(0.55, lib_noise(p * 0.4 + vec2<f32>(5.0, 3.0)));
+}
+fn lib_grid(uv: vec2<f32>, cells: f32, width: f32) -> f32 {
+    let f = fract(uv * cells);
+    let d = min(f, vec2<f32>(1.0) - f);
+    return 1.0 - smoothstep(0.0, width + 0.0001, min(d.x, d.y));
+}
+fn lib_planks(uv: vec2<f32>, rows: f32, length_scale: f32, gap: f32) -> f32 {
+    let row = floor(uv.y * rows);
+    let x = uv.x * rows / max(length_scale, 0.01) + lib_hash21(vec2<f32>(row, 3.7)) * 10.0;
+    let cell = floor(x);
+    let f = vec2<f32>(fract(x), fract(uv.y * rows));
+    let edge = min(min(f.x, 1.0 - f.x) * length_scale, min(f.y, 1.0 - f.y));
+    let tone = 0.62 + 0.38 * lib_hash21(vec2<f32>(cell, row));
+    return tone * smoothstep(0.0, gap + 0.0001, edge);
+}
+fn lib_weave(uv: vec2<f32>, threads: f32) -> f32 {
+    let p = uv * threads;
+    let c = floor(p);
+    let f = fract(p);
+    let odd = abs(c.x + c.y - 2.0 * floor((c.x + c.y) * 0.5));
+    let h = select(sin(f.y * 3.14159265), sin(f.x * 3.14159265), odd > 0.5);
+    return 0.25 + 0.75 * h;
+}
+fn lib_blend(a: vec3<f32>, b: vec3<f32>, mode: f32) -> vec3<f32> {
+    let m = i32(floor(mode + 0.5));
+    let one = vec3<f32>(1.0);
+    if (m == 1) { return a * b; }
+    if (m == 2) { return lib_screen(a, b); }
+    if (m == 3) { return lib_overlay(clamp(a, vec3<f32>(0.0), one), b); }
+    if (m == 4) { return a + b; }
+    if (m == 5) { return a - b; }
+    if (m == 6) { return abs(a - b); }
+    if (m == 7) { return min(a, b); }
+    if (m == 8) { return max(a, b); }
+    if (m == 9) { return (one - 2.0 * b) * a * a + 2.0 * b * a; }
+    if (m == 10) { return a / max(one - b, vec3<f32>(0.001)); }
+    if (m == 11) { return one - (one - a) / max(b, vec3<f32>(0.001)); }
+    if (m == 12) { return lib_overlay(clamp(b, vec3<f32>(0.0), one), a); }
+    return b;
+}
+fn lib_hsv_adjust(c: vec3<f32>, dh: f32, s: f32, v: f32) -> vec3<f32> {
+    var h = lib_rgb_to_hsv(c);
+    h.x = fract(h.x + dh);
+    h.y = clamp(h.y * s, 0.0, 1.0);
+    h.z = h.z * v;
+    return lib_hsv_to_rgb(h);
+}
+fn lib_rotate_axis(v: vec3<f32>, axis: vec3<f32>, angle: f32) -> vec3<f32> {
+    let k = normalize(axis + vec3<f32>(0.00001));
+    let c = cos(angle);
+    let s = sin(angle);
+    return v * c + cross(k, v) * s + k * dot(k, v) * (1.0 - c);
+}
+fn lib_twirl(uv: vec2<f32>, amount: f32) -> vec2<f32> {
+    let d = uv - vec2<f32>(0.5);
+    let r = clamp(length(d) * 2.0, 0.0, 1.0);
+    return lib_rot2(d, amount * (1.0 - r)) + vec2<f32>(0.5);
+}
+fn lib_smoother(x: vec3<f32>, e0: f32, e1: f32) -> vec3<f32> {
+    let t = clamp((x - vec3<f32>(e0)) / vec3<f32>(e1 - e0 + 0.00001), vec3<f32>(0.0), vec3<f32>(1.0));
+    return t * t * t * (t * (t * 6.0 - vec3<f32>(15.0)) + vec3<f32>(10.0));
+}
+fn lib_bias(x: vec3<f32>, b: f32) -> vec3<f32> {
+    return pow(clamp(x, vec3<f32>(0.0), vec3<f32>(1.0)), vec3<f32>(log(max(b, 0.001)) / log(0.5)));
+}
+fn lib_gain(x: vec3<f32>, g: f32) -> vec3<f32> {
+    let lo = lib_bias(2.0 * x, 1.0 - g) * 0.5;
+    let hi = vec3<f32>(1.0) - lib_bias(vec3<f32>(2.0) - 2.0 * x, 1.0 - g) * 0.5;
+    return select(hi, lo, x < vec3<f32>(0.5));
+}
+// Tangent-space normal-map colour from the red channel of a texture (height map).
+fn lib_tex_normal(t: texture_2d<f32>, s: sampler, uv: vec2<f32>, strength: f32) -> vec3<f32> {
+    let d = vec2<f32>(1.0) / vec2<f32>(textureDimensions(t));
+    let l = textureSampleLevel(t, s, uv - vec2<f32>(d.x, 0.0), 0.0).r;
+    let r = textureSampleLevel(t, s, uv + vec2<f32>(d.x, 0.0), 0.0).r;
+    let u = textureSampleLevel(t, s, uv - vec2<f32>(0.0, d.y), 0.0).r;
+    let b = textureSampleLevel(t, s, uv + vec2<f32>(0.0, d.y), 0.0).r;
+    return normalize(vec3<f32>((l - r) * strength, (b - u) * strength, 1.0)) * 0.5 + vec3<f32>(0.5);
+}
+fn lib_triplanar(t: texture_2d<f32>, s: sampler, p: vec3<f32>, n: vec3<f32>, sharpness: f32) -> vec3<f32> {
+    var w = pow(abs(n), vec3<f32>(sharpness));
+    w = w / max(w.x + w.y + w.z, 0.0001);
+    return textureSample(t, s, p.zy).rgb * w.x + textureSample(t, s, p.xz).rgb * w.y + textureSample(t, s, p.xy).rgb * w.z;
+}
 ";
 
 fn builtin(name: &str) -> Option<&'static str> {

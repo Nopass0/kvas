@@ -23,6 +23,9 @@ struct Player {
     assets: Assets,
     /// Frames shown so far: the first ones show a loading screen before assets are decoded.
     frames: u32,
+    smoke_frames: u32,
+    smoke_errors: Vec<String>,
+    smoke_report: Option<PathBuf>,
 }
 
 struct Loaded {
@@ -36,12 +39,13 @@ fn locate() -> Result<Loaded, String> {
     let args: Vec<String> = std::env::args().collect();
     if let Some(i) = args.iter().position(|a| a == "--project") {
         let dir = args.get(i + 1).ok_or("--project needs a folder")?;
-        let project = Project::open(&PathBuf::from(dir))?;
+        let mut project = Project::open(&PathBuf::from(dir))?;
+        if let Some(i) = args.iter().position(|a| a == "--scene") { project.config.start_scene = args.get(i + 1).ok_or("--scene needs an asset path")?.clone(); }
         let scripts = project.root.join(".kvas").join(project.script_lib_name());
         return Ok(Loaded {
             assets: Assets::Dir(project.assets_dir()),
             title: project.config.name.clone(),
-            scripts: scripts.exists().then_some(scripts),
+            scripts: (scripts.exists() && !args.iter().any(|a| a == "--no-scripts")).then_some(scripts),
             config: project.config,
         });
     }
@@ -81,7 +85,9 @@ impl Player {
             Err(e) => (None, Assets::Dir(PathBuf::new()), e),
         };
         kvas_engine::meshmod::set_assets(assets.clone());
-        Self { runtime, renderer: Renderer::new(rs, assets.clone()), debug: DebugDraw::default(), status, started: Instant::now(), audio: kvas_audio::AudioEngine::new(), assets, frames: 0 }
+        let args: Vec<_> = std::env::args().collect();
+        let smoke_report = args.iter().position(|a| a == "--smoke-report").and_then(|i| args.get(i + 1)).map(PathBuf::from);
+        Self { runtime, renderer: Renderer::new(rs, assets.clone()), debug: DebugDraw::default(), status, started: Instant::now(), audio: kvas_audio::AudioEngine::new(), assets, frames: 0, smoke_frames: 0, smoke_errors: Vec::new(), smoke_report }
     }
 }
 
@@ -115,7 +121,7 @@ impl eframe::App for Player {
         }
         egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| {
             let size = ui.available_size();
-            let (Some(rt), true) = (&self.runtime, size.x > 1.0 && size.y > 1.0) else {
+            let (Some(rt), true) = (&mut self.runtime, size.x > 1.0 && size.y > 1.0) else {
                 ui.centered_and_justified(|ui| ui.label(&self.status));
                 return;
             };
@@ -132,16 +138,39 @@ impl eframe::App for Player {
                         cinematic: true,
                     };
                     let tex = self.renderer.render(&rt.scene, &frame);
+                    self.smoke_frames += 1;
                     let response = ui.image((tex, size));
                     shell::draw_hud(ui.painter(), response.rect, &rt.input.hud());
+                    for (entity, channel) in shell::draw_game_ui(ui, &rt.scene, response.rect, Some(&view), true) {
+                        let _ = rt.scene.signals.send(&channel, serde_json::json!({"clicked": true}), Some(entity), None);
+                    }
                 }
                 None => {
+                    if self.smoke_report.is_some() { self.smoke_errors.push("The scene has no Camera".into()); }
                     ui.centered_and_justified(|ui| ui.label("The scene has no Camera"));
                 }
             }
         });
         for e in self.renderer.take_errors() {
             eprintln!("[render] {e}");
+            self.smoke_errors.push(e);
+        }
+        if self.smoke_report.is_some() && (self.smoke_frames >= 12 || self.runtime.is_none() || !self.smoke_errors.is_empty()) {
+            let path = self.smoke_report.take().unwrap();
+            if !self.status.is_empty() { self.smoke_errors.push(self.status.clone()); }
+            let capture_path = path.with_extension("png");
+            if self.smoke_frames >= 12 {
+                if let Some(rt) = &self.runtime {
+                    if let Some(view) = game_view(&rt.scene, 16.0 / 9.0) {
+                        let frame = Frame { view, size: [640, 360], time: self.started.elapsed().as_secs_f32(), dt: 0.0, debug: &self.debug, shadows: true, debug_view: 0, cinematic: true };
+                        if let Err(e) = self.renderer.capture(&rt.scene, &frame).and_then(|image| image.save(&capture_path).map_err(|e| e.to_string())) { self.smoke_errors.push(e); }
+                    }
+                }
+            }
+            self.smoke_errors.extend(self.renderer.take_errors());
+            let report = serde_json::json!({ "ok": self.smoke_errors.is_empty() && self.smoke_frames >= 12, "rendered_frames": self.smoke_frames, "generated_frames": self.renderer.generated_frames(), "gpu": self.renderer.gpu_name(), "capture": capture_path, "errors": self.smoke_errors });
+            if let Err(e) = std::fs::write(&path, serde_json::to_vec_pretty(&report).unwrap()) { eprintln!("smoke report: {e}"); }
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
     }
 }

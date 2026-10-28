@@ -4,6 +4,33 @@ use kvas_engine::{assets::Assets, components::*, hierarchy, scene::Scene};
 use kvas_render::{debug::DebugDraw, Frame, Renderer, View};
 
 #[test]
+#[ignore = "requires a native GPU; small HDR environment capture"]
+fn hdr_environment_background_rotation_and_missing_fallback_work_on_gpu() {
+    let root = std::env::temp_dir().join(format!("kvas-hdri-{}", std::process::id()));
+    std::fs::create_dir_all(&root).unwrap();
+    let hdr = std::fs::File::create(root.join("test.hdr")).unwrap();
+    image::codecs::hdr::HdrEncoder::new(hdr).encode(&vec![image::Rgb([2.0, 0.05, 0.01]); 8 * 4], 8, 4).unwrap();
+    let mut renderer = Renderer::new_headless(Assets::Dir(root.clone())).unwrap();
+    let mut scene = Scene::default(); scene.settings.environment_map = "test.hdr".into();
+    let debug = DebugDraw::default();
+    let frame = Frame { view: View::new(glam::Mat4::IDENTITY, 60.0, 1.0, 0.1, 100.0), size: [32, 32], time: 0.0, dt: 0.0, debug: &debug, shadows: false, debug_view: 0, cinematic: false };
+    let image = renderer.capture(&scene, &frame).unwrap(); let pixel = image.get_pixel(16, 16);
+    assert!(pixel[0] > 200 && pixel[1] < 130 && pixel[2] < 100, "HDR background: {pixel:?}");
+    assert!(renderer.take_errors().is_empty());
+    let mut panorama = image::RgbaImage::new(8, 4);
+    for (x, _, pixel) in panorama.enumerate_pixels_mut() { *pixel = if x < 4 { image::Rgba([255, 0, 0, 255]) } else { image::Rgba([0, 0, 255, 255]) }; }
+    panorama.save(root.join("panorama.png")).unwrap(); scene.settings.environment_map = "panorama.png".into();
+    let first = renderer.capture(&scene, &frame).unwrap();
+    scene.settings.environment_rotation = 180.0;
+    let rotated = renderer.capture(&scene, &frame).unwrap();
+    assert_ne!(first.get_pixel(16, 16), rotated.get_pixel(16, 16));
+    scene.settings.environment_map = "missing.hdr".into();
+    let fallback = renderer.capture(&scene, &frame).unwrap(); assert_ne!(fallback, rotated);
+    assert_eq!(renderer.take_errors().len(), 1);
+    let _ = std::fs::remove_dir_all(root);
+}
+
+#[test]
 #[ignore = "requires an available native wgpu adapter; run with --ignored"]
 fn capture_readback_and_inherited_visibility_work_on_the_gpu() {
     let mut renderer = Renderer::new_headless(Assets::Dir(std::env::temp_dir())).expect("native GPU adapter");

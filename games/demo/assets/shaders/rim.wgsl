@@ -2,7 +2,7 @@
 
 @vertex
 fn vs_main(v: VertexIn) -> VsOut {
-    return vec4<f32>(to_display(lit + rim * pulse * vec3<f32>(0.5, 0.3, 0.8)), 1.0);
+    return standard_vertex(v);
 }
 
 @fragment

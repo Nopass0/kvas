@@ -1,0 +1,3021 @@
+{
+  "settings": {
+    "ambient": [
+      0.15,
+      0.15,
+      0.15
+    ],
+    "sky": [
+      0.35,
+      0.5,
+      0.75
+    ],
+    "gravity": [
+      0.0,
+      -9.81,
+      0.0
+    ],
+    "toon_bands": 0,
+    "saturation": 1.0,
+    "contrast": 1.0,
+    "exposure": 1.0,
+    "psx": false,
+    "render_scale": 1.0,
+    "atmosphere": {
+      "procedural": false,
+      "time": 14.0,
+      "speed": 0.0,
+      "clouds": 0.45,
+      "cloud_speed": 0.02,
+      "stars": 0.8,
+      "haze": 0.3,
+      "moon_phase": 0.5,
+      "aurora": 0.0,
+      "milky_way": 0.7
+    },
+    "shadows": {
+      "enabled": true,
+      "softness": 1.0,
+      "strength": 1.0,
+      "bias": 0.0004,
+      "range": 40.0
+    },
+    "post": {
+      "bloom": 0.0,
+      "bloom_threshold": 0.8,
+      "bloom_radius": 1.5,
+      "lens_flare": 0.0,
+      "blur": 0.0,
+      "motion_blur": 0.0,
+      "vignette": 0.0,
+      "chromatic_aberration": 0.0,
+      "film_grain": 0.0,
+      "sharpen": 0.0,
+      "tint": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "effects": []
+    },
+    "upscaler": "Fsr",
+    "frame_generation": false,
+    "sharpness": 0.5,
+    "view_distance": 0.0,
+    "filmic": 1.0,
+    "fog": 0.0,
+    "environment_map": "environments/studio_small_09_1k.hdr",
+    "environment_rotation": 40.0,
+    "environment_intensity": 0.7
+  },
+  "entities": [
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Slate display floor"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              -0.2199999988079071,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              14.0,
+              0.4000000059604645,
+              10.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.18000000715255737,
+              0.20000000298023224,
+              0.23000000417232513,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.4000000059604645,
+            "roughness": 0.3499999940395355,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pedestal 0-0"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -4.0,
+              0.20000000298023224,
+              -2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.350000023841858,
+              0.4000000059604645,
+              1.350000023841858
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.10000000149011612,
+              0.11999999731779099,
+              0.15000000596046448,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Gold roughness 0.00"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -4.0,
+              1.0499999523162842,
+              -2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.25,
+              1.25,
+              1.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.949999988079071,
+              0.6700000166893005,
+              0.25,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 1.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.699999988079071,
+            "roughness": 0.03999999910593033,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Sphere",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pedestal 0-1"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -2.0,
+              0.20000000298023224,
+              -2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.350000023841858,
+              0.4000000059604645,
+              1.350000023841858
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.10000000149011612,
+              0.11999999731779099,
+              0.15000000596046448,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Gold roughness 0.25"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -2.0,
+              1.0499999523162842,
+              -2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.25,
+              1.25,
+              1.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.949999988079071,
+              0.6700000166893005,
+              0.25,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 1.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.699999988079071,
+            "roughness": 0.25,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Sphere",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pedestal 0-2"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              0.20000000298023224,
+              -2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.350000023841858,
+              0.4000000059604645,
+              1.350000023841858
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.10000000149011612,
+              0.11999999731779099,
+              0.15000000596046448,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Gold roughness 0.50"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              1.0499999523162842,
+              -2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.25,
+              1.25,
+              1.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.949999988079071,
+              0.6700000166893005,
+              0.25,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 1.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.699999988079071,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Sphere",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pedestal 0-3"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              2.0,
+              0.20000000298023224,
+              -2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.350000023841858,
+              0.4000000059604645,
+              1.350000023841858
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.10000000149011612,
+              0.11999999731779099,
+              0.15000000596046448,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Gold roughness 0.75"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              2.0,
+              1.0499999523162842,
+              -2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.25,
+              1.25,
+              1.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.949999988079071,
+              0.6700000166893005,
+              0.25,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 1.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.699999988079071,
+            "roughness": 0.75,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Sphere",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pedestal 0-4"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              4.0,
+              0.20000000298023224,
+              -2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.350000023841858,
+              0.4000000059604645,
+              1.350000023841858
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.10000000149011612,
+              0.11999999731779099,
+              0.15000000596046448,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Gold roughness 1.00"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              4.0,
+              1.0499999523162842,
+              -2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.25,
+              1.25,
+              1.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.949999988079071,
+              0.6700000166893005,
+              0.25,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 1.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.699999988079071,
+            "roughness": 1.0,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Sphere",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pedestal 1-0"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -4.0,
+              0.20000000298023224,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.350000023841858,
+              0.4000000059604645,
+              1.350000023841858
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.10000000149011612,
+              0.11999999731779099,
+              0.15000000596046448,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Chrome roughness 0.00"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -4.0,
+              1.0499999523162842,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.25,
+              1.25,
+              1.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.7200000286102295,
+              0.800000011920929,
+              0.8999999761581421,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 1.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.699999988079071,
+            "roughness": 0.03999999910593033,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Sphere",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pedestal 1-1"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -2.0,
+              0.20000000298023224,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.350000023841858,
+              0.4000000059604645,
+              1.350000023841858
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.10000000149011612,
+              0.11999999731779099,
+              0.15000000596046448,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Chrome roughness 0.25"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -2.0,
+              1.0499999523162842,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.25,
+              1.25,
+              1.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.7200000286102295,
+              0.800000011920929,
+              0.8999999761581421,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 1.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.699999988079071,
+            "roughness": 0.25,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Sphere",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pedestal 1-2"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              0.20000000298023224,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.350000023841858,
+              0.4000000059604645,
+              1.350000023841858
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.10000000149011612,
+              0.11999999731779099,
+              0.15000000596046448,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Chrome roughness 0.50"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              1.0499999523162842,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.25,
+              1.25,
+              1.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.7200000286102295,
+              0.800000011920929,
+              0.8999999761581421,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 1.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.699999988079071,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Sphere",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pedestal 1-3"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              2.0,
+              0.20000000298023224,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.350000023841858,
+              0.4000000059604645,
+              1.350000023841858
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.10000000149011612,
+              0.11999999731779099,
+              0.15000000596046448,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Chrome roughness 0.75"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              2.0,
+              1.0499999523162842,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.25,
+              1.25,
+              1.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.7200000286102295,
+              0.800000011920929,
+              0.8999999761581421,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 1.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.699999988079071,
+            "roughness": 0.75,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Sphere",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pedestal 1-4"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              4.0,
+              0.20000000298023224,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.350000023841858,
+              0.4000000059604645,
+              1.350000023841858
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.10000000149011612,
+              0.11999999731779099,
+              0.15000000596046448,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Chrome roughness 1.00"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              4.0,
+              1.0499999523162842,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.25,
+              1.25,
+              1.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.7200000286102295,
+              0.800000011920929,
+              0.8999999761581421,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 1.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.699999988079071,
+            "roughness": 1.0,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Sphere",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pedestal 2-0"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -4.0,
+              0.20000000298023224,
+              2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.350000023841858,
+              0.4000000059604645,
+              1.350000023841858
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.10000000149011612,
+              0.11999999731779099,
+              0.15000000596046448,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Ceramic roughness 0.00"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -4.0,
+              1.0499999523162842,
+              2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.25,
+              1.25,
+              1.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.699999988079071,
+              0.2199999988079071,
+              0.10000000149011612,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.699999988079071,
+            "roughness": 0.03999999910593033,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Torus",
+            "radius": 0.5,
+            "radius2": 0.18000000715255737,
+            "rings": 24,
+            "seed": 1,
+            "segments": 48,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pedestal 2-1"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -2.0,
+              0.20000000298023224,
+              2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.350000023841858,
+              0.4000000059604645,
+              1.350000023841858
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.10000000149011612,
+              0.11999999731779099,
+              0.15000000596046448,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Ceramic roughness 0.25"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -2.0,
+              1.0499999523162842,
+              2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.25,
+              1.25,
+              1.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.699999988079071,
+              0.2199999988079071,
+              0.10000000149011612,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.699999988079071,
+            "roughness": 0.25,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Torus",
+            "radius": 0.5,
+            "radius2": 0.18000000715255737,
+            "rings": 24,
+            "seed": 1,
+            "segments": 48,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pedestal 2-2"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              0.20000000298023224,
+              2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.350000023841858,
+              0.4000000059604645,
+              1.350000023841858
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.10000000149011612,
+              0.11999999731779099,
+              0.15000000596046448,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Ceramic roughness 0.50"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              1.0499999523162842,
+              2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.25,
+              1.25,
+              1.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.699999988079071,
+              0.2199999988079071,
+              0.10000000149011612,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.699999988079071,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Torus",
+            "radius": 0.5,
+            "radius2": 0.18000000715255737,
+            "rings": 24,
+            "seed": 1,
+            "segments": 48,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pedestal 2-3"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              2.0,
+              0.20000000298023224,
+              2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.350000023841858,
+              0.4000000059604645,
+              1.350000023841858
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.10000000149011612,
+              0.11999999731779099,
+              0.15000000596046448,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Ceramic roughness 0.75"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              2.0,
+              1.0499999523162842,
+              2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.25,
+              1.25,
+              1.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.699999988079071,
+              0.2199999988079071,
+              0.10000000149011612,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.699999988079071,
+            "roughness": 0.75,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Torus",
+            "radius": 0.5,
+            "radius2": 0.18000000715255737,
+            "rings": 24,
+            "seed": 1,
+            "segments": 48,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Pedestal 2-4"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              4.0,
+              0.20000000298023224,
+              2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.350000023841858,
+              0.4000000059604645,
+              1.350000023841858
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.10000000149011612,
+              0.11999999731779099,
+              0.15000000596046448,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cylinder",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Ceramic roughness 1.00"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              4.0,
+              1.0499999523162842,
+              2.4000000953674316
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.25,
+              1.25,
+              1.25
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.699999988079071,
+              0.2199999988079071,
+              0.10000000149011612,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.699999988079071,
+            "roughness": 1.0,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Torus",
+            "radius": 0.5,
+            "radius2": 0.18000000715255737,
+            "rings": 24,
+            "seed": 1,
+            "segments": 48,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Marble"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              -2.0,
+              1.0,
+              -5.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.7999999523162842,
+              1.7999999523162842,
+              1.7999999523162842
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "materials/lab/marble.kmat",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wood"
+        },
+        {
+          "type": "Tags",
+          "data": {
+            "value": "pbr_lab"
+          }
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              2.0,
+              1.0,
+              -5.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.7999999523162842,
+              1.7999999523162842,
+              1.7999999523162842
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.5,
+            "shader": "materials/lab/wood.kmat",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Camera"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              8.800000190734863,
+              6.5,
+              12.0
+            ],
+            "rotation": [
+              -21.10413360595703,
+              35.14554214477539,
+              4.5757766997667204e-7
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Camera",
+          "data": {
+            "aperture": 2.799999952316284,
+            "autofocus": true,
+            "dof": false,
+            "exposure_comp": 0.0,
+            "far": 200.0,
+            "focal_length": 0.0,
+            "focus_distance": 8.0,
+            "focus_speed": 6.0,
+            "fov": 52.0,
+            "letterbox": 0.0,
+            "near": 0.10000000149011612,
+            "ortho_size": 10.0,
+            "orthographic": false,
+            "primary": true
+          }
+        }
+      ]
+    },
+    {
+      "parent": null,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Soft key light"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              -50.0,
+              -30.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Light",
+          "data": {
+            "angle": 35.0,
+            "color": [
+              1.0,
+              0.9300000071525574,
+              0.8399999737739563,
+              1.0
+            ],
+            "intensity": 0.800000011920929,
+            "kind": "Directional",
+            "range": 10.0,
+            "shadows": true,
+            "softness": 0.25
+          }
+        }
+      ]
+    }
+  ]
+}

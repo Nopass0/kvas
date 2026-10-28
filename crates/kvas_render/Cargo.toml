@@ -13,4 +13,5 @@ image.workspace = true
 pollster = "1"
 
 [dev-dependencies]
+serde_json.workspace = true
 naga = { version = "30", features = ["wgsl-in"] }

@@ -25,11 +25,14 @@ pub struct PaintTool {
     pub strength: f32,
     /// 0 soft, 1 hard edge.
     pub hardness: f32,
+    stroke: bool,
+    undo: Vec<(String, [u32; 2], Vec<u8>)>,
+    redo: Vec<(String, [u32; 2], Vec<u8>)>,
 }
 
 impl Default for PaintTool {
     fn default() -> Self {
-        Self { active: false, layer: 1, smooth: false, radius: 1.6, strength: 0.7, hardness: 0.15 }
+        Self { active: false, layer: 1, smooth: false, radius: 1.6, strength: 0.7, hardness: 0.15, stroke: false, undo: Vec::new(), redo: Vec::new() }
     }
 }
 
@@ -107,6 +110,7 @@ impl Editor {
 
     /// Paints while the primary button is held over the selected surface, and draws the brush ring.
     pub fn paint_in_viewport(&mut self, ui: &egui::Ui, resp: &egui::Response, rect: egui::Rect, view: &View, draw: &mut DebugDraw) {
+        if !ui.input(|i| i.pointer.primary_down()) { self.paint.stroke = false; }
         if !self.paint.active {
             return;
         }
@@ -132,6 +136,7 @@ impl Editor {
                 return;
             }
             let dt = ui.input(|i| i.stable_dt).min(0.1);
+            if !self.paint.stroke { self.remember_paint(&mask); self.paint.stroke = true; }
             let mode = if self.paint.smooth { BrushMode::Smooth } else { BrushMode::Layer(self.paint.layer) };
             PaintMaps::global().brush(&mask, [hit.uv.x, hit.uv.y], self.paint.radius * hit.uv_per_metre, (self.paint.strength * dt * 8.0).min(1.0), self.paint.hardness, mode);
             ui.ctx().request_repaint();
@@ -176,11 +181,31 @@ impl Editor {
             ui.add(egui::DragValue::new(&mut self.paint.hardness).speed(0.01).range(0.0..=0.95).prefix(format!("{} ", t("hard"))));
             ui.separator();
             if ui.button(t("Fill")).on_hover_text(t("Fill the whole mask with the chosen layer")).clicked() {
+                self.remember_paint(&mask);
                 PaintMaps::global().fill(&mask, self.paint.layer);
             }
+            if ui.small_button("↶").on_hover_text("Отменить штрих (Ctrl+Z)").clicked() { self.paint_history(true); }
+            if ui.small_button("↷").on_hover_text("Повторить штрих (Ctrl+Y)").clicked() { self.paint_history(false); }
             if ui.button(t("Save mask")).clicked() {
                 self.save_paint();
             }
         });
+    }
+
+    fn remember_paint(&mut self, mask: &str) {
+        if let Some((size, pixels, _)) = PaintMaps::global().snapshot(mask) {
+            if pixels.len() > 64 * 1024 * 1024 { self.console.warn("Маска превышает лимит истории 64 MiB."); return; }
+            self.paint.redo.clear();
+            self.paint.undo.push((mask.into(), size, pixels));
+            while self.paint.undo.iter().map(|(_, _, p)| p.len()).sum::<usize>() > 64 * 1024 * 1024 { self.paint.undo.remove(0); }
+        }
+    }
+
+    pub fn paint_history(&mut self, undo: bool) {
+        let (from, to) = if undo { (&mut self.paint.undo, &mut self.paint.redo) } else { (&mut self.paint.redo, &mut self.paint.undo) };
+        let Some((name, size, pixels)) = from.pop() else { return };
+        if let Some((current_size, current, _)) = PaintMaps::global().snapshot(&name) { to.push((name.clone(), current_size, current)); }
+        PaintMaps::global().restore(&name, size, pixels);
+        self.dirty = true;
     }
 }

@@ -7,11 +7,14 @@ use crate::i18n::{t, td, tf};
 use crate::theme::{self, pal};
 use eframe::egui::{self, Color32, Key, Modifiers, Pos2, Rect, RichText, Sense, Stroke, Vec2};
 use kvas_engine::material_graph::{all_specs, available, is_output, spec, GraphMode, MatNode, MaterialGraph, NodeSpec};
-use std::collections::BTreeSet;
+use kvas_engine::material_nodes_ext::CATEGORIES;
+use std::collections::{BTreeSet, HashMap};
 use std::time::{Duration, Instant};
 
-const NODE_W: f32 = 196.0;
-const HEADER_H: f32 = 24.0;
+const NODE_W: f32 = 224.0;
+const HEADER_H: f32 = 22.0;
+const PREVIEW_H: f32 = 84.0;
+const RAMP_H: f32 = 30.0;
 const ROW_H: f32 = 24.0;
 const SOCKET_R: f32 = 5.5;
 const PREVIEW_FILE: &str = ".node_preview/preview";
@@ -27,6 +30,10 @@ pub struct AddMenu {
     /// A link was dropped on empty canvas: connect this node's output to the new node.
     connect_from: Option<u32>,
     just_opened: bool,
+    /// Category filter of the left column (`None` = all).
+    category: Option<&'static str>,
+    /// Highlighted row (keyboard and mouse).
+    cursor: usize,
 }
 
 #[derive(Default)]
@@ -59,23 +66,32 @@ pub struct MaterialEditor {
     preview_json: String,
     editing_comment: Option<u32>,
     fit_next: bool,
+    /// Bumped on every edit; the in-node previews follow it after a short pause.
+    rev: u64,
+    prev_rev: u64,
+    last_edit: Option<Instant>,
+    /// Preview shader of every node that shows a preview: node id -> asset path.
+    node_prev: HashMap<u32, String>,
+    prev_files: u32,
 }
 
 fn category_color(category: &str) -> Color32 {
     match category {
         "Output" => Color32::from_rgb(0xC2, 0x4D, 0x4D),
         "Input" => Color32::from_rgb(0x3E, 0x8E, 0x5B),
+        "Geometry" => Color32::from_rgb(0x2E, 0x94, 0x8A),
+        "Light" => Color32::from_rgb(0xC9, 0xA2, 0x2B),
+        "Normal" => Color32::from_rgb(0x6D, 0x7B, 0xDB),
+        "Noise" => Color32::from_rgb(0x8B, 0x5C, 0xC4),
+        "Procedural" => Color32::from_rgb(0xC2, 0x5B, 0x9E),
         "Effect" => Color32::from_rgb(0x2F, 0x9C, 0x9C),
         "Utility" => Color32::from_rgb(0x70, 0x76, 0x80),
         "Math" => Color32::from_rgb(0x3D, 0x6E, 0xC9),
         "Vector" => Color32::from_rgb(0x4A, 0x5F, 0xB8),
-        "Colour" => Color32::from_rgb(0xB5, 0x7A, 0x2C),
+        "Colour" => Color32::from_rgb(0xD0, 0x7A, 0x2C),
         _ => Color32::from_rgb(0x8B, 0x5C, 0xC4),
     }
 }
-
-/// Menu order of the node categories.
-const CATEGORIES: &[&str] = &["Input", "Effect", "Utility", "Math", "Vector", "Colour", "Procedural"];
 
 /// A constant default like `vec3<f32>(0.5)` or `vec3<f32>(0.1, 0.2, 0.3)` as numbers, when it is one.
 fn parse_default(expr: &str) -> Option<[f32; 3]> {
@@ -89,13 +105,30 @@ fn parse_default(expr: &str) -> Option<[f32; 3]> {
 }
 
 fn is_colour_input(name: &str) -> bool {
-    matches!(name, "Base color" | "Emission" | "Colour" | "From" | "To" | "Color" | "Tint" | "Low" | "Middle" | "High")
+    matches!(name, "Base color" | "Emission" | "Colour" | "From" | "To" | "Color" | "Tint" | "Low" | "Middle" | "High" | "Stop 1" | "Stop 2" | "Stop 3" | "Stop 4")
 }
 
-fn node_height(spec: &NodeSpec) -> f32 {
-    let params = if spec.params.is_empty() { 0 } else if spec.color { 1 } else { spec.params.len() };
+/// Extra block under the header: a live preview, or the gradient strip of a colour ramp.
+fn block_h(node: &MatNode, spec: &NodeSpec) -> f32 {
+    if node.kind == "Color ramp" {
+        RAMP_H
+    } else if node.preview && !is_output(spec.kind) && !matches!(spec.kind, "Comment" | "Reroute") {
+        PREVIEW_H + 8.0
+    } else {
+        0.0
+    }
+}
+
+fn node_height(node: &MatNode, spec: &NodeSpec) -> f32 {
+    let params = if spec.params.is_empty() {
+        0
+    } else if spec.color && spec.params.len() >= 3 {
+        1 + spec.params.len() - 3
+    } else {
+        spec.params.len()
+    };
     let rows = (spec.inputs.len() + params).max(1);
-    HEADER_H + rows as f32 * ROW_H + 8.0
+    HEADER_H + block_h(node, spec) + rows as f32 * ROW_H + 8.0
 }
 
 /// Size of a node on the canvas in graph units.
@@ -103,8 +136,75 @@ fn node_size(node: &MatNode, s: &NodeSpec) -> Vec2 {
     match node.kind.as_str() {
         "Comment" => Vec2::new(node.size[0].max(90.0), node.size[1].max(54.0)),
         "Reroute" => Vec2::new(30.0, 24.0),
-        _ => Vec2::new(NODE_W, node_height(s)),
+        _ => Vec2::new(NODE_W, node_height(node, s)),
     }
+}
+
+fn lerp3(a: [f32; 3], b: [f32; 3], t: f32) -> [f32; 3] {
+    [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]
+}
+
+/// The colour the "Color ramp" node produces at `t` (stops that are linked use their default).
+fn ramp_colour(node: &MatNode, spec: &NodeSpec, t: f32) -> [f32; 3] {
+    let stop = |i: usize| {
+        let socket = &node.inputs[i + 1];
+        if socket.override_default || socket.value != [0.0; 3] { socket.value } else { parse_default(spec.inputs[i + 1].1).unwrap_or([0.0; 3]) }
+    };
+    let p = |i: usize| node.params.get(i).copied().unwrap_or(0.0);
+    let k = |t: f32, lo: f32, hi: f32| ((t - lo) / (hi - lo).max(0.0001)).clamp(0.0, 1.0);
+    let c = lerp3(stop(0), stop(1), k(t, p(0), p(1)));
+    let c = lerp3(c, stop(2), k(t, p(1), p(2)));
+    lerp3(c, stop(3), k(t, p(2), p(3)))
+}
+
+fn to_srgb8(c: [f32; 3]) -> Color32 {
+    let f = |v: f32| (v.clamp(0.0, 1.0).powf(1.0 / 2.2) * 255.0) as u8;
+    Color32::from_rgb(f(c[0]), f(c[1]), f(c[2]))
+}
+
+/// A copy of the graph that shows only the result of node `id` as unlit glowing colour.
+/// Only the nodes feeding `id` are kept and positions are zeroed, so the JSON (and the preview
+/// shader) changes only when something upstream of the node changes.
+fn solo_graph(g: &MaterialGraph, id: u32) -> Option<MaterialGraph> {
+    if g.mode == GraphMode::Effect {
+        return None;
+    }
+    let node = g.nodes.iter().find(|n| n.id == id)?;
+    if is_output(&node.kind) || node.kind == "Comment" {
+        return None;
+    }
+    let mut keep = BTreeSet::new();
+    let mut stack = vec![id];
+    while let Some(i) = stack.pop() {
+        if keep.insert(i) {
+            if let Some(n) = g.nodes.iter().find(|n| n.id == i) {
+                stack.extend(n.inputs.iter().filter_map(|s| s.link));
+            }
+        }
+    }
+    let mut tmp = g.clone();
+    tmp.nodes.retain(|n| keep.contains(&n.id) || is_output(&n.kind));
+    for n in &mut tmp.nodes {
+        n.pos = [0.0, 0.0];
+        n.preview = false;
+        n.text.clear();
+    }
+    let out = tmp.nodes.iter_mut().find(|n| is_output(&n.kind))?;
+    let (colour, glow, amount) = match g.mode {
+        GraphMode::Material => (0, 3, None),
+        _ => (0, 2, Some(3)),
+    };
+    for socket in &mut out.inputs {
+        socket.link = None;
+    }
+    out.inputs[colour].value = [0.0; 3];
+    out.inputs[colour].override_default = true;
+    out.inputs[glow].link = Some(id);
+    if let Some(a) = amount {
+        out.inputs[a].value = [0.0; 3];
+        out.inputs[a].override_default = true;
+    }
+    Some(tmp)
 }
 
 /// Which graph kind a file extension opens.
@@ -126,8 +226,13 @@ impl Editor {
         match graph {
             Ok(mut g) => {
                 g.mode = mode;
+                if mode == GraphMode::Effect {
+                    for n in &mut g.nodes {
+                        n.preview = false;
+                    }
+                }
                 let snapshot = serde_json::to_string(&g).unwrap_or_default();
-                self.mat = MaterialEditor { open: true, path: path.to_string(), graph: Some(g), pan: Vec2::new(20.0, 20.0), zoom: 1.0, preview_mesh, snapshot, fit_next: true, ..Default::default() };
+                self.mat = MaterialEditor { open: true, path: path.to_string(), graph: Some(g), pan: Vec2::new(20.0, 20.0), zoom: 1.0, preview_mesh, snapshot, fit_next: true, prev_rev: u64::MAX, ..Default::default() };
             }
             Err(e) => self.console.error(format!("{path}: {e}")),
         }
@@ -206,6 +311,8 @@ impl Editor {
             self.mat.redo.clear();
         }
         self.mat.last_push = Some(Instant::now());
+        self.mat.last_edit = Some(Instant::now());
+        self.mat.rev += 1;
         self.mat.snapshot = now;
         self.mat.error.clear();
         self.mat.dirty_since.get_or_insert_with(Instant::now);
@@ -221,6 +328,8 @@ impl Editor {
             self.mat.snapshot = text;
             self.mat.selected.clear();
             self.mat.dirty_since = Some(Instant::now());
+            self.mat.rev += 1;
+            self.mat.last_edit = Some(Instant::now());
         }
     }
 
@@ -228,15 +337,17 @@ impl Editor {
         if !self.mat.open || (self.mat.graph.is_none() && !self.mat.shader_mode) {
             return;
         }
-        let mut open = true;
-        let kind = match self.mat.graph.as_ref().map(|g| g.mode) {
+        let mut close = false;
+        let mode = self.mat.graph.as_ref().map(|g| g.mode);
+        let kind = match mode {
             Some(GraphMode::Shader) => t("Shader graph"),
             Some(GraphMode::Effect) => t("Camera effect graph"),
             Some(GraphMode::Material) => t("Material editor"),
             None => t("Shader editor"),
         };
         let title = format!("{kind}  -  {}", self.mat.path);
-        egui::Window::new(title).id(egui::Id::unique("material-editor")).open(&mut open).default_size([1180.0, 720.0]).collapsible(false).show(ctx, |ui| {
+        egui::Window::new(title).id(egui::Id::unique("material-editor")).title_bar(false).default_size([1180.0, 720.0]).show(ctx, |ui| {
+            self.material_header(ui, kind, mode, &mut close);
             egui::Panel::right("mat-side").exact_size(262.0).resizable(false).frame(egui::Frame::NONE.inner_margin(egui::Margin { left: 10, right: 0, top: 0, bottom: 0 })).show(ui, |ui| self.material_side(ui));
             egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| {
                 if self.mat.shader_mode {
@@ -248,6 +359,7 @@ impl Editor {
         });
         self.add_menu_ui(ctx);
         self.track_changes();
+        self.update_node_previews(ctx);
         if let Some(since) = self.mat.dirty_since {
             if since.elapsed() > Duration::from_millis(350) {
                 self.save_material();
@@ -255,11 +367,89 @@ impl Editor {
                 ctx.request_repaint_after(Duration::from_millis(100));
             }
         }
-        if !open {
+        if close {
             if self.mat.dirty_since.is_some() {
                 self.save_material();
             }
             self.mat.open = false;
+        }
+    }
+
+    /// One slim line: kind dot, title, file, save state and the close button.
+    fn material_header(&mut self, ui: &mut egui::Ui, kind: &str, mode: Option<GraphMode>, close: &mut bool) {
+        let accent = match mode {
+            Some(GraphMode::Material) => category_color("Colour"),
+            Some(GraphMode::Shader) => category_color("Noise"),
+            Some(GraphMode::Effect) => category_color("Effect"),
+            None => category_color("Math"),
+        };
+        let name = self.mat.path.rsplit('/').next().unwrap_or("").to_string();
+        let dirty = self.mat.dirty_since.is_some();
+        ui.allocate_ui_with_layout(egui::vec2(ui.available_width(), 20.0), egui::Layout::left_to_right(egui::Align::Center), |ui| {
+            ui.spacing_mut().item_spacing.x = 8.0;
+            let (dot, _) = ui.allocate_exact_size(egui::vec2(10.0, 10.0), Sense::hover());
+            ui.painter().rect_filled(dot, 3.0, accent);
+            ui.label(RichText::new(kind).family(theme::bold_family()).size(13.0));
+            ui.label(RichText::new(name).size(12.0).color(pal().text_dim)).on_hover_text(&self.mat.path);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.add(egui::Button::new(RichText::new("✕").size(12.0)).frame(false).min_size(egui::vec2(22.0, 18.0))).on_hover_text(t("Close")).clicked() {
+                    *close = true;
+                }
+                let (text, colour) = if dirty { (t("Saving..."), theme::ACCENT) } else { (t("Saved"), pal().text_dim) };
+                ui.label(RichText::new(text).size(11.0).color(colour));
+            });
+        });
+        ui.add_space(1.0);
+        let line = ui.available_rect_before_wrap();
+        ui.painter().hline(line.x_range(), line.top(), Stroke::new(1.0, pal().border_strong));
+        ui.add_space(5.0);
+    }
+
+    /// Writes (after a short pause) one tiny preview shader per node that shows a preview.
+    fn update_node_previews(&mut self, ctx: &egui::Context) {
+        if self.mat.prev_rev == self.mat.rev {
+            return;
+        }
+        if self.mat.last_edit.is_some_and(|t| t.elapsed() < Duration::from_millis(250)) {
+            ctx.request_repaint_after(Duration::from_millis(120));
+            return;
+        }
+        let Some(g) = &self.mat.graph else { return };
+        let ext = g.mode.extension();
+        let ids: Vec<u32> = g.nodes.iter().filter(|n| n.preview).map(|n| n.id).take(24).collect();
+        let mut paths = HashMap::new();
+        let dir = self.project.assets_dir().join(".node_preview");
+        for id in ids {
+            let Some(tmp) = solo_graph(g, id) else { continue };
+            let json = tmp.to_json();
+            let mut hasher = std::collections::hash_map::DefaultHasher::new();
+            std::hash::Hash::hash(&json, &mut hasher);
+            let rel = format!(".node_preview/n{id}_{:016x}.{ext}", std::hash::Hasher::finish(&hasher));
+            let full = self.project.assets_dir().join(&rel);
+            if !full.exists() {
+                let _ = std::fs::create_dir_all(&dir);
+                if std::fs::write(&full, json).is_err() {
+                    continue;
+                }
+                self.mat.prev_files += 1;
+            }
+            paths.insert(id, rel);
+        }
+        self.mat.node_prev = paths;
+        self.mat.prev_rev = self.mat.rev;
+        // Old previews are garbage: free their GPU textures and files now and then.
+        if self.mat.prev_files > 60 {
+            self.mat.prev_files = 0;
+            self.renderer.clear_thumbnails();
+            let live: Vec<String> = self.mat.node_prev.values().filter_map(|p| p.rsplit('/').next().map(str::to_string)).collect();
+            if let Ok(entries) = std::fs::read_dir(&dir) {
+                for e in entries.flatten() {
+                    let name = e.file_name().to_string_lossy().to_string();
+                    if name.starts_with('n') && !live.contains(&name) {
+                        let _ = std::fs::remove_file(e.path());
+                    }
+                }
+            }
         }
     }
 
@@ -417,7 +607,7 @@ impl Editor {
             let selected_kind = (self.mat.selected.len() == 1).then(|| self.mat.selected.iter().next().copied()).flatten().and_then(|id| self.mat.graph.as_ref().and_then(|g| g.nodes.iter().find(|n| n.id == id)).map(|n| n.kind.clone()));
             if let Some(kind) = selected_kind {
                 ui.label(RichText::new(td(&kind)).family(theme::bold_family()));
-                let help = kvas_engine::material_nodes::help(&kind);
+                let help = kvas_engine::material_nodes::help_for(&kind, crate::i18n::current() == crate::i18n::Lang::Ru);
                 ui.label(RichText::new(if help.is_empty() { t("Connect its output to another node's input.") } else { help }).size(11.5).color(pal().text_dim));
             }
             ui.add_space(6.0);
@@ -477,13 +667,17 @@ impl Editor {
         }
     }
 
-    /// Menu entries (kind names) that match a search text, grouped by category order.
-    fn menu_entries(mode: GraphMode, search: &str) -> Vec<(&'static str, &'static str)> {
+    /// Menu entries (kind names) that match a search text and category, in menu order.
+    fn menu_entries(mode: GraphMode, search: &str, category: Option<&str>) -> Vec<(&'static str, &'static str)> {
         let q = search.trim().to_lowercase();
+        let russian = crate::i18n::current() == crate::i18n::Lang::Ru;
         let mut out = Vec::new();
         for cat in CATEGORIES {
+            if category.is_some_and(|c| c != *cat) && q.is_empty() {
+                continue;
+            }
             for s in all_specs().filter(|s| s.category == *cat && !is_output(s.kind) && available(s.kind, mode)) {
-                let hit = q.is_empty() || s.kind.to_lowercase().contains(&q) || td(s.kind).to_lowercase().contains(&q) || kvas_engine::material_nodes::help(s.kind).to_lowercase().contains(&q);
+                let hit = q.is_empty() || s.kind.to_lowercase().contains(&q) || td(s.kind).to_lowercase().contains(&q) || kvas_engine::material_nodes::help_for(s.kind, russian).to_lowercase().contains(&q) || td(cat).to_lowercase().contains(&q);
                 if hit {
                     out.push((s.kind, *cat));
                 }
@@ -500,6 +694,11 @@ impl Editor {
     fn add_node_at(&mut self, kind: &str, at: Vec2, connect_from: Option<u32>) {
         let Some(g) = &mut self.mat.graph else { return };
         let id = g.add_node(kind, [at.x, at.y]);
+        if g.mode == GraphMode::Effect {
+            if let Some(n) = g.nodes.last_mut() {
+                n.preview = false;
+            }
+        }
         if let (Some(from), Some(s)) = (connect_from, spec(kind)) {
             if !s.inputs.is_empty() {
                 g.connect(from, id, 0);
@@ -508,45 +707,111 @@ impl Editor {
         self.mat.selected = BTreeSet::from([id]);
     }
 
-    /// The searchable popup for adding nodes.
+    /// The searchable popup for adding nodes: categories on the left, nodes with a description on the right.
     pub fn add_menu_ui(&mut self, ctx: &egui::Context) {
         let Some(mut menu) = self.mat.menu.clone() else { return };
         let Some(mode) = self.mat.graph.as_ref().map(|g| g.mode) else { return };
+        let russian = crate::i18n::current() == crate::i18n::Lang::Ru;
         let mut picked: Option<&'static str> = None;
         let mut close = false;
+        let all = Self::menu_entries(mode, "", None);
         let area = egui::Area::new(egui::Id::unique("add-node-menu")).order(egui::Order::Foreground).fixed_pos(menu.screen).show(ctx, |ui| {
             egui::Frame::popup(ui.style()).show(ui, |ui| {
-                ui.set_width(300.0);
+                ui.set_width(580.0);
                 let r = ui.add(egui::TextEdit::singleline(&mut menu.search).hint_text(t("Search nodes...")).desired_width(f32::INFINITY));
                 if menu.just_opened {
                     r.request_focus();
                     menu.just_opened = false;
                 }
-                let entries = Self::menu_entries(mode, &menu.search);
+                if r.changed() {
+                    menu.cursor = 0;
+                }
+                let searching = !menu.search.trim().is_empty();
+                let entries = Self::menu_entries(mode, &menu.search, menu.category);
+                menu.cursor = menu.cursor.min(entries.len().saturating_sub(1));
+                let mut moved = false;
+                ui.input_mut(|i| {
+                    if i.consume_key(Modifiers::NONE, Key::ArrowDown) {
+                        menu.cursor = (menu.cursor + 1).min(entries.len().saturating_sub(1));
+                        moved = true;
+                    }
+                    if i.consume_key(Modifiers::NONE, Key::ArrowUp) {
+                        menu.cursor = menu.cursor.saturating_sub(1);
+                        moved = true;
+                    }
+                });
                 if ui.input(|i| i.key_pressed(Key::Enter)) {
-                    picked = entries.first().map(|e| e.0);
+                    picked = entries.get(menu.cursor).map(|e| e.0);
                 }
                 if ui.input(|i| i.key_pressed(Key::Escape)) {
                     close = true;
                 }
-                egui::ScrollArea::vertical().max_height(360.0).show(ui, |ui| {
-                    let mut last_cat = "";
-                    for (kind, cat) in &entries {
-                        if *cat != last_cat && menu.search.trim().is_empty() {
-                            ui.add_space(4.0);
-                            ui.label(RichText::new(td(cat)).size(11.0).color(category_color(cat)).family(theme::bold_family()));
-                            last_cat = cat;
+                ui.add_space(4.0);
+                ui.horizontal_top(|ui| {
+                    // Categories.
+                    ui.vertical(|ui| {
+                        ui.set_width(138.0);
+                        let mut rows: Vec<(String, Option<&'static str>, usize)> = vec![(t("All").to_string(), None, all.len())];
+                        for cat in CATEGORIES {
+                            let count = all.iter().filter(|e| e.1 == *cat).count();
+                            if count > 0 {
+                                rows.push((td(cat), Some(*cat), count));
+                            }
                         }
-                        let resp = ui.add(egui::Button::new(RichText::new(td(kind))).frame(false).min_size(Vec2::new(ui.available_width(), 22.0)));
-                        let help = kvas_engine::material_nodes::help(kind);
-                        let resp = if help.is_empty() { resp } else { resp.on_hover_text(help) };
-                        if resp.clicked() {
-                            picked = Some(kind);
+                        for (label, cat, count) in rows {
+                            let (rect, resp) = ui.allocate_exact_size(egui::vec2(138.0, 24.0), Sense::click());
+                            let active = menu.category == cat && !searching;
+                            if active || resp.hovered() {
+                                ui.painter().rect_filled(rect, 6.0, if active { pal().selection } else { pal().hover });
+                            }
+                            ui.painter().circle_filled(rect.left_center() + Vec2::new(10.0, 0.0), 4.0, cat.map_or(pal().text_dim, category_color));
+                            ui.painter().text(rect.left_center() + Vec2::new(22.0, 0.0), egui::Align2::LEFT_CENTER, label, egui::FontId::proportional(12.5), pal().text);
+                            ui.painter().text(rect.right_center() - Vec2::new(8.0, 0.0), egui::Align2::RIGHT_CENTER, count.to_string(), egui::FontId::proportional(11.0), pal().text_dim);
+                            if resp.clicked() {
+                                menu.category = cat;
+                                menu.cursor = 0;
+                                menu.search.clear();
+                            }
                         }
-                    }
-                    if entries.is_empty() {
-                        ui.weak(t("No node matches"));
-                    }
+                    });
+                    ui.separator();
+                    // Nodes.
+                    ui.vertical(|ui| {
+                        ui.set_width(420.0);
+                        egui::ScrollArea::vertical().max_height(400.0).auto_shrink([false, true]).show(ui, |ui| {
+                            for (i, (kind, cat)) in entries.iter().enumerate() {
+                                let (rect, resp) = ui.allocate_exact_size(egui::vec2(ui.available_width(), 38.0), Sense::click());
+                                let current = i == menu.cursor;
+                                if resp.hovered() && ui.input(|i| i.pointer.delta() != Vec2::ZERO) {
+                                    menu.cursor = i;
+                                }
+                                if current || resp.hovered() {
+                                    ui.painter().rect_filled(rect, 6.0, if current { pal().selection } else { pal().hover });
+                                }
+                                if current && moved {
+                                    resp.scroll_to_me(None);
+                                }
+                                let colour = category_color(cat);
+                                ui.painter().rect_filled(Rect::from_min_size(rect.min + Vec2::new(4.0, 6.0), Vec2::new(3.0, 26.0)), 2.0, colour);
+                                ui.painter().text(rect.min + Vec2::new(16.0, 11.0), egui::Align2::LEFT_CENTER, td(kind), egui::FontId::new(13.0, theme::bold_family()), pal().text);
+                                if searching || menu.category.is_none() {
+                                    ui.painter().text(rect.right_top() + Vec2::new(-8.0, 11.0), egui::Align2::RIGHT_CENTER, td(cat), egui::FontId::proportional(10.5), colour);
+                                }
+                                let help = kvas_engine::material_nodes::help_for(kind, russian);
+                                let mut line: String = help.chars().take(74).collect();
+                                if help.chars().count() > 74 {
+                                    line.push('…');
+                                }
+                                ui.painter().text(rect.min + Vec2::new(16.0, 27.0), egui::Align2::LEFT_CENTER, line, egui::FontId::proportional(11.0), pal().text_dim);
+                                if resp.clicked() {
+                                    picked = Some(kind);
+                                }
+                            }
+                            if entries.is_empty() {
+                                ui.weak(t("No node matches"));
+                            }
+                        });
+                    });
                 });
             });
         });
@@ -564,7 +829,7 @@ impl Editor {
     }
 
     fn open_add_menu(&mut self, screen: Pos2, at: Vec2, connect_from: Option<u32>) {
-        self.mat.menu = Some(AddMenu { at, screen, search: String::new(), connect_from, just_opened: true });
+        self.mat.menu = Some(AddMenu { at, screen, search: String::new(), connect_from, just_opened: true, category: None, cursor: 0 });
     }
 
     /// Copies the selected nodes (links between them are kept).
@@ -711,18 +976,19 @@ impl Editor {
         let Some(graph) = self.mat.graph.clone() else { return };
         let mode = graph.mode;
         let geom = |n: &MatNode| spec(&n.kind).map(|s| Rect::from_min_size(to_screen(Vec2::from(n.pos)), node_size(n, s) * z));
+        let top_of = |n: &MatNode| HEADER_H + spec(&n.kind).map_or(0.0, |s| block_h(n, s));
         let input_pos = |n: &MatNode, r: Rect, i: usize| {
             if n.kind == "Reroute" {
                 Pos2::new(r.left(), r.center().y)
             } else {
-                Pos2::new(r.left(), r.top() + (HEADER_H + i as f32 * ROW_H + ROW_H * 0.5) * z)
+                Pos2::new(r.left(), r.top() + (top_of(n) + i as f32 * ROW_H + ROW_H * 0.5) * z)
             }
         };
         let output_pos = |n: &MatNode, r: Rect| {
             if n.kind == "Reroute" {
                 Pos2::new(r.right(), r.center().y)
             } else {
-                Pos2::new(r.right(), r.top() + (HEADER_H + ROW_H * 0.5) * z)
+                Pos2::new(r.right(), r.top() + HEADER_H * 0.5 * z)
             }
         };
         let shift = ui.input(|i| i.modifiers.shift);
@@ -742,6 +1008,7 @@ impl Editor {
         let mut comment_text: Vec<(u32, String)> = Vec::new();
         let mut start_editing: Option<u32> = None;
         let mut disconnect: Option<u32> = None;
+        let mut toggle_preview: Vec<u32> = Vec::new();
 
         // Comment frames sit behind everything.
         for node in graph.nodes.iter().filter(|n| n.kind == "Comment") {
@@ -850,25 +1117,73 @@ impl Editor {
                     preview_this = Some(node.id);
                     ui.close();
                 }
+                if mode != GraphMode::Effect && !out && !matches!(node.kind.as_str(), "Reroute" | "Comment") && ui.button(if node.preview { t("Hide preview in node") } else { t("Show preview in node") }).clicked() {
+                    toggle_preview.push(node.id);
+                    ui.close();
+                }
                 if node.inputs.iter().any(|s| s.link.is_some()) && ui.button(t("Disconnect inputs")).clicked() {
                     disconnect = Some(node.id);
                     ui.close();
                 }
             });
 
+            let top = HEADER_H + block_h(node, s);
             if is_reroute {
                 painter.rect_filled(r, radius, pal().card);
                 painter.rect_stroke(r, radius, Stroke::new(if selected { 2.0 } else { 1.0 }, if selected { theme::ACCENT } else { pal().border_strong }), egui::StrokeKind::Inside);
             } else {
-                painter.rect_filled(r.translate(Vec2::new(0.0, 3.0 * z)), radius, Color32::from_black_alpha(60));
+                let accent = category_color(s.category);
+                painter.rect_filled(r.translate(Vec2::new(0.0, 4.0 * z)).expand(1.0 * z), radius + 1.0, Color32::from_black_alpha(80));
+                if selected {
+                    painter.rect_stroke(r.expand(2.5 * z), radius + 2.0, Stroke::new(2.0, theme::ACCENT.gamma_multiply(0.45)), egui::StrokeKind::Outside);
+                }
                 painter.rect_filled(r, radius, pal().card);
-                painter.rect_stroke(r, radius, Stroke::new(if selected { 2.0 } else { 1.0 }, if selected { theme::ACCENT } else { pal().border_strong }), egui::StrokeKind::Inside);
                 let header = Rect::from_min_size(r.min, Vec2::new(r.width(), HEADER_H * z));
-                painter.rect_filled(header, egui::CornerRadius { nw: radius as u8, ne: radius as u8, sw: 0, se: 0 }, category_color(s.category).gamma_multiply(0.85));
+                painter.rect_filled(header, egui::CornerRadius { nw: radius as u8, ne: radius as u8, sw: 0, se: 0 }, accent.gamma_multiply(0.9));
+                painter.rect_stroke(r, radius, Stroke::new(if selected { 1.5 } else { 1.0 }, if selected { theme::ACCENT } else { pal().border_strong }), egui::StrokeKind::Inside);
                 painter.text(header.left_center() + Vec2::new(10.0 * z, 0.0), egui::Align2::LEFT_CENTER, td(&node.kind), bold, Color32::WHITE);
-                let help = kvas_engine::material_nodes::help(&node.kind);
+                if z >= 0.7 && !out {
+                    painter.text(header.right_center() - Vec2::new(16.0 * z, 0.0), egui::Align2::RIGHT_CENTER, td(s.category), egui::FontId::proportional(10.0 * z), Color32::from_white_alpha(120));
+                }
+                let help = kvas_engine::material_nodes::help_for(&node.kind, crate::i18n::current() == crate::i18n::Lang::Ru);
                 if !help.is_empty() && pointer.is_some_and(|p| header.contains(p)) {
                     body.clone().on_hover_text(help);
+                }
+                // Gradient strip of a colour ramp, or the live preview of the node.
+                let block = block_h(node, s);
+                if block > 0.0 && widgets {
+                    let area = Rect::from_min_size(Pos2::new(r.left() + 8.0 * z, r.top() + (HEADER_H + 4.0) * z), Vec2::new((NODE_W - 16.0) * z, (block - 8.0) * z));
+                    if node.kind == "Color ramp" {
+                        let strip = Rect::from_min_size(area.min, Vec2::new(area.width(), area.height() - 8.0 * z));
+                        let steps = 40;
+                        for i in 0..steps {
+                            let x0 = strip.left() + strip.width() * i as f32 / steps as f32;
+                            let x1 = strip.left() + strip.width() * (i + 1) as f32 / steps as f32;
+                            let col = to_srgb8(ramp_colour(node, s, (i as f32 + 0.5) / steps as f32));
+                            painter.rect_filled(Rect::from_min_max(Pos2::new(x0, strip.top()), Pos2::new(x1 + 0.5, strip.bottom())), 0.0, col);
+                        }
+                        painter.rect_stroke(strip, 3.0 * z, Stroke::new(1.0, pal().border_strong), egui::StrokeKind::Inside);
+                        for k in 0..4 {
+                            let x = strip.left() + strip.width() * node.params.get(k).copied().unwrap_or(0.0).clamp(0.0, 1.0);
+                            let tip = Pos2::new(x, strip.bottom());
+                            let stop = &node.inputs[k + 1];
+                            let col = if stop.override_default || stop.value != [0.0; 3] { stop.value } else { parse_default(s.inputs[k + 1].1).unwrap_or([0.0; 3]) };
+                            painter.add(egui::Shape::convex_polygon(vec![tip, tip + Vec2::new(-4.0 * z, 7.0 * z), tip + Vec2::new(4.0 * z, 7.0 * z)], to_srgb8(col), Stroke::new(1.0, pal().text)));
+                        }
+                    } else {
+                        painter.rect_filled(area, 6.0 * z, Color32::from_rgb(0x14, 0x15, 0x17));
+                        let side = area.height().min(area.width());
+                        let img = Rect::from_center_size(area.center(), Vec2::splat(side));
+                        let tex = self.mat.node_prev.get(&node.id).cloned().and_then(|path| self.renderer.thumbnail("primitive:sphere", &path, 96));
+                        match tex {
+                            Some(tex) => {
+                                painter.image(tex, img, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE);
+                            }
+                            None => {
+                                painter.text(area.center(), egui::Align2::CENTER_CENTER, "...", egui::FontId::proportional(14.0 * z), pal().text_dim);
+                            }
+                        }
+                    }
                 }
             }
 
@@ -886,7 +1201,7 @@ impl Editor {
 
             let mut row = 0usize;
             for (i, (name, default)) in s.inputs.iter().enumerate() {
-                let y = r.top() + (HEADER_H + row as f32 * ROW_H) * z;
+                let y = r.top() + (top + row as f32 * ROW_H) * z;
                 let p = input_pos(node, r, i);
                 let resp = ui.interact(Rect::from_center_size(p, Vec2::splat(18.0 * z.max(0.7))), ui.scope_id().with(("in", node.id, i)), Sense::click_and_drag());
                 let linked = node.inputs[i].link.is_some();
@@ -907,7 +1222,7 @@ impl Editor {
                 if !is_reroute {
                     painter.text(Pos2::new(r.left() + 14.0 * z, y + ROW_H * z * 0.5), egui::Align2::LEFT_CENTER, td(name), small.clone(), pal().text);
                     if !linked {
-                        let field = Rect::from_min_size(Pos2::new(r.left() + 96.0 * z, y + 2.0 * z), Vec2::new((NODE_W - 106.0) * z, (ROW_H - 4.0) * z));
+                        let field = Rect::from_min_size(Pos2::new(r.left() + 100.0 * z, y + 2.0 * z), Vec2::new((NODE_W - 110.0) * z, (ROW_H - 4.0) * z));
                         let current = if node.inputs[i].override_default || node.inputs[i].value != [0.0; 3] { Some(node.inputs[i].value) } else { parse_default(default) };
                         match current {
                             Some(mut value) if widgets => {
@@ -939,10 +1254,12 @@ impl Editor {
                 }
                 row += 1;
             }
-            // Parameters (one colour picker, or one row each).
-            let first_param_row = row;
-            if s.color && node.params.len() >= 3 {
-                let y = r.top() + (HEADER_H + first_param_row as f32 * ROW_H) * z;
+            // Parameters: a colour picker for tinted nodes (the first three), then one row each.
+            let mut prow = row;
+            let skip = if s.color && node.params.len() >= 3 { 3 } else { 0 };
+            if skip == 3 {
+                let y = r.top() + (top + prow as f32 * ROW_H) * z;
+                prow += 1;
                 let field = Rect::from_min_size(Pos2::new(r.left() + 14.0 * z, y + 2.0 * z), Vec2::new((NODE_W - 28.0) * z, (ROW_H - 4.0) * z));
                 let mut rgb = [node.params[0], node.params[1], node.params[2]];
                 if widgets {
@@ -956,22 +1273,37 @@ impl Editor {
                 } else {
                     painter.rect_filled(field, 4.0, Color32::from_rgb((rgb[0].clamp(0.0, 1.0) * 255.0) as u8, (rgb[1].clamp(0.0, 1.0) * 255.0) as u8, (rgb[2].clamp(0.0, 1.0) * 255.0) as u8));
                 }
-            } else {
-                for (k, (pname, _, min, max)) in s.params.iter().enumerate() {
-                    let y = r.top() + (HEADER_H + (first_param_row + k) as f32 * ROW_H) * z;
-                    let label = pname.split(" (").next().unwrap_or(pname);
-                    painter.text(Pos2::new(r.left() + 14.0 * z, y + ROW_H * z * 0.5), egui::Align2::LEFT_CENTER, td(label), small.clone(), pal().text_dim);
-                    let field = Rect::from_min_size(Pos2::new(r.left() + 96.0 * z, y + 2.0 * z), Vec2::new((NODE_W - 106.0) * z, (ROW_H - 4.0) * z));
-                    let mut v = node.params.get(k).copied().unwrap_or(0.0);
-                    if widgets {
-                        ui.scope_builder(egui::UiBuilder::new().max_rect(field), |ui| {
-                            ui.spacing_mut().interact_size.y = (ROW_H - 4.0) * z;
-                            ui.style_mut().override_font_id = Some(small.clone());
-                            if ui.add(egui::DragValue::new(&mut v).speed(((max - min) * 0.005).max(0.001)).range(*min..=*max).max_decimals(3)).changed() {
-                                param_edits.push((node.id, k, v));
-                            }
-                        });
+            }
+            for (k, (pname, _, min, max)) in s.params.iter().enumerate().skip(skip) {
+                let y = r.top() + (top + prow as f32 * ROW_H) * z;
+                prow += 1;
+                let label = pname.split(" (").next().unwrap_or(pname);
+                let label_pos = Pos2::new(r.left() + 14.0 * z, y + ROW_H * z * 0.5);
+                painter.text(label_pos, egui::Align2::LEFT_CENTER, td(label), small.clone(), pal().text_dim);
+                let field = Rect::from_min_size(Pos2::new(r.left() + 100.0 * z, y + 2.0 * z), Vec2::new((NODE_W - 110.0) * z, (ROW_H - 4.0) * z));
+                let mut v = node.params.get(k).copied().unwrap_or(0.0);
+                if widgets {
+                    let selector = pname.contains('(');
+                    if selector {
+                        // The label hides the legend of a selector ("type (0 fBm, 1 ridged...)"): show it on hover.
+                        let hint = Rect::from_min_size(Pos2::new(r.left(), y), Vec2::new(100.0 * z, ROW_H * z));
+                        ui.interact(hint, ui.scope_id().with(("hint", node.id, k)), Sense::hover()).on_hover_text(*pname);
                     }
+                    ui.scope_builder(egui::UiBuilder::new().max_rect(field), |ui| {
+                        ui.spacing_mut().interact_size.y = (ROW_H - 4.0) * z;
+                        ui.style_mut().override_font_id = Some(small.clone());
+                        ui.spacing_mut().slider_width = (field.width() - 48.0 * z).max(24.0);
+                        let changed = if selector {
+                            ui.add(egui::Slider::new(&mut v, *min..=*max).integer()).changed()
+                        } else if max - min <= 64.0 {
+                            ui.add(egui::Slider::new(&mut v, *min..=*max).max_decimals(3)).changed()
+                        } else {
+                            ui.add(egui::DragValue::new(&mut v).speed(((max - min) * 0.005).max(0.001)).range(*min..=*max).max_decimals(3)).changed()
+                        };
+                        if changed {
+                            param_edits.push((node.id, k, v));
+                        }
+                    });
                 }
             }
         }
@@ -1197,6 +1529,12 @@ impl Editor {
                     n.inputs[i].value = v;
                     n.inputs[i].override_default = true;
                 }
+            }
+            for id in toggle_preview {
+                if let Some(n) = g.nodes.iter_mut().find(|n| n.id == id) {
+                    n.preview = !n.preview;
+                }
+                self.mat.prev_rev = u64::MAX;
             }
             for (id, k, v) in param_edits {
                 if let Some(n) = g.nodes.iter_mut().find(|n| n.id == id) {

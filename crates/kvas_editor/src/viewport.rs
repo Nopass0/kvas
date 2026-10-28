@@ -83,12 +83,14 @@ impl Editor {
         let mut draw = DebugDraw::default();
         self.build_debug(&view, &mut draw, playing);
         let painting = !playing && self.paint.active && self.has_paint_target();
-        let gizmo_busy = if playing || painting { false } else { self.gizmo_ui(ui, &resp, rect, &view, &mut draw) };
+        let editing_mesh = !playing && self.mesh_edit.open && self.mesh_edit.entity == self.selection;
+        let gizmo_busy = if playing || painting || editing_mesh { false } else { self.gizmo_ui(ui, &resp, rect, &view, &mut draw) };
+        if editing_mesh { self.mesh_edit_in_viewport(ui, &resp, rect, &view, &mut draw); }
         if painting {
             self.paint_in_viewport(ui, &resp, rect, &view, &mut draw);
         }
 
-        if !playing && !gizmo_busy && !painting && resp.clicked_by(PointerButton::Primary) && !ui.input(|i| i.modifiers.alt) {
+        if !playing && !gizmo_busy && !painting && !editing_mesh && resp.clicked_by(PointerButton::Primary) && !ui.input(|i| i.modifiers.alt) {
             if let Some(pos) = resp.interact_pointer_pos() {
                 let picked = self.pick(&view, to_ndc(rect, pos));
                 self.select_entity(picked, ui.input(|i| i.modifiers), &[]);
@@ -139,6 +141,11 @@ impl Editor {
         if let Some(p) = &self.play {
             kvas_render::shell::draw_hud(ui.painter(), rect, &p.runtime.input.hud());
             kvas_render::shell::apply_cursor(ui.ctx(), &p.runtime.input, rect.center());
+        }
+        if let Some(p) = &mut self.play {
+            for (entity, channel) in kvas_render::shell::draw_game_ui(ui, &p.runtime.scene, rect, Some(&view), true) {
+                let _ = p.runtime.scene.signals.send(&channel, serde_json::json!({"clicked": true}), Some(entity), None);
+            }
         }
         self.viewport_overlay(ui, rect);
         if resp.hovered() && ui.input(|i| i.pointer.any_down()) && playing {
