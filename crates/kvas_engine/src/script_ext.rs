@@ -258,3 +258,28 @@ impl Ctx<'_> {
         self.scene.world.get_mut::<crate::mesh_edit::EditableMesh>(entity)
     }
 }
+
+/// Logging for debugging: everything lands in the editor Console (warnings yellow, errors red).
+impl Ctx<'_> {
+    /// A yellow warning line: `ctx.warn("health is below zero")`.
+    pub fn warn(&mut self, message: impl Into<String>) {
+        self.log(format!("warning: {}", message.into()));
+    }
+
+    /// A red error line. The script keeps running; use it for conditions that should never happen.
+    pub fn error(&mut self, message: impl Into<String>) {
+        self.log(format!("error: {}", message.into()));
+    }
+
+    /// Logs `name = value` using `Debug`: `ctx.watch("velocity", ctx.velocity())`.
+    pub fn watch(&mut self, name: &str, value: impl std::fmt::Debug) {
+        self.log(format!("{name} = {value:?}"));
+    }
+
+    /// Like [`Ctx::watch`] but at most once per `seconds`, so it can sit in `update` without flooding the Console.
+    pub fn watch_every(&mut self, seconds: f32, name: &str, value: impl std::fmt::Debug) {
+        if self.every(seconds) {
+            self.watch(name, value);
+        }
+    }
+}

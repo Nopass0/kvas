@@ -890,7 +890,11 @@ impl Editor {
                 }
                 let lines: Vec<String> = p.runtime.log.drain(..).collect();
                 for line in lines {
-                    self.console.log(Level::Info, line);
+                    // `ctx.warn` / `ctx.error` prefix their text; show those in the matching colour.
+                    match line.strip_prefix("warning: ").map(|m| (Level::Warn, m)).or_else(|| line.strip_prefix("error: ").map(|m| (Level::Error, m))) {
+                        Some((level, text)) => self.console.log(level, text.to_string()),
+                        None => self.console.log(Level::Info, line),
+                    }
                 }
             }
             None => {

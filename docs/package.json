@@ -6,7 +6,7 @@
     "dev": "vitepress dev",
     "build": "vitepress build",
     "preview": "vitepress preview",
-    "nodes": "cargo run -q -p kvas_engine --example gen_node_docs -- docs/nodes/reference.md"
+    "nodes": "cargo run -q -p kvas_engine --example gen_node_docs"
   },
   "devDependencies": {
     "vitepress": "^1.6.4"

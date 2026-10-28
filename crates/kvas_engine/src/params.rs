@@ -175,3 +175,76 @@ macro_rules! script_params {
         }
     };
 }
+
+/// Lists the Inspector fields of a hand-written script in one line.
+/// Every listed field must implement [`Param`] (numbers, `bool`, `Vec3`, `String`, [`Color`],
+/// asset and entity references, enums with `Choice`, and [`Local`] to hide a variable).
+///
+/// ```
+/// use kvas_engine::prelude::*;
+///
+/// #[derive(Default)]
+/// struct Door { speed: f32, open: bool, name: String }
+/// impl Script for Door {
+///     fn fields(&mut self) -> Vec<Field<'_>> { fields!(self; speed, open, name) }
+/// }
+/// let mut door = Door::default();
+/// assert_eq!(door.fields().len(), 3);
+/// ```
+#[macro_export]
+macro_rules! fields {
+    ($s:ident; $($f:ident),* $(,)?) => {{
+        #[allow(unused_mut)]
+        let mut out: Vec<$crate::reflect::Field<'_>> = Vec::new();
+        $(if let Some(field) = $crate::params::Param::field(&mut $s.$f, stringify!($f)) { out.push(field); })*
+        out
+    }};
+}
+
+/// Declares a whole script in one block: the variables with their defaults (shown in the Inspector
+/// and saved in the scene) and the callbacks. No `Default`, no `fields()`, no boilerplate.
+///
+/// Callbacks are `start`, `update` and `fixed_update`; each names `self` and the context.
+/// Wrap a variable in [`Local`](crate::params::Local) to keep it out of the Inspector.
+///
+/// ```
+/// use kvas_engine::prelude::*;
+///
+/// script! {
+///     /// Spins around Y and counts the frames it has been running.
+///     pub struct Spinner {
+///         speed: f32 = 90.0,
+///         axis: Vec3 = Vec3::Y,
+///         frames: Local<u32> = Local(0),
+///     }
+///
+///     start(self, ctx) {
+///         ctx.log(format!("spinner started at speed {}", self.speed));
+///     }
+///
+///     update(self, ctx) {
+///         ctx.rotate(self.axis * self.speed * ctx.dt());
+///         *self.frames += 1;
+///     }
+/// }
+///
+/// let mut spinner = Spinner::default();
+/// assert_eq!(spinner.speed, 90.0);
+/// assert_eq!(spinner.fields().len(), 2, "Local fields are hidden");
+/// ```
+#[macro_export]
+macro_rules! script {
+    (
+        $(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }
+        $( $phase:ident ($s:ident, $c:ident) $blk:block )*
+    ) => {
+        $crate::script_params! { $(#[$meta])* $vis struct $name { $($body)* } }
+        impl $crate::script::Script for $name {
+            $( $crate::script!(@phase $phase $s $c $blk); )*
+            fn fields(&mut self) -> Vec<$crate::reflect::Field<'_>> { self.params() }
+        }
+    };
+    (@phase start $s:ident $c:ident $blk:block) => { fn start(&mut $s, $c: &mut $crate::script::Ctx) $blk };
+    (@phase update $s:ident $c:ident $blk:block) => { fn update(&mut $s, $c: &mut $crate::script::Ctx) $blk };
+    (@phase fixed_update $s:ident $c:ident $blk:block) => { fn fixed_update(&mut $s, $c: &mut $crate::script::Ctx) $blk };
+}

@@ -5,7 +5,7 @@
 //!
 //! ```
 //! let all = kvas_engine::material_presets::library();
-//! assert!(all.len() >= 40);
+//! assert!(all.len() >= 70);
 //! assert!(all.iter().all(|p| kvas_engine::material_graph::to_wgsl(&p.graph).is_ok()));
 //! ```
 
@@ -355,6 +355,97 @@ fn plain(color: [f32; 3], rough: f32, metal: f32) -> MaterialGraph {
     b.g
 }
 
+/// Flat, hand-painted look: a noise is posterised into a few bands, then coloured by a ramp. No bump, matte.
+fn stylized(stops: [[f32; 3]; 4], scale: f32, steps: f32, kind: f32) -> MaterialGraph {
+    let mut b = B::new();
+    let n = b.fractal(scale, 4.0, kind, 0);
+    let post = b.node("Posterize", 1);
+    b.set(post, &[steps]);
+    b.link(n, post, 0);
+    let ramp = b.ramp(post, stops, [0.0, 0.34, 0.67, 1.0], 2);
+    b.out(ramp, BASE);
+    b.out_value(ROUGH, 0.85);
+    b.g
+}
+
+/// A pattern node (`kind`, parameters) turned into colours by a two-colour mix.
+fn pattern(kind: &str, params: &[f32], a: [f32; 3], bcol: [f32; 3], rough: f32) -> MaterialGraph {
+    let mut b = B::new();
+    let pat = b.node(kind, 0);
+    b.set(pat, params);
+    let mix = b.node("Mix", 1);
+    b.value(mix, 0, a);
+    b.value(mix, 1, bcol);
+    b.link(pat, mix, 2);
+    b.out(mix, BASE);
+    b.out_value(ROUGH, rough);
+    b.g
+}
+
+/// A gradient (`gradient` node: Linear / Radial / Angular) coloured by a ramp.
+fn gradient(kind: &str, stops: [[f32; 3]; 4], emission: f32) -> MaterialGraph {
+    let mut b = B::new();
+    let g = b.node(kind, 0);
+    let ramp = b.ramp(g, stops, [0.0, 0.34, 0.67, 1.0], 1);
+    if emission > 0.0 {
+        let glow = b.node("Multiply", 2);
+        b.link(ramp, glow, 0);
+        b.value(glow, 1, [emission; 3]);
+        b.out(glow, EMIT);
+        b.value(b.out, BASE, [0.02; 3]);
+    } else {
+        b.out(ramp, BASE);
+    }
+    b.out_value(ROUGH, 0.7);
+    b.g
+}
+
+/// Rainbow colours from a warped noise (tie-dye) or from the viewing angle (holographic foil).
+fn rainbow(from_view: bool, scale: f32) -> MaterialGraph {
+    let mut b = B::new();
+    let src = if from_view {
+        let f = b.node("Fresnel", 0);
+        b.value(f, 0, [1.5; 3]);
+        f
+    } else {
+        let w = b.node("Warped noise", 0);
+        b.set(w, &[scale, 2.5]);
+        w
+    };
+    let hsv = b.node("HSV to RGB", 1);
+    b.link(src, hsv, 0);
+    b.value(hsv, 1, [0.75; 3]);
+    b.value(hsv, 2, [1.0; 3]);
+    b.out(hsv, BASE);
+    if from_view {
+        let glow = b.node("Multiply", 2);
+        b.link(hsv, glow, 0);
+        b.value(glow, 1, [0.6; 3]);
+        b.out(glow, EMIT);
+        b.out_value(METAL, 0.8);
+        b.out_value(ROUGH, 0.2);
+    } else {
+        b.out_value(ROUGH, 0.8);
+    }
+    b.g
+}
+
+/// Starfield: dark gradient clouds with bright sparkle points as emission.
+fn galaxy(a: [f32; 3], bcol: [f32; 3]) -> MaterialGraph {
+    let mut b = B::new();
+    let n = b.node("Clouds", 0);
+    b.set(n, &[2.0, 0.3, 0.6]);
+    let ramp = b.ramp(n, [[0.01, 0.01, 0.05], a, bcol, [1.0, 0.9, 1.0]], [0.0, 0.4, 0.75, 1.0], 1);
+    let stars = b.node("Sparkle", 0);
+    b.set(stars, &[90.0, 0.04]);
+    let sum = b.node("Add", 2);
+    b.link(ramp, sum, 0);
+    b.link(stars, sum, 1);
+    b.out(sum, EMIT);
+    b.value(b.out, BASE, [0.0; 3]);
+    b.g
+}
+
 fn p(category: &'static str, name: &'static str, graph: MaterialGraph) -> Preset {
     Preset { category, name, graph }
 }
@@ -424,6 +515,32 @@ pub fn library() -> Vec<Preset> {
         p("Plain", "Plastic Blue", plain([0.05, 0.2, 0.8], 0.3, 0.0)),
         p("Plain", "Chrome", plain([0.9, 0.9, 0.92], 0.04, 1.0)),
         p("Plain", "Clay", plain([0.55, 0.3, 0.2], 0.9, 0.0)),
+        // ---- stylized / cartoon
+        p("Stylized", "Toon Grass", stylized([[0.1, 0.4, 0.15], [0.2, 0.6, 0.2], [0.4, 0.8, 0.25], [0.65, 0.92, 0.35]], 3.0, 4.0, 0.0)),
+        p("Stylized", "Toon Stone", stylized([[0.32, 0.33, 0.4], [0.5, 0.52, 0.6], [0.66, 0.68, 0.76], [0.82, 0.84, 0.9]], 2.5, 4.0, 1.0)),
+        p("Stylized", "Toon Sand", stylized([[0.82, 0.62, 0.35], [0.92, 0.75, 0.45], [0.98, 0.86, 0.58], [1.0, 0.94, 0.75]], 4.0, 4.0, 0.0)),
+        p("Stylized", "Toon Snow", stylized([[0.6, 0.72, 0.9], [0.78, 0.88, 1.0], [0.92, 0.96, 1.0], [1.0, 1.0, 1.0]], 3.0, 3.0, 0.0)),
+        p("Stylized", "Toon Dirt", stylized([[0.25, 0.15, 0.1], [0.38, 0.24, 0.15], [0.5, 0.33, 0.2], [0.62, 0.42, 0.26]], 3.5, 4.0, 2.0)),
+        p("Stylized", "Toon Wood", wood([0.8, 0.55, 0.3], [0.5, 0.3, 0.15], false)),
+        p("Stylized", "Toon Water Foam", stylized([[0.1, 0.4, 0.75], [0.2, 0.6, 0.9], [0.55, 0.85, 1.0], [0.95, 1.0, 1.0]], 2.0, 5.0, 2.0)),
+        p("Stylized", "Toon Lava", stylized([[0.3, 0.02, 0.02], [0.8, 0.15, 0.05], [1.0, 0.55, 0.1], [1.0, 0.9, 0.35]], 2.5, 4.0, 1.0)),
+        p("Stylized", "Candy Stripes", pattern("Stripes", &[10.0, 0.9], [0.95, 0.2, 0.3], [1.0, 0.95, 0.95], 0.35)),
+        p("Stylized", "Polka Dots", pattern("Dots", &[8.0, 0.28], [1.0, 0.85, 0.9], [0.9, 0.2, 0.5], 0.5)),
+        p("Stylized", "Pastel Checker", pattern("Checker", &[10.0], [1.0, 0.85, 0.9], [0.8, 0.9, 1.0], 0.6)),
+        p("Stylized", "Comic Halftone", pattern("Dots", &[40.0, 0.35], [1.0, 0.96, 0.85], [0.1, 0.12, 0.3], 0.9)),
+        p("Stylized", "Zebra", pattern("Stripes", &[14.0, 0.95], [0.03, 0.03, 0.03], [0.96, 0.96, 0.96], 0.6)),
+        p("Stylized", "Honeycomb", pattern("Hexagons", &[9.0, 0.12], [0.35, 0.2, 0.02], [1.0, 0.72, 0.1], 0.3)),
+        p("Stylized", "Pixel Camo", stylized([[0.2, 0.25, 0.12], [0.35, 0.4, 0.2], [0.5, 0.42, 0.28], [0.15, 0.17, 0.1]], 5.0, 3.0, 0.0)),
+        p("Stylized", "Tie Dye", rainbow(false, 2.0)),
+        p("Stylized", "Holographic Foil", rainbow(true, 1.0)),
+        p("Stylized", "Sunset Gradient", gradient("Linear gradient", [[0.15, 0.05, 0.35], [0.75, 0.15, 0.4], [1.0, 0.55, 0.2], [1.0, 0.9, 0.5]], 0.0)),
+        p("Stylized", "Ocean Gradient", gradient("Radial gradient", [[0.0, 0.05, 0.2], [0.0, 0.3, 0.6], [0.1, 0.6, 0.8], [0.7, 0.95, 1.0]], 0.0)),
+        p("Stylized", "Neon Gradient", gradient("Angular gradient", [[1.0, 0.1, 0.6], [0.5, 0.1, 1.0], [0.1, 0.8, 1.0], [1.0, 0.1, 0.6]], 2.5)),
+        p("Stylized", "Galaxy", galaxy([0.25, 0.1, 0.6], [0.8, 0.3, 0.7])),
+        p("Stylized", "Nebula", galaxy([0.05, 0.35, 0.6], [0.2, 0.8, 0.7])),
+        p("Stylized", "Watercolor", stylized([[0.85, 0.9, 0.95], [0.7, 0.82, 0.92], [0.95, 0.85, 0.8], [0.98, 0.95, 0.9]], 1.5, 8.0, 0.0)),
+        p("Stylized", "Paper", natural([[0.86, 0.84, 0.78], [0.9, 0.88, 0.82], [0.93, 0.91, 0.86], [0.96, 0.95, 0.9]], [0.0, 0.4, 0.7, 1.0], 18.0, 0.0, (0.9, 1.0), 0.0, 0.2)),
+        p("Stylized", "Cardboard", natural([[0.5, 0.36, 0.22], [0.6, 0.45, 0.28], [0.68, 0.52, 0.34], [0.74, 0.58, 0.4]], [0.0, 0.4, 0.7, 1.0], 20.0, 1.0, (0.9, 1.0), 0.0, 0.5)),
     ];
     for preset in &mut v {
         preset.graph.next_id = preset.graph.nodes.iter().map(|n| n.id + 1).max().unwrap_or(1);

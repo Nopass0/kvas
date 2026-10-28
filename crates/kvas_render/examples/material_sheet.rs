@@ -26,7 +26,8 @@ fn main() -> Result<(), String> {
     hierarchy::update_globals(&mut scene.world);
     let aspect = columns as f32 / rows as f32;
     let height = (width as f32 / aspect) as u32;
-    let eye = Vec3::new(0.0, 0.0, 9.5 * columns as f32 / 11.0 * 1.25);
+    // The grid has the frame's aspect ratio, so the vertical extent alone decides the distance.
+    let eye = Vec3::new(0.0, 0.0, rows as f32 * 1.15 / 2.0 / 20.0f32.to_radians().tan() * 1.1);
     let view = View::new(Mat4::from_translation(eye), 40.0, aspect, 0.1, 200.0);
     let debug = DebugDraw::default();
     let frame = Frame { view, size: [width, height], time: 0.0, dt: 0.0, debug: &debug, shadows: false, debug_view: 0, cinematic: false };

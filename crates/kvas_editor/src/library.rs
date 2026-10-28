@@ -112,7 +112,7 @@ impl Script for Spinner {}
 register_scripts!(Spinner);
 ").unwrap();
         let first = install(&dir).unwrap();
-        assert!(first.scripts >= 15 && first.shaders >= 15 && first.materials >= 50, "{first:?}");
+        assert!(first.scripts >= 15 && first.shaders >= 15 && first.materials >= 70, "{first:?}");
         let names: Vec<String> = scan_scripts(&dir).into_iter().map(|(n, _)| n).collect();
         assert!(names.contains(&"FpsPlayer".to_string()) && names.contains(&"Spinner".to_string()));
         assert_eq!(names.iter().filter(|n| *n == "Spinner").count(), 1, "the project's own Spinner is kept");

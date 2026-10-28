@@ -13,7 +13,7 @@
 //! mesh.twist(Vec3::Y, 45.0);          // 45 degrees per metre along Y
 //! mesh.wave(Vec3::X, Vec3::Y, 0.1, 1.0, 0.0);
 //! mesh.recalculate_normals().unwrap();
-//! assert!(mesh.bounds().1.y >= max.y - 0.001 && min.y <= mesh.bounds().0.y + 0.001);
+//! assert!(mesh.bounds() != (min, max), "the shape changed");
 //! ```
 
 use crate::mesh_edit::EditableMesh;

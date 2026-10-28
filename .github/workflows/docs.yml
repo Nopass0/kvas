@@ -45,7 +45,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libasound2-dev libudev-dev pkg-config
 
       - name: Regenerate the node reference from the node library
-        run: cargo run -q -p kvas_engine --example gen_node_docs -- docs/nodes/reference.md
+        run: cargo run -q -p kvas_engine --example gen_node_docs
 
       - name: Test that the script cookbook compiles and runs
         run: cargo test -p kvas_engine --test cookbook

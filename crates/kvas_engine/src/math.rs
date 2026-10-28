@@ -76,6 +76,42 @@ pub fn approach_degrees(current: f32, target: f32, max_delta: f32) -> f32 {
     current + approach(0.0, delta_degrees(current, target), max_delta)
 }
 
+/// Critically damped spring towards `target` (like a camera "smooth damp"): returns the new value and the
+/// new velocity. Keep the velocity between calls. `smooth_time` is roughly the seconds to arrive.
+///
+/// ```
+/// use kvas_engine::math::smooth_damp;
+/// let (mut x, mut v) = (0.0, 0.0);
+/// for _ in 0..120 { (x, v) = smooth_damp(x, 10.0, v, 0.3, 1.0 / 60.0); }
+/// assert!((x - 10.0).abs() < 0.05);
+/// ```
+pub fn smooth_damp(current: f32, target: f32, velocity: f32, smooth_time: f32, dt: f32) -> (f32, f32) {
+    let omega = 2.0 / smooth_time.max(1e-4);
+    let x = omega * dt;
+    let exp = 1.0 / (1.0 + x + 0.48 * x * x + 0.235 * x * x * x);
+    let change = current - target;
+    let temp = (velocity + omega * change) * dt;
+    let new_velocity = (velocity - omega * temp) * exp;
+    let out = target + (change + temp) * exp;
+    // Never overshoot the target.
+    if (target - current > 0.0) == (out > target) {
+        return (target, 0.0);
+    }
+    (out, new_velocity)
+}
+
+/// Smooth S curve `3t² - 2t³` of a value clamped to 0..1.
+pub fn ease_smooth(t: f32) -> f32 {
+    let t = t.clamp(0.0, 1.0);
+    t * t * (3.0 - 2.0 * t)
+}
+
+/// Even smoother S curve `6t⁵ - 15t⁴ + 10t³` with zero acceleration at both ends.
+pub fn ease_smoother(t: f32) -> f32 {
+    let t = t.clamp(0.0, 1.0);
+    t * t * t * (t * (t * 6.0 - 15.0) + 10.0)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
