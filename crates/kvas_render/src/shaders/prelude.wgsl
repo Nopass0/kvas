@@ -46,6 +46,8 @@ struct Object {
 @group(2) @binding(4) var orm_tex: texture_2d<f32>;      // R occlusion, G roughness, B metallic
 // Depth of the opaque scene; filled for transparent objects only (water, glass), empty otherwise.
 @group(3) @binding(0) var scene_depth_tex: texture_depth_multisampled_2d;
+// Colour of the opaque scene (already in display space); same availability as the depth.
+@group(3) @binding(1) var scene_color_tex: texture_multisampled_2d<f32>;
 
 struct VertexIn {
     @location(0) position: vec3<f32>,
@@ -72,6 +74,14 @@ fn scene_depth_behind(clip: vec4<f32>, world_pos: vec3<f32>) -> f32 {
     let ndc = vec4<f32>(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0, d, 1.0);
     let w = globals.inv_view_proj * ndc;
     return distance(w.xyz / w.w, world_pos);
+}
+
+// Colour of the opaque scene seen through this pixel (black where it is not available).
+fn scene_color_behind(clip: vec4<f32>) -> vec3<f32> {
+    let dims = vec2<i32>(textureDimensions(scene_color_tex));
+    let px = vec2<i32>(clip.xy);
+    if (dims.x < 2 || px.x < 0 || px.y < 0 || px.x >= dims.x || px.y >= dims.y) { return vec3<f32>(0.0); }
+    return textureLoad(scene_color_tex, px, 0).rgb;
 }
 
 // World position of the opaque surface seen through this pixel (the point itself where nothing is behind).

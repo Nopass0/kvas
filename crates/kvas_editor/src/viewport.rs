@@ -108,8 +108,17 @@ impl Editor {
             let still = matches!((start, pos_now), (Some(a), Some(b)) if (a - b).length() < 8.0);
             if still && !playing && !gizmo_busy && !painting && !editing_mesh && !alt {
                 if let Some(pos) = pos_now.filter(|p| rect.contains(*p)) {
-                    let picked = self.pick(&view, to_ndc(rect, pos));
-                    self.select_entity(picked, ui.input(|i| i.modifiers), &[]);
+                    let ctrl = ui.input(|i| i.modifiers.command);
+                    let decal = self.selection.filter(|e| self.scene.world.has::<Decal>(*e));
+                    if let (true, Some(d)) = (ctrl, decal) {
+                        // Ctrl+click with a decal selected lays it onto the surface under the pointer.
+                        if let Some((_, at, normal)) = self.pick_surface(&view, to_ndc(rect, pos), Some(d)) {
+                            self.place_on_surface(d, at, normal);
+                        }
+                    } else {
+                        let picked = self.pick(&view, to_ndc(rect, pos));
+                        self.select_entity(picked, ui.input(|i| i.modifiers), &[]);
+                    }
                 }
             }
         }
@@ -131,7 +140,27 @@ impl Editor {
         if let Some(asset) = resp.dnd_release_payload::<AssetDrag>().filter(|a| self.is_camera_effect(&a.0)) {
             self.drop_asset(None, &asset.0);
         }
-        if let Some(asset) = resp.dnd_release_payload::<AssetDrag>() {
+        // Alt while dropping an image: a decal on the surface instead of a new texture.
+        let alt_drop = ui.input(|i| i.modifiers.alt);
+        let asset_drop = resp.dnd_release_payload::<AssetDrag>();
+        let asset_drop = match asset_drop {
+            Some(a) if alt_drop && [".png", ".jpg", ".jpeg"].iter().any(|x| a.0.to_ascii_lowercase().ends_with(x)) => {
+                if let Some(pos) = ui.input(|i| i.pointer.interact_pos()).filter(|p| rect.contains(*p)) {
+                    if let Some((_, at, normal)) = self.pick_surface(&view, to_ndc(rect, pos), None) {
+                        let path = a.0.clone();
+                        let name = path.rsplit('/').next().unwrap_or("Decal").to_string();
+                        let e = self.create_entity(&name, |w, e| w.insert(e, Decal { texture: path, color: [1.0; 4], ..Default::default() }));
+                        if let Some(t) = self.active_mut().world.get_mut::<Transform>(e) {
+                            t.scale = Vec3::new(1.0, 0.5, 1.0);
+                        }
+                        self.place_on_surface(e, at, normal);
+                    }
+                }
+                None
+            }
+            other => other,
+        };
+        if let Some(asset) = asset_drop {
             let target = ui.input(|i| i.pointer.interact_pos()).filter(|p| rect.contains(*p)).and_then(|pos| self.pick(&view, to_ndc(rect, pos)));
             if let Some(e) = target.filter(|_| self.apply_asset_to_ok(&asset.0)) {
                 self.apply_asset_to(e, &asset.0);
@@ -214,6 +243,11 @@ impl Editor {
             for (e, _) in world.iter::<Cloth>() {
                 if let Some(p) = place(e) {
                     items.push((e, Icon::Shirt, Color32::from_rgb(0xB0, 0x8A, 0xE8), p, name(e)));
+                }
+            }
+            for (e, _) in world.iter::<Decal>() {
+                if let Some(p) = place(e) {
+                    items.push((e, Icon::Brush, Color32::from_rgb(0xE8, 0x9A, 0x4B), p, name(e)));
                 }
             }
             for (e, _) in world.iter::<VoxelWater>() {
@@ -506,6 +540,47 @@ impl Editor {
         painter.rect_filled(pill, 7.0, Color32::from_black_alpha(185));
         painter.galley(pill.min + egui::vec2(9.0, 5.0), galley, Color32::WHITE);
         ui.ctx().request_repaint();
+    }
+
+    /// The surface under a screen point: the object, the world point and the world normal.
+    /// `skip` is left out of the test (the decal being placed).
+    pub fn pick_surface(&mut self, view: &View, ndc: Vec2, skip: Option<Entity>) -> Option<(Entity, Vec3, Vec3)> {
+        let (origin, dir) = view.ray(ndc);
+        let items: Vec<(Entity, Mat4, String)> = self
+            .active()
+            .world
+            .iter::<GlobalTransform>()
+            .filter(|(e, _)| Some(*e) != skip)
+            .filter_map(|(e, g)| Some((e, g.0, mesh_key(&self.active().world, e)?)))
+            .collect();
+        let mut best: Option<(f32, Entity, Vec3, Vec3)> = None;
+        for (e, m, mesh) in items {
+            let inv = m.inverse();
+            let (lo, ld) = (inv.transform_point3(origin), inv.transform_vector3(dir));
+            let Some((t, n)) = self.renderer.mesh_ray_normal(&mesh, lo, ld) else { continue };
+            let point = m.transform_point3(lo + ld * t);
+            let dist = (point - origin).length();
+            if best.is_none_or(|b| dist < b.0) {
+                // Normals transform with the inverse transpose (non-uniform scale).
+                let normal = inv.transpose().transform_vector3(n).normalize_or(Vec3::Y);
+                best = Some((dist, e, point, normal));
+            }
+        }
+        best.map(|(_, e, p, n)| (e, p, n))
+    }
+
+    /// Moves an object onto a surface point and turns its +Y along the surface normal (decals
+    /// project along -Y, so they then paint that surface). The turn around the normal is kept.
+    pub fn place_on_surface(&mut self, e: Entity, at: Vec3, normal: Vec3) {
+        self.begin_edit();
+        if let Some(t) = self.active_mut().world.get_mut::<Transform>(e) {
+            let yaw = Quat::from_rotation_y(t.rotation.y.to_radians());
+            let q = Quat::from_rotation_arc(Vec3::Y, normal.normalize_or(Vec3::Y)) * yaw;
+            let (y, x, z) = q.to_euler(EulerRot::YXZ);
+            t.position = at;
+            t.rotation = Vec3::new(x.to_degrees(), y.to_degrees(), z.to_degrees());
+        }
+        self.selection = Some(e);
     }
 
     /// The nearest object under a screen point and its distance along the view ray.

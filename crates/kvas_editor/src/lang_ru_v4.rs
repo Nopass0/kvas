@@ -236,6 +236,8 @@ pub const RU_V4: &[(&str, &str)] = &[
     ("Tree (palm)", "Пальма"),
     ("Bush", "Куст"),
     ("Tree", "Дерево"),
+    ("Decal", "Декаль"),
+    ("antialias", "сглаживание (FXAA)"),
     ("Scene loaded", "Сцена загружена"),
     ("Built-in materials and shaders added to the project: {}", "Встроенные материалы и шейдеры добавлены в проект: {}"),
 ];

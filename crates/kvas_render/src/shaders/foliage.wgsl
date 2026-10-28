@@ -1,3 +1,4 @@
+// kvas:alpha_to_coverage
 // Built-in foliage shader for procedural trees (the prelude is prepended). Each card carries a
 // small cluster of leaves (or needles) cut out here; the cards sway with the wind on the GPU.
 //   object.color   main leaf colour          object.user0  x wind, y style (0 leaves, 1 needles, 2 fronds)
@@ -71,7 +72,9 @@ fn fs_main(in: VsOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f
             }
         }
     }
-    if (inside < 0.0) { discard; }
+    // Soft edge one pixel wide: with alpha-to-coverage MSAA turns it into smooth leaf outlines.
+    let coverage = clamp(inside / max(fwidth(inside), 1e-4) + 0.5, 0.0, 1.0);
+    if (coverage <= 0.01) { discard; }
 
     // Colour: two tints mixed per card, darker towards the inside and the bottom of the crown.
     let tint = hash21(vec2<f32>(card, 1.3));
@@ -96,5 +99,5 @@ fn fs_main(in: VsOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f
     let h = normalize(l + v);
     col += globals.sun_color.xyz * pow(max(dot(n, h), 0.0), 24.0) * 0.06 * shadow;
     if (!front) { col *= 0.92; }
-    return vec4<f32>(to_display_at(apply_fog(col, in.world_pos), in.clip), 1.0);
+    return vec4<f32>(to_display_at(apply_fog(col, in.world_pos), in.clip), coverage);
 }

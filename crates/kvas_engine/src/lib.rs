@@ -42,6 +42,7 @@ mod file_io;
 pub mod gameplay;
 pub mod grass;
 pub mod tree;
+pub mod decal;
 pub mod gui;
 pub mod hierarchy;
 pub mod input;
@@ -97,6 +98,7 @@ pub mod prelude {
     pub use crate::gameplay::{Lifetime, Tags, Visibility};
     pub use crate::grass::Grass;
     pub use crate::tree::TreeStyle;
+    pub use crate::decal::{DecalBlend, DecalShape};
     pub use crate::hierarchy;
     pub use crate::input::Hud;
     pub use crate::math::{approach, approach_degrees, damp, ease_smooth, ease_smoother, smooth_damp, delta_degrees, inverse_lerp, lerp, remap, remap_clamped, smoothstep, wrap_degrees};

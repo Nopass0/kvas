@@ -1,3 +1,4 @@
+// kvas:alpha_to_coverage
 // For imported plants and trees: cuts leaves out of the model's texture (alpha below 0.5 is
 // discarded), lights them softly from both sides and sways them in the wind, more at the top.
 //   object.user0  x wind strength (default 1), y height of the model in metres (default 4)
@@ -20,7 +21,9 @@ fn vs_main(v: VertexIn) -> VsOut {
 @fragment
 fn fs_main(in: VsOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f32> {
     let tex = textureSample(albedo_tex, albedo_smp, in.uv);
-    if (tex.a < 0.5) { discard; }
+    // Sharpened alpha: smooth edges through alpha-to-coverage instead of a hard cut.
+    let coverage = clamp((tex.a - 0.5) / max(fwidth(tex.a), 1e-4) + 0.5, 0.0, 1.0);
+    if (coverage <= 0.01) { discard; }
     let albedo = tex.rgb * object.color.rgb;
     var n = normalize(in.normal);
     if (!front) { n = -n; }
@@ -30,5 +33,5 @@ fn fs_main(in: VsOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f
     let wrap = clamp(dot(n, l) * 0.5 + 0.5, 0.0, 1.0);
     var col = albedo * globals.sun_color.xyz * wrap * mix(0.35, 1.0, shadow) + albedo * env_color(n) * 0.5;
     col += albedo * globals.sun_color.xyz * pow(max(dot(-v, l), 0.0), 4.0) * 0.6 * shadow;
-    return vec4<f32>(to_display_at(apply_fog(col, in.world_pos), in.clip), 1.0);
+    return vec4<f32>(to_display_at(apply_fog(col, in.world_pos), in.clip), coverage);
 }

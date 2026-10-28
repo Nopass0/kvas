@@ -82,6 +82,9 @@ pub struct PostSettings {
     pub film_grain: f32,
     /// Sharpening of fine detail.
     pub sharpen: f32,
+    /// Edge smoothing (FXAA) on top of MSAA: removes stair steps on thin geometry, cut-out leaves
+    /// and sharp procedural patterns. 0 = off, 1 = full.
+    pub antialias: f32,
     /// Tint multiplied over the final picture (linear RGB), white = none.
     pub tint: [f32; 3],
     /// Custom shader effects, applied in order after the built-in ones.
@@ -101,6 +104,7 @@ impl Default for PostSettings {
             chromatic_aberration: 0.0,
             film_grain: 0.0,
             sharpen: 0.0,
+            antialias: 1.0,
             tint: [1.0; 3],
             effects: Vec::new(),
         }
@@ -128,6 +132,7 @@ impl PostSettings {
             || self.chromatic_aberration > 0.0
             || self.film_grain > 0.0
             || self.sharpen > 0.0
+            || self.antialias > 0.0
             || self.tint != [1.0; 3]
     }
 

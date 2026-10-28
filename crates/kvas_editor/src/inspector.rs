@@ -491,6 +491,7 @@ impl Editor {
                 ("chromatic aberration", &mut p.chromatic_aberration, 1.5),
                 ("film grain", &mut p.film_grain, 1.0),
                 ("sharpen", &mut p.sharpen, 1.5),
+                ("antialias", &mut p.antialias, 1.0),
             ] {
                 ui.label(t(label));
                 ui.add(egui::Slider::new(value, 0.0..=max));

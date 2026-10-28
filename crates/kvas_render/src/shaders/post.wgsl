@@ -5,7 +5,7 @@ struct Post {
     a: vec4<f32>,   // bloom, bloom threshold, bloom radius, lens flare
     b: vec4<f32>,   // blur, motion blur, vignette, chromatic aberration
     c: vec4<f32>,   // film grain, sharpen, time, aspect (w / h)
-    d: vec4<f32>,   // tint rgb
+    d: vec4<f32>,   // tint rgb, antialias (FXAA) amount
     e: vec4<f32>,   // motion uv shift xy, texel size xy
     f: vec4<f32>,   // depth of field on, focus distance, f-number, focal length (mm)
     g: vec4<f32>,   // near, far, exposure compensation (stops), letterbox ratio
@@ -53,6 +53,34 @@ fn bright(uv: vec2<f32>) -> vec3<f32> {
 
 const GOLDEN: f32 = 2.39996323;
 
+// FXAA (after Timothy Lottes' FXAA 3.11, console quality): finds edges by luma contrast and
+// blends along them. Keeps flat areas and texture detail untouched.
+fn fxaa(uv: vec2<f32>) -> vec3<f32> {
+    let t = u.e.zw;
+    let rgb_m = tap(uv);
+    let l_m = luma(rgb_m);
+    let l_nw = luma(tap(uv + vec2<f32>(-1.0, -1.0) * t));
+    let l_ne = luma(tap(uv + vec2<f32>(1.0, -1.0) * t));
+    let l_sw = luma(tap(uv + vec2<f32>(-1.0, 1.0) * t));
+    let l_se = luma(tap(uv + vec2<f32>(1.0, 1.0) * t));
+    let l_min = min(l_m, min(min(l_nw, l_ne), min(l_sw, l_se)));
+    let l_max = max(l_m, max(max(l_nw, l_ne), max(l_sw, l_se)));
+    if (l_max - l_min < max(0.0312, l_max * 0.125)) {
+        return rgb_m;
+    }
+    var dir = vec2<f32>(-((l_nw + l_ne) - (l_sw + l_se)), (l_nw + l_sw) - (l_ne + l_se));
+    let reduce = max((l_nw + l_ne + l_sw + l_se) * 0.03125, 1.0 / 128.0);
+    let rcp = 1.0 / (min(abs(dir.x), abs(dir.y)) + reduce);
+    dir = clamp(dir * rcp, vec2<f32>(-8.0), vec2<f32>(8.0)) * t;
+    let a = 0.5 * (tap(uv + dir * (1.0 / 3.0 - 0.5)) + tap(uv + dir * (2.0 / 3.0 - 0.5)));
+    let b = a * 0.5 + 0.25 * (tap(uv - dir * 0.5) + tap(uv + dir * 0.5));
+    let l_b = luma(b);
+    if (l_b < l_min || l_b > l_max) {
+        return a;
+    }
+    return b;
+}
+
 fn view_depth(p: vec2<i32>) -> f32 {
     let size = vec2<i32>(textureDimensions(depth_tex));
     let d = textureLoad(depth_tex, clamp(p, vec2<i32>(0), size - vec2<i32>(1)), 0);
@@ -79,6 +107,9 @@ fn fs_main(in: VsOut) -> @location(0) vec4<f32> {
     // Chromatic aberration: red and blue drift apart towards the corners.
     let ca = u.b.w * dot(d, d) * 0.06;
     var col = vec3<f32>(tap(uv + d * ca).r, tap(uv).g, tap(uv - d * ca).b);
+    if (u.d.w > 0.0 && ca < 1e-5) {
+        col = mix(col, fxaa(uv), u.d.w);
+    }
 
     // Depth of field: gather a disc whose radius follows how far this pixel is from the focus plane.
     if (u.f.x > 0.5) {

@@ -82,6 +82,7 @@ const SHADOW: &str = include_str!("shaders/shadow.wgsl");
 const GRASS: &str = include_str!("shaders/grass.wgsl");
 const FOLIAGE: &str = include_str!("shaders/foliage.wgsl");
 const BARK: &str = include_str!("shaders/bark.wgsl");
+const DECAL: &str = include_str!("shaders/decal.wgsl");
 const SMOKE: &str = include_str!("shaders/smoke.wgsl");
 const CLOUDS: &str = include_str!("shaders/clouds.wgsl");
 const WATER: &str = include_str!("shaders/water.wgsl");
@@ -174,6 +175,10 @@ struct Targets {
     color_msaa: wgpu::TextureView,
     depth: wgpu::TextureView,
     depth_tex: wgpu::Texture,
+    color_msaa_tex: wgpu::Texture,
+    /// Copy of the opaque colour, readable by decals and transparent shaders.
+    color_copy_tex: wgpu::Texture,
+    color_copy: wgpu::TextureView,
     /// Copy of the opaque depth, readable by transparent shaders (water foam, soft edges).
     depth_copy_tex: wgpu::Texture,
     depth_copy: wgpu::TextureView,
@@ -327,6 +332,12 @@ fn multisample() -> wgpu::MultisampleState {
     wgpu::MultisampleState { count: MSAA, mask: !0, alpha_to_coverage_enabled: false }
 }
 
+/// Shaders that write a soft coverage into alpha (cut-out leaves, fences) and contain the marker
+/// `kvas:alpha_to_coverage` get smooth MSAA edges instead of hard pixel stairs.
+fn multisample_for(source: &str, transparent: bool) -> wgpu::MultisampleState {
+    wgpu::MultisampleState { count: MSAA, mask: !0, alpha_to_coverage_enabled: !transparent && source.contains("kvas:alpha_to_coverage") }
+}
+
 fn color_target(blend: wgpu::BlendState) -> Option<wgpu::ColorTargetState> {
     Some(wgpu::ColorTargetState { format: COLOR_FORMAT, blend: Some(blend), write_mask: wgpu::ColorWrites::ALL })
 }
@@ -380,10 +391,12 @@ fn build_pipeline(
             compilation_options: Default::default(),
             targets: &[color_target(wgpu::BlendState::ALPHA_BLENDING)],
         }),
-        primitive: wgpu::PrimitiveState { cull_mode: Some(wgpu::Face::Back), ..Default::default() },
+        // Decals (marked `kvas:decal`) draw the back faces of their box with no depth test, so they
+        // cover every surface inside the box once, even with the camera inside it.
+        primitive: wgpu::PrimitiveState { cull_mode: Some(if source.contains("kvas:decal") { wgpu::Face::Front } else { wgpu::Face::Back }), ..Default::default() },
         // Transparent surfaces test depth but do not write it, so things behind glass stay visible.
-        depth_stencil: Some(depth_state(!transparent, wgpu::CompareFunction::Less)),
-        multisample: multisample(),
+        depth_stencil: Some(if source.contains("kvas:decal") { depth_state(false, wgpu::CompareFunction::Always) } else { depth_state(!transparent, wgpu::CompareFunction::Less) }),
+        multisample: multisample_for(source, transparent),
         multiview_mask: None,
         cache: None,
     });
@@ -619,16 +632,31 @@ fn make_targets(device: &wgpu::Device, size: [u32; 2], full: Option<[u32; 2]>) -
     };
     let depth_tex = device.create_texture(&depth_desc("depth", wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_SRC));
     let depth_copy_tex = device.create_texture(&depth_desc("depth-copy", wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::RENDER_ATTACHMENT));
+    let color_desc = |label, usage| wgpu::TextureDescriptor {
+        label: Some(label),
+        size: extent,
+        mip_level_count: 1,
+        sample_count: MSAA,
+        dimension: wgpu::TextureDimension::D2,
+        format: COLOR_FORMAT,
+        usage,
+        view_formats: &[],
+    };
+    let color_msaa_tex = device.create_texture(&color_desc("color-msaa", wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC));
+    let color_copy_tex = device.create_texture(&color_desc("color-copy", wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST));
     Targets {
         depth: depth_tex.create_view(&Default::default()),
         depth_copy: depth_copy_tex.create_view(&Default::default()),
         depth_tex,
         depth_copy_tex,
+        color_msaa: color_msaa_tex.create_view(&Default::default()),
+        color_copy: color_copy_tex.create_view(&Default::default()),
+        color_msaa_tex,
+        color_copy_tex,
         post_tmp: tex("color-post2", 1, COLOR_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_SRC),
         up_out,
         full,
         size,
-        color_msaa: tex("color-msaa", MSAA, COLOR_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT),
         post_out: tex("color-post", 1, COLOR_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_SRC),
         resolve: tex(
             "color",
@@ -772,12 +800,20 @@ impl Renderer {
         });
         let scene_depth_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("scene-depth"),
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Texture { sample_type: wgpu::TextureSampleType::Depth, view_dimension: wgpu::TextureViewDimension::D2, multisampled: true },
-                count: None,
-            }],
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture { sample_type: wgpu::TextureSampleType::Depth, view_dimension: wgpu::TextureViewDimension::D2, multisampled: true },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture { sample_type: wgpu::TextureSampleType::Float { filterable: false }, view_dimension: wgpu::TextureViewDimension::D2, multisampled: true },
+                    count: None,
+                },
+            ],
         });
         let mesh_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("mesh"),
@@ -912,10 +948,25 @@ impl Renderer {
                 view_formats: &[],
             })
             .create_view(&Default::default());
+        let no_color = device
+            .create_texture(&wgpu::TextureDescriptor {
+                label: Some("no-scene-color"),
+                size: wgpu::Extent3d { width: 1, height: 1, depth_or_array_layers: 1 },
+                mip_level_count: 1,
+                sample_count: MSAA,
+                dimension: wgpu::TextureDimension::D2,
+                format: COLOR_FORMAT,
+                usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
+                view_formats: &[],
+            })
+            .create_view(&Default::default());
         let no_scene_depth = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("no-scene-depth"),
             layout: &scene_depth_layout,
-            entries: &[wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(&no_depth) }],
+            entries: &[
+                wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(&no_depth) },
+                wgpu::BindGroupEntry { binding: 1, resource: wgpu::BindingResource::TextureView(&no_color) },
+            ],
         });
         let builtin = build_pipeline(&device, &mesh_layout, LIT, false).expect("built-in shader must compile");
         let builtin_t = build_pipeline(&device, &mesh_layout, LIT, true).expect("built-in shader must compile");
@@ -1202,6 +1253,12 @@ impl Renderer {
     /// Distance along a local-space ray to the nearest triangle of a mesh (both faces count).
     /// Used for picking: a click hits what is drawn, not the box around it.
     pub fn mesh_ray(&mut self, mesh: &str, origin: Vec3, dir: Vec3) -> Option<f32> {
+        self.mesh_ray_normal(mesh, origin, dir).map(|h| h.0)
+    }
+
+    /// Like [`Self::mesh_ray`], also returning the local-space normal of the triangle hit
+    /// (facing the ray). Used to lay decals and objects onto surfaces.
+    pub fn mesh_ray_normal(&mut self, mesh: &str, origin: Vec3, dir: Vec3) -> Option<(f32, Vec3)> {
         let (bmin, bmax) = self.mesh_bounds(mesh)?;
         let inv = dir.recip();
         let (t0, t1) = ((bmin - Vec3::splat(0.01) - origin) * inv, (bmax + Vec3::splat(0.01) - origin) * inv);
@@ -1209,8 +1266,8 @@ impl Renderer {
         if near > far || far < 0.0 {
             return None;
         }
-        let tri_hit = |p: &[Vec3], idx: &[u32]| -> Option<f32> {
-            let mut best: Option<f32> = None;
+        let tri_hit = |p: &[Vec3], idx: &[u32]| -> Option<(f32, Vec3)> {
+            let mut best: Option<(f32, Vec3)> = None;
             for t in idx.chunks_exact(3) {
                 let (Some(a), Some(b), Some(c)) = (p.get(t[0] as usize), p.get(t[1] as usize), p.get(t[2] as usize)) else { continue };
                 let (e1, e2) = (*b - *a, *c - *a);
@@ -1231,8 +1288,9 @@ impl Renderer {
                     continue;
                 }
                 let d = f * e2.dot(q);
-                if d > 1e-5 && best.is_none_or(|b| d < b) {
-                    best = Some(d);
+                if d > 1e-5 && best.is_none_or(|b| d < b.0) {
+                    let n = e1.cross(e2).normalize_or_zero();
+                    best = Some((d, if n.dot(dir) > 0.0 { -n } else { n }));
                 }
             }
             best
@@ -1488,6 +1546,7 @@ impl Renderer {
                 "builtin:water" => WATER.to_string(),
                 "builtin:splat" => SPLAT.to_string(),
                 "builtin:particle" => PARTICLE.to_string(),
+                "builtin:decal" => DECAL.to_string(),
                 path if path.ends_with(".kmat") || path.ends_with(".kshader") => {
                     let text = assets.read_string(path).map_err(|e| format!("{path}: {e}"))?;
                     let graph = kvas_engine::material_graph::MaterialGraph::from_json(&text).map_err(|e| format!("{path}: {e}"))?;
@@ -1835,6 +1894,8 @@ impl Renderer {
             in_shadow: bool,
             distance: f32,
             visible: bool,
+            /// Draw order of a decal (decals go first among the transparent objects).
+            decal: Option<i32>,
         }
         let mut items: Vec<Item> = Vec::new();
         let has_visibility = scene.world.count::<Visibility>() != 0;
@@ -1891,6 +1952,40 @@ impl Renderer {
                 in_shadow: true,
                 distance: (gt.0.w_axis.truncate() - frame.view.eye).length(),
                 visible: true,
+                decal: None,
+            });
+        }
+        // Decals: a box per decal, far ones dropped right away.
+        for (e, d) in scene.world.iter::<kvas_engine::decal::Decal>() {
+            if has_visibility && !kvas_engine::hierarchy::is_visible(&scene.world, e) {
+                continue;
+            }
+            let Some(gt) = scene.world.get::<GlobalTransform>(e) else { continue };
+            let distance = (gt.0.w_axis.truncate() - frame.view.eye).length();
+            if d.max_distance > 0.0 && distance - gt.0.to_scale_rotation_translation().0.max_element() > d.max_distance {
+                stats.hidden_objects += 1;
+                continue;
+            }
+            let p = d.shader_params();
+            let mut color = srgb_to_linear(d.color);
+            color[3] = d.color[3] * d.opacity.clamp(0.0, 1.0);
+            items.push(Item {
+                mesh: "primitive:cube".into(),
+                texture: d.texture.clone(),
+                shader: "builtin:decal".into(),
+                model: gt.0,
+                color,
+                params: [d.roughness, 0.0, 1.0, 0.0],
+                params2: [d.metallic, 0.0, (!d.normal_map.is_empty()) as i32 as f32, d.normal_strength],
+                user: p,
+                normal_map: d.normal_map.clone(),
+                orm_map: d.orm_map.clone(),
+                transparent: true,
+                casts_shadow: false,
+                in_shadow: false,
+                distance,
+                visible: true,
+                decal: Some(d.order),
             });
         }
         // Upload dynamic geometry and drop buffers of entities that no longer have any.
@@ -1954,7 +2049,13 @@ impl Renderer {
         items.sort_by(|a, b| {
             a.transparent.cmp(&b.transparent).then_with(|| {
                 if a.transparent {
-                    b.distance.partial_cmp(&a.distance).unwrap_or(std::cmp::Ordering::Equal)
+                    // Decals first (lowest order underneath, grouped by image), then the rest back to front.
+                    match (a.decal, b.decal) {
+                        (Some(x), Some(y)) => x.cmp(&y).then_with(|| (&a.texture, &a.normal_map).cmp(&(&b.texture, &b.normal_map))),
+                        (Some(_), None) => std::cmp::Ordering::Less,
+                        (None, Some(_)) => std::cmp::Ordering::Greater,
+                        (None, None) => b.distance.partial_cmp(&a.distance).unwrap_or(std::cmp::Ordering::Equal),
+                    }
                 } else {
                     (&a.shader, &a.mesh, &a.texture, &a.normal_map, &a.orm_map).cmp(&(
                         &b.shader,
@@ -2058,7 +2159,10 @@ impl Renderer {
             self.device.create_bind_group(&wgpu::BindGroupDescriptor {
                 label: Some("scene-depth"),
                 layout: &self.scene_depth_layout,
-                entries: &[wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(&targets.depth_copy) }],
+                entries: &[
+                    wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(&targets.depth_copy) },
+                    wgpu::BindGroupEntry { binding: 1, resource: wgpu::BindingResource::TextureView(&targets.color_copy) },
+                ],
             })
         });
         // Opaque objects first; then (when there are transparent ones) the depth is copied so
@@ -2071,6 +2175,7 @@ impl Renderer {
                 }
                 let size = wgpu::Extent3d { width: targets.size[0], height: targets.size[1], depth_or_array_layers: 1 };
                 encoder.copy_texture_to_texture(targets.depth_tex.as_image_copy(), targets.depth_copy_tex.as_image_copy(), size);
+                encoder.copy_texture_to_texture(targets.color_msaa_tex.as_image_copy(), targets.color_copy_tex.as_image_copy(), size);
             }
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some(if phase == 0 { "scene" } else { "scene-transparent" }),
@@ -2353,7 +2458,7 @@ fn effect(uv: vec2<f32>, color: vec3<f32>, params: vec4<f32>, time: f32) -> vec3
     /// Every built-in shader (with the prelude) must parse and validate.
     #[test]
     fn builtin_shaders_validate() {
-        for (name, body) in [("lit", LIT), ("sky", SKY), ("grass", GRASS), ("foliage", FOLIAGE), ("bark", BARK), ("smoke", SMOKE), ("clouds", CLOUDS), ("water", WATER), ("splat", SPLAT), ("particle", PARTICLE), ("fsr", FSR), ("post", POST)] {
+        for (name, body) in [("lit", LIT), ("sky", SKY), ("grass", GRASS), ("foliage", FOLIAGE), ("bark", BARK), ("decal", DECAL), ("smoke", SMOKE), ("clouds", CLOUDS), ("water", WATER), ("splat", SPLAT), ("particle", PARTICLE), ("fsr", FSR), ("post", POST)] {
             let src = if name == "fsr" || name == "post" { body.to_string() } else { format!("{PRELUDE}
 {body}") };
             let module = naga::front::wgsl::parse_str(&src).unwrap_or_else(|e| panic!("{name}: {}", e.emit_to_string(&src)));

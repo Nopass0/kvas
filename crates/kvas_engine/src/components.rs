@@ -765,6 +765,7 @@ pub use crate::cloth::Cloth;
 pub use crate::gameplay::{Lifetime, Tags, Visibility};
 pub use crate::grass::Grass;
 pub use crate::tree::{Tree, TreePart};
+pub use crate::decal::Decal;
 pub use crate::interaction::{Slider, Switch};
 pub use crate::meshmod::{MeshModifiers, ModifierStateCell};
 pub use crate::paint::TexturePaint;
@@ -794,6 +795,7 @@ name_components!(
     GrassChunk,
     Tree,
     TreePart,
+    Decal,
     DynamicMesh,
     Cloth,
     Grass,

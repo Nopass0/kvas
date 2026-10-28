@@ -82,7 +82,7 @@ impl Editor {
             }
         });
         ui.menu_button(t("Effects"), |ui| {
-            for (kind, label) in [("grass", "Grass (wind)"), ("tree", "Tree (oak)"), ("tree_pine", "Tree (pine)"), ("tree_palm", "Tree (palm)"), ("bush", "Bush"), ("cloth", "Cloth"), ("smoke", "Voxel smoke"), ("clouds", "Voxel clouds"), ("water_voxel", "Voxel water"), ("water", "Water (smooth)"), ("water_real", "Water (realistic)"), ("paint_plane", "Painted surface")] {
+            for (kind, label) in [("grass", "Grass (wind)"), ("tree", "Tree (oak)"), ("tree_pine", "Tree (pine)"), ("tree_palm", "Tree (palm)"), ("bush", "Bush"), ("decal:blood", "Decal"), ("cloth", "Cloth"), ("smoke", "Voxel smoke"), ("clouds", "Voxel clouds"), ("water_voxel", "Voxel water"), ("water", "Water (smooth)"), ("water_real", "Water (realistic)"), ("paint_plane", "Painted surface")] {
                 if ui.button(t(label)).clicked() {
                     self.create_procedural(kind);
                     ui.close();

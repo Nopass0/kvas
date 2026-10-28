@@ -412,6 +412,7 @@ impl Editor {
             "tree_pine" => ("Pine", 0.0),
             "tree_palm" => ("Palm", 0.0),
             "bush" => ("Bush", 0.0),
+            k if k.starts_with("decal") => ("Decal", 0.0),
             "cloth" => ("Cloth", 4.0),
             "smoke" => ("Voxel Smoke", 0.0),
             "water_voxel" => ("Voxel Water", 0.0),
@@ -421,6 +422,13 @@ impl Editor {
             _ => ("Voxel Clouds", 28.0),
         };
         let e = self.create_entity(name, |w, e| {
+            if let Some(p) = kind.strip_prefix("decal") {
+                w.insert(e, kvas_engine::decal::preset(p.trim_start_matches(':')));
+                if let Some(t) = w.get_mut::<Transform>(e) {
+                    t.scale = Vec3::new(2.0, 1.0, 2.0);
+                }
+                return;
+            }
             if kind.starts_with("tree") || kind == "bush" {
                 let tree = match kind {
                     "tree_pine" => Tree { style: TreeStyle::Conifer, height: 7.5, trunk_radius: 0.2, levels: 2, branches: 9, branch_angle: 78.0, branch_length: 0.5, leaf_density: 10, leaf_size: 0.6, crookedness: 0.12, leaf_color: [0.02, 0.07, 0.03, 1.0], leaf_color_2: [0.04, 0.11, 0.04, 1.0], ..Default::default() },

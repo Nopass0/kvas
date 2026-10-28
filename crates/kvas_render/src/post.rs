@@ -148,7 +148,7 @@ impl Post {
             a: [settings.bloom, settings.bloom_threshold.clamp(0.0, 1.5), settings.bloom_radius.clamp(0.2, 6.0), settings.lens_flare],
             b: [settings.blur, settings.motion_blur, settings.vignette, settings.chromatic_aberration],
             c: [settings.film_grain, settings.sharpen, time, w / h],
-            d: [settings.tint[0], settings.tint[1], settings.tint[2], 0.0],
+            d: [settings.tint[0], settings.tint[1], settings.tint[2], settings.antialias.clamp(0.0, 1.0)],
             e: [motion[0], motion[1], 1.0 / w, 1.0 / h],
             f: [lens.dof as i32 as f32, lens.focus_distance, lens.aperture, lens.focal_mm],
             g: [near, far, lens.exposure_comp, lens.letterbox],
