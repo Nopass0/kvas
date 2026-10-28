@@ -18,6 +18,7 @@ cargo test -p kvas_render --lib               # проверка всех шей
 - Новая нода: добавьте её в `material_nodes_ext.rs` (и подсказку в `HELP`), функции WGSL - в `shader_lib.rs`,
   затем `cargo run -p kvas_engine --example gen_node_docs`. Тест валидирует шейдер во всех режимах.
 - Новый встроенный материал: `material_presets.rs`, затем `cargo run -p kvas_engine --example gen_material_library`.
+- Шейдеры и скрипты библиотеки генерируются: `python tools/gen_shaders.py`, `python tools/gen_scripts.py`, затем `python tools/gen_catalog.py`. Тесты компилируют каждый шейдер (naga) и каждый скрипт (`games/library_check`).
 - Рецепты скриптов живут в `crates/kvas_engine/tests/cookbook.rs`, сайт подтягивает код оттуда.
 - Строки интерфейса - английские ключи через `t("...")`, перевод в `lang_ru*.rs`.
 

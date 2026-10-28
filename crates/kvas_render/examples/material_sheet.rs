@@ -1,5 +1,5 @@
 //! Renders every built-in material on a sphere into one contact-sheet PNG (for the docs and as a visual check).
-//! `cargo run --release -p kvas_render --example material_sheet -- docs/images/materials.png [width]`
+//! `cargo run --release -p kvas_render --example material_sheet -- docs/images/materials.png [width] [Category,Category]`
 use glam::{Mat4, Vec3};
 use kvas_engine::{assets::Assets, components::*, hierarchy, material_presets::library, scene::Scene};
 use kvas_render::{debug::DebugDraw, Frame, Renderer, View};
@@ -9,13 +9,15 @@ fn main() -> Result<(), String> {
     let mut args = std::env::args().skip(1);
     let output = PathBuf::from(args.next().unwrap_or_else(|| "materials.png".into()));
     let width = args.next().and_then(|s| s.parse::<u32>().ok()).unwrap_or(1600).clamp(320, 1920);
-    let presets = library();
+    // Optional third argument: comma-separated category names to include (default: everything).
+    let filter: Vec<String> = args.next().map(|f| f.split(',').map(str::to_string).collect()).unwrap_or_default();
+    let presets: Vec<_> = library().into_iter().filter(|p| filter.is_empty() || filter.iter().any(|f| f == p.category)).collect();
     // Materials are read from the editor's starter library, exactly as a new project gets them.
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../kvas_editor/library");
     let assets = Assets::Dir(root);
     let mut scene = Scene::default();
     scene.settings.atmosphere.procedural = true;
-    let columns = 11usize;
+    let columns = if presets.len() > 120 { 20 } else { 11usize };
     let rows = presets.len().div_ceil(columns);
     for (i, p) in presets.iter().enumerate() {
         let (c, r) = ((i % columns) as f32, (i / columns) as f32);

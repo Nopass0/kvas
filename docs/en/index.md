@@ -24,7 +24,7 @@ features:
     details: 190 nodes - noise with previews, Color Ramp, normal and height maps, light, angles, faces, glow. Materials, object shaders and camera effects.
     link: /en/nodes/
   - icon: 🎨
-    title: 80 built-in materials
+    title: 326 built-in materials
     details: Realistic and stylized procedural materials in every new project - stone, metal, wood, fabric, lava, toon, galaxy, holographic foil.
     link: /en/nodes/materials
   - icon: 🦀

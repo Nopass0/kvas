@@ -1,0 +1,1157 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "Output",
+      "pos": [
+        1100.0,
+        120.0
+      ],
+      "inputs": [
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 31,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 2,
+      "kind": "UV",
+      "pos": [
+        40.0,
+        30.0
+      ],
+      "inputs": [],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 3,
+      "kind": "View direction",
+      "pos": [
+        40.0,
+        220.0
+      ],
+      "inputs": [],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 4,
+      "kind": "Multiply",
+      "pos": [
+        290.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 3,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 5,
+      "kind": "Add",
+      "pos": [
+        290.0,
+        220.0
+      ],
+      "inputs": [
+        {
+          "link": 2,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 4,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 6,
+      "kind": "Scroll coords",
+      "pos": [
+        540.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 5,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        0.01,
+        0.005
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 7,
+      "kind": "Fractal noise",
+      "pos": [
+        790.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 6,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        2.0,
+        4.0,
+        2.0,
+        0.5,
+        0.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 8,
+      "kind": "Color ramp",
+      "pos": [
+        1040.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 7,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.05,
+            0.1
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.24000001,
+            0.32000002
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.75,
+            0.72,
+            0.8
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [
+        0.25,
+        0.5,
+        0.75,
+        1.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 9,
+      "kind": "Smoothstep",
+      "pos": [
+        1040.0,
+        220.0
+      ],
+      "inputs": [
+        {
+          "link": 7,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        0.3,
+        0.8
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 10,
+      "kind": "Multiply",
+      "pos": [
+        1290.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 8,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 9,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 11,
+      "kind": "Multiply",
+      "pos": [
+        290.0,
+        410.0
+      ],
+      "inputs": [
+        {
+          "link": 3,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.18,
+            0.18,
+            0.18
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 12,
+      "kind": "Add",
+      "pos": [
+        290.0,
+        600.0
+      ],
+      "inputs": [
+        {
+          "link": 2,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 11,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 13,
+      "kind": "Scroll coords",
+      "pos": [
+        540.0,
+        220.0
+      ],
+      "inputs": [
+        {
+          "link": 12,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        0.02,
+        0.005
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 14,
+      "kind": "Fractal noise",
+      "pos": [
+        790.0,
+        220.0
+      ],
+      "inputs": [
+        {
+          "link": 13,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        4.0,
+        4.0,
+        2.0,
+        0.5,
+        1.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 15,
+      "kind": "Color ramp",
+      "pos": [
+        1040.0,
+        410.0
+      ],
+      "inputs": [
+        {
+          "link": 14,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.15,
+            0.2
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.16000001,
+            0.48000002,
+            0.48000002
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.75,
+            0.72,
+            0.8
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [
+        0.25,
+        0.5,
+        0.75,
+        1.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 16,
+      "kind": "Smoothstep",
+      "pos": [
+        1040.0,
+        600.0
+      ],
+      "inputs": [
+        {
+          "link": 14,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        0.3,
+        0.8
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 17,
+      "kind": "Multiply",
+      "pos": [
+        1290.0,
+        220.0
+      ],
+      "inputs": [
+        {
+          "link": 15,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 16,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 18,
+      "kind": "Add",
+      "pos": [
+        1540.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 10,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 17,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 19,
+      "kind": "Multiply",
+      "pos": [
+        290.0,
+        790.0
+      ],
+      "inputs": [
+        {
+          "link": 3,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.45,
+            0.45,
+            0.45
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 20,
+      "kind": "Add",
+      "pos": [
+        290.0,
+        980.0
+      ],
+      "inputs": [
+        {
+          "link": 2,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 19,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 21,
+      "kind": "Scroll coords",
+      "pos": [
+        540.0,
+        410.0
+      ],
+      "inputs": [
+        {
+          "link": 20,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        0.03,
+        0.005
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 22,
+      "kind": "Fractal noise",
+      "pos": [
+        790.0,
+        410.0
+      ],
+      "inputs": [
+        {
+          "link": 21,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        8.0,
+        4.0,
+        2.0,
+        0.5,
+        0.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 23,
+      "kind": "Color ramp",
+      "pos": [
+        1040.0,
+        790.0
+      ],
+      "inputs": [
+        {
+          "link": 22,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.1,
+            0.3,
+            0.3
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.080000006,
+            0.16000001
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.75,
+            0.72,
+            0.8
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [
+        0.25,
+        0.5,
+        0.75,
+        1.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 24,
+      "kind": "Smoothstep",
+      "pos": [
+        1040.0,
+        980.0
+      ],
+      "inputs": [
+        {
+          "link": 22,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        0.3,
+        0.8
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 25,
+      "kind": "Multiply",
+      "pos": [
+        1290.0,
+        410.0
+      ],
+      "inputs": [
+        {
+          "link": 23,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 24,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 26,
+      "kind": "Add",
+      "pos": [
+        1540.0,
+        220.0
+      ],
+      "inputs": [
+        {
+          "link": 18,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 25,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 27,
+      "kind": "Multiply",
+      "pos": [
+        290.0,
+        1170.0
+      ],
+      "inputs": [
+        {
+          "link": 3,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.6,
+            0.6,
+            0.6
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 28,
+      "kind": "Add",
+      "pos": [
+        540.0,
+        600.0
+      ],
+      "inputs": [
+        {
+          "link": 2,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 27,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 29,
+      "kind": "Sparkle",
+      "pos": [
+        790.0,
+        600.0
+      ],
+      "inputs": [
+        {
+          "link": 28,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        70.0,
+        0.02
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 30,
+      "kind": "Multiply",
+      "pos": [
+        1290.0,
+        600.0
+      ],
+      "inputs": [
+        {
+          "link": 29,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            2.0,
+            2.0,
+            2.0
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 31,
+      "kind": "Add",
+      "pos": [
+        1790.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 26,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 30,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    }
+  ],
+  "textures": [
+    "",
+    "",
+    ""
+  ],
+  "next_id": 32,
+  "mode": "material"
+}

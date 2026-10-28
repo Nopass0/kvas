@@ -1,0 +1,407 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "Output",
+      "pos": [
+        1100.0,
+        120.0
+      ],
+      "inputs": [
+        {
+          "link": 7,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.85,
+            0.85,
+            0.85
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 9,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 2,
+      "kind": "Bricks",
+      "pos": [
+        40.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        6.0,
+        0.05
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 3,
+      "kind": "Fractal noise",
+      "pos": [
+        40.0,
+        220.0
+      ],
+      "inputs": [
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        12.0,
+        4.0,
+        2.0,
+        0.5,
+        0.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 4,
+      "kind": "Voronoi cells",
+      "pos": [
+        40.0,
+        410.0
+      ],
+      "inputs": [
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        8.0,
+        1.0,
+        2.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 5,
+      "kind": "Color ramp",
+      "pos": [
+        290.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 4,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.48000002,
+            0.468,
+            0.44400004
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.8,
+            0.78,
+            0.74
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            1.0,
+            0.89699996,
+            0.814
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.8,
+            0.78,
+            0.74
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [
+        0.0,
+        0.4,
+        0.8,
+        1.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 6,
+      "kind": "Mix",
+      "pos": [
+        540.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": null,
+          "value": [
+            0.55,
+            0.53,
+            0.5
+          ],
+          "override_default": true
+        },
+        {
+          "link": 5,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 2,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 7,
+      "kind": "Blend colours",
+      "pos": [
+        790.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 6,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 8,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        1.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 8,
+      "kind": "Map range",
+      "pos": [
+        290.0,
+        220.0
+      ],
+      "inputs": [
+        {
+          "link": 3,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        0.0,
+        1.0,
+        0.7,
+        1.1
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 9,
+      "kind": "Bump from height",
+      "pos": [
+        540.0,
+        220.0
+      ],
+      "inputs": [
+        {
+          "link": 2,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        3.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    }
+  ],
+  "textures": [
+    "",
+    "",
+    ""
+  ],
+  "next_id": 10,
+  "mode": "material"
+}

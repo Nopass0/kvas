@@ -9,20 +9,13 @@
       ],
       "inputs": [
         {
-          "link": 2,
-          "value": [
-            0.0,
-            0.0,
-            0.0
-          ]
-        },
-        {
           "link": 4,
           "value": [
             0.0,
             0.0,
             0.0
-          ]
+          ],
+          "override_default": false
         },
         {
           "link": null,
@@ -30,7 +23,8 @@
             0.0,
             0.0,
             0.0
-          ]
+          ],
+          "override_default": false
         },
         {
           "link": null,
@@ -38,7 +32,8 @@
             0.0,
             0.0,
             0.0
-          ]
+          ],
+          "override_default": false
         },
         {
           "link": null,
@@ -46,7 +41,8 @@
             0.0,
             0.0,
             0.0
-          ]
+          ],
+          "override_default": false
         },
         {
           "link": null,
@@ -54,10 +50,44 @@
             0.0,
             0.0,
             0.0
-          ]
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
         }
       ],
-      "params": []
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
     },
     {
       "id": 2,
@@ -71,7 +101,13 @@
         0.827571,
         0.2226918,
         0.2226918
-      ]
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
     },
     {
       "id": 4,
@@ -87,18 +123,26 @@
             0.0,
             0.0,
             0.0
-          ]
+          ],
+          "override_default": false
         },
         {
-          "link": null,
+          "link": 6,
           "value": [
             0.42,
             0.42,
             0.42
-          ]
+          ],
+          "override_default": false
         }
       ],
-      "params": []
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
     },
     {
       "id": 5,
@@ -109,15 +153,21 @@
       ],
       "inputs": [],
       "params": [
-        0.5
-      ]
+        17.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
     },
     {
       "id": 6,
       "kind": "Gradient",
       "pos": [
-        166.0,
-        640.0
+        -113.235176,
+        447.46295
       ],
       "inputs": [
         {
@@ -126,7 +176,8 @@
             0.0,
             0.0,
             0.0
-          ]
+          ],
+          "override_default": false
         },
         {
           "link": null,
@@ -134,7 +185,8 @@
             0.0,
             0.0,
             0.0
-          ]
+          ],
+          "override_default": false
         },
         {
           "link": null,
@@ -142,10 +194,17 @@
             0.0,
             0.0,
             0.0
-          ]
+          ],
+          "override_default": false
         }
       ],
-      "params": []
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
     }
   ],
   "textures": [
@@ -153,5 +212,6 @@
     "textures/checker.png",
     "textures/checker.png"
   ],
-  "next_id": 7
+  "next_id": 7,
+  "mode": "material"
 }

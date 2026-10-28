@@ -1,0 +1,504 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "Output",
+      "pos": [
+        1100.0,
+        120.0
+      ],
+      "inputs": [
+        {
+          "link": 11,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.35,
+            0.35,
+            0.35
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 13,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 2,
+      "kind": "UV",
+      "pos": [
+        40.0,
+        30.0
+      ],
+      "inputs": [],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 3,
+      "kind": "Scroll coords",
+      "pos": [
+        290.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 2,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        0.022499999,
+        0.009
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 4,
+      "kind": "Scroll coords",
+      "pos": [
+        290.0,
+        220.0
+      ],
+      "inputs": [
+        {
+          "link": 2,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        -0.015749998,
+        0.020249998
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 5,
+      "kind": "Fractal noise",
+      "pos": [
+        540.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 3,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        1.75,
+        4.0,
+        2.0,
+        0.5,
+        0.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 6,
+      "kind": "Fractal noise",
+      "pos": [
+        540.0,
+        220.0
+      ],
+      "inputs": [
+        {
+          "link": 4,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        4.025,
+        3.0,
+        2.0,
+        0.5,
+        2.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 7,
+      "kind": "Average",
+      "pos": [
+        790.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 5,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": 6,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 8,
+      "kind": "Posterize",
+      "pos": [
+        790.0,
+        220.0
+      ],
+      "inputs": [
+        {
+          "link": 7,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        4.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 9,
+      "kind": "Color ramp",
+      "pos": [
+        1040.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 8,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.02,
+            0.16,
+            0.22
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.085,
+            0.35500002,
+            0.385
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.15,
+            0.55,
+            0.55
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.28,
+            0.76000005,
+            0.76000005
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [
+        0.15,
+        0.45,
+        0.7,
+        0.95
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 10,
+      "kind": "Greater than",
+      "pos": [
+        1040.0,
+        220.0
+      ],
+      "inputs": [
+        {
+          "link": 7,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.78,
+            0.78,
+            0.78
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 11,
+      "kind": "Mix",
+      "pos": [
+        1290.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": 9,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "override_default": true
+        },
+        {
+          "link": 10,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 12,
+      "kind": "Fresnel",
+      "pos": [
+        1040.0,
+        410.0
+      ],
+      "inputs": [
+        {
+          "link": null,
+          "value": [
+            3.0,
+            3.0,
+            3.0
+          ],
+          "override_default": true
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 13,
+      "kind": "Map range",
+      "pos": [
+        1290.0,
+        220.0
+      ],
+      "inputs": [
+        {
+          "link": 12,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        0.0,
+        1.0,
+        0.7,
+        1.0
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    }
+  ],
+  "textures": [
+    "",
+    "",
+    ""
+  ],
+  "next_id": 14,
+  "mode": "material"
+}

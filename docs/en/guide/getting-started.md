@@ -33,9 +33,9 @@ Add `--release` for speed. The editor builds your scripts with the same profile 
 A project is a folder: `project.json`, `assets/` (scenes, models, textures, shaders, materials) and `scripts/` (a `cdylib` crate).
 Every new project already contains:
 
-- `assets/materials/library/` - 80 procedural materials,
-- `assets/shaders/library/` - ready-made object and camera shaders,
-- `scripts/src/<folder>/` - starter scripts (movement, camera, gameplay, audio, world, UI).
+- `assets/materials/library/` - 326 procedural materials,
+- `assets/shaders/library/` - 380 object and camera shaders (see the [catalogue](/en/library)),
+- `scripts/src/<folder>/` - 236 starter scripts (animation, control, gameplay, camera, world, audio, debug).
 
 Create your first script with **+ New script** in the Project panel, pick a template and save.
 The editor builds the library and reloads the scripts without closing the scene.

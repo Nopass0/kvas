@@ -30,7 +30,7 @@ Changes made while the game is playing are discarded when you press Stop.
 
 ## Materials, shaders, scripts
 
-- **Materials**: `assets/materials/library/` has 80 ready materials - open them in the [node editor](/en/nodes/) or drag one onto an object.
+- **Materials**: `assets/materials/library/` has 326 ready materials - open them in the [node editor](/en/nodes/) or drag one onto an object.
 - **Shaders**: `assets/shaders/library/` has object and camera shaders (toon, hologram, fire, ice, dissolve, wind sway, outline...).
 - **Scripts**: `scripts/src/<folder>/` has starter scripts; **+ New script** creates your own from a template.
 

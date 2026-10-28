@@ -1,0 +1,100 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "Output",
+      "pos": [
+        1100.0,
+        120.0
+      ],
+      "inputs": [
+        {
+          "link": null,
+          "value": [
+            0.1,
+            0.55,
+            0.35
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.08,
+            0.08,
+            0.08
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    }
+  ],
+  "textures": [
+    "",
+    "",
+    ""
+  ],
+  "next_id": 2,
+  "mode": "material"
+}

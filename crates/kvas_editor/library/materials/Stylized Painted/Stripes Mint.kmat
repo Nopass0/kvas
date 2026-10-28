@@ -1,0 +1,173 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "kind": "Output",
+      "pos": [
+        1100.0,
+        120.0
+      ],
+      "inputs": [
+        {
+          "link": 3,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.6,
+            0.6,
+            0.6
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        },
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 2,
+      "kind": "Stripes",
+      "pos": [
+        40.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": null,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [
+        8.0,
+        0.85
+      ],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    },
+    {
+      "id": 3,
+      "kind": "Mix",
+      "pos": [
+        290.0,
+        30.0
+      ],
+      "inputs": [
+        {
+          "link": null,
+          "value": [
+            0.2,
+            0.6,
+            0.5
+          ],
+          "override_default": true
+        },
+        {
+          "link": null,
+          "value": [
+            0.7,
+            1.0,
+            0.85
+          ],
+          "override_default": true
+        },
+        {
+          "link": 2,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "override_default": false
+        }
+      ],
+      "params": [],
+      "text": "",
+      "size": [
+        0.0,
+        0.0
+      ],
+      "preview": false
+    }
+  ],
+  "textures": [
+    "",
+    "",
+    ""
+  ],
+  "next_id": 4,
+  "mode": "material"
+}

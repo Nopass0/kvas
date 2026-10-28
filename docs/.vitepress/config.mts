@@ -45,6 +45,7 @@ const ruSidebar = [
       { text: 'Как работать с нодами', link: '/nodes/' },
       { text: 'Каталог материалов', link: '/nodes/materials' },
       { text: 'Справочник нод', link: '/nodes/reference' },
+      { text: 'Каталог шейдеров и скриптов', link: '/library' },
     ],
   },
   {
@@ -79,6 +80,7 @@ const enSidebar = [
       { text: 'Working with nodes', link: '/en/nodes/' },
       { text: 'Material catalogue', link: '/en/nodes/materials' },
       { text: 'Node reference', link: '/en/nodes/reference' },
+      { text: 'Shader and script catalogue', link: '/en/library' },
     ],
   },
 ]

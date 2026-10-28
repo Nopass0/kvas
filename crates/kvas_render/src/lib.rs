@@ -2124,35 +2124,43 @@ mod tests {
         std::fs::write(root.join("shaders/kvas_camera_api.wgsl"), camera_api_stub()).unwrap();
         let assets = Assets::Dir(root.clone());
         let mut checked = 0;
-        for (folder, camera) in [("", false), ("fx", true)] {
-            for entry in std::fs::read_dir(library.join(folder)).unwrap().flatten() {
+        // Every `.wgsl` file below the library, in any sub-folder; files under `fx/` are camera effects.
+        fn walk(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
+            for entry in std::fs::read_dir(dir).unwrap().flatten() {
                 let path = entry.path();
-                if path.extension().is_none_or(|e| e != "wgsl") {
-                    continue;
+                if path.is_dir() {
+                    walk(&path, out);
+                } else if path.extension().is_some_and(|e| e == "wgsl") {
+                    out.push(path);
                 }
-                let name = entry.file_name().to_string_lossy().to_string();
-                let rel = if folder.is_empty() { format!("shaders/{name}") } else { format!("shaders/{folder}/{name}") };
-                std::fs::copy(&path, root.join(&rel)).unwrap();
-                let src = if camera {
-                    post::custom_source(&assets, &rel).unwrap()
-                } else {
-                    let user = shader_lib::expand(&assets, &std::fs::read_to_string(&path).unwrap(), "shaders").unwrap();
-                    format!("{PRELUDE}
-{user}")
-                };
-                let module = naga::front::wgsl::parse_str(&src).unwrap_or_else(|e| panic!("{rel}: {}", e.emit_to_string(&src)));
-                naga::valid::Validator::new(naga::valid::ValidationFlags::all(), naga::valid::Capabilities::all())
-                    .validate(&module)
-                    .unwrap_or_else(|e| panic!("{rel}: {e:?}"));
-                checked += 1;
             }
+        }
+        let mut files = Vec::new();
+        walk(&library, &mut files);
+        for path in files {
+            let relative = path.strip_prefix(&library).unwrap().to_string_lossy().replace('\\', "/");
+            let camera = relative.starts_with("fx/");
+            let rel = format!("shaders/{relative}");
+            std::fs::create_dir_all(root.join(&rel).parent().unwrap()).unwrap();
+            std::fs::copy(&path, root.join(&rel)).unwrap();
+            let src = if camera {
+                post::custom_source(&assets, &rel).unwrap()
+            } else {
+                let user = shader_lib::expand(&assets, &std::fs::read_to_string(&path).unwrap(), "shaders").unwrap();
+                format!("{PRELUDE}\n{user}")
+            };
+            let module = naga::front::wgsl::parse_str(&src).unwrap_or_else(|e| panic!("{rel}: {}", e.emit_to_string(&src)));
+            naga::valid::Validator::new(naga::valid::ValidationFlags::all(), naga::valid::Capabilities::all())
+                .validate(&module)
+                .unwrap_or_else(|e| panic!("{rel}: {e:?}"));
+            checked += 1;
         }
         // The declaration files themselves are valid WGSL for editors (camera one needs its own tail).
         let stub = mesh_api_stub();
         let module = naga::front::wgsl::parse_str(&stub).unwrap_or_else(|e| panic!("mesh stub: {}", e.emit_to_string(&stub)));
         naga::valid::Validator::new(naga::valid::ValidationFlags::all(), naga::valid::Capabilities::all()).validate(&module).unwrap();
         let _ = std::fs::remove_dir_all(root);
-        assert!(checked >= 15, "found only {checked} library shaders");
+        assert!(checked >= 200, "found only {checked} library shaders");
     }
 
     /// A user camera effect with an included library compiles inside the effect template.
