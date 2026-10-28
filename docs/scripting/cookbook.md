@@ -57,6 +57,14 @@
 
 <<< ../../crates/kvas_engine/tests/cookbook.rs#signals{rust}
 
+## Деформация вершин и общие переменные
+
+`make_editable` превращает встроенный примитив в редактируемую сетку, `editable(e)` даёт доступ к вершинам:
+`wave`, `twist`, `taper`, `bend`, `noise_displace`, `smooth`, `inflate`, выбор вершин `select_sphere`.
+`set_global` / `global_f32` / `add_global` - переменные, общие для всех скриптов.
+
+<<< ../../crates/kvas_engine/tests/cookbook.rs#jelly{rust}
+
 ## Как проверить свой скрипт без редактора
 
 Скрипты - обычные типы, поэтому их можно запускать в тесте, как делает этот cookbook:

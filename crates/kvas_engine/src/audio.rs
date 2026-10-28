@@ -166,6 +166,9 @@ pub struct AudioSource {
     pub pan: f32,
     /// Set to true from a script to (re)start the clip; the backend clears it.
     pub trigger: bool,
+    /// Opening angle in degrees of the sound beam along the object's forward (-Z) axis.
+    /// 360 = the same in every direction; a narrow cone is a loudspeaker that is quieter behind and to the sides.
+    pub cone_angle: f32,
 }
 
 impl Default for AudioSource {
@@ -181,6 +184,7 @@ impl Default for AudioSource {
             max_distance: 40.0,
             pan: 0.0,
             trigger: false,
+            cone_angle: 360.0,
         }
     }
 }
@@ -197,6 +201,7 @@ impl Component for AudioSource {
             Field::f32("min_distance", &mut self.min_distance),
             Field::f32("max_distance", &mut self.max_distance),
             Field::f32("pan", &mut self.pan),
+            Field::f32("cone_angle", &mut self.cone_angle),
             Field::bool("trigger", &mut self.trigger),
         ]
     }
@@ -211,6 +216,29 @@ pub fn distance_gain(distance: f32, min: f32, max: f32) -> f32 {
     } else {
         let t = (distance - min) / (max - min);
         (1.0 - t) * (1.0 - t)
+    }
+}
+
+/// Gain of a directional source: full inside the inner 60 % of the cone, fading to 10 % at its edge and beyond.
+/// `forward` is where the source points, `to_listener` the direction from the source to the listener.
+pub fn cone_gain(forward: Vec3, to_listener: Vec3, cone_degrees: f32) -> f32 {
+    if cone_degrees >= 359.0 {
+        return 1.0;
+    }
+    let (f, t) = (forward.normalize_or_zero(), to_listener.normalize_or_zero());
+    if f == Vec3::ZERO || t == Vec3::ZERO {
+        return 1.0;
+    }
+    let angle = f.dot(t).clamp(-1.0, 1.0).acos().to_degrees();
+    let half = (cone_degrees * 0.5).max(1.0);
+    let inner = half * 0.6;
+    if angle <= inner {
+        1.0
+    } else if angle >= half {
+        0.1
+    } else {
+        let k = (angle - inner) / (half - inner);
+        1.0 - 0.9 * k * k * (3.0 - 2.0 * k)
     }
 }
 
@@ -233,6 +261,15 @@ mod tests {
         assert_eq!(distance_gain(1.0, 2.0, 10.0), 1.0);
         assert_eq!(distance_gain(10.0, 2.0, 10.0), 0.0);
         assert!(distance_gain(6.0, 2.0, 10.0) < 0.5);
+    }
+
+    #[test]
+    fn cone_is_loud_in_front_and_quiet_behind() {
+        assert_eq!(cone_gain(Vec3::NEG_Z, Vec3::NEG_Z, 90.0), 1.0);
+        assert_eq!(cone_gain(Vec3::NEG_Z, Vec3::Z, 90.0), 0.1);
+        assert_eq!(cone_gain(Vec3::NEG_Z, Vec3::Z, 360.0), 1.0);
+        let mid = cone_gain(Vec3::NEG_Z, Vec3::new(0.6, 0.0, -0.8), 90.0);
+        assert!(mid < 1.0 && mid > 0.1);
     }
 
     #[test]

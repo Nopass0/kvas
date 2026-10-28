@@ -3,7 +3,7 @@
 
 use glam::Vec3;
 use kvas_engine::assets::Assets;
-use kvas_engine::audio::{distance_gain, stereo_pan, AudioCmd, AudioSource};
+use kvas_engine::audio::{cone_gain, distance_gain, stereo_pan, AudioCmd, AudioSource};
 use kvas_engine::prelude::*;
 use kvas_engine::scene::Scene;
 use rodio::{Decoder, OutputStream, OutputStreamHandle, Source, SpatialSink};
@@ -19,6 +19,9 @@ struct Voice {
     min: f32,
     max: f32,
     pan: f32,
+    /// Direction the source points (world), and its beam angle in degrees (360 = omni).
+    forward: Vec3,
+    cone: f32,
 }
 
 /// Decodes a clip; some container quirks make the decoder panic instead of failing, so that is caught.
@@ -76,7 +79,7 @@ impl AudioEngine {
             sink.append(source);
         }
         sink.set_volume(volume);
-        self.voices.insert(id, Voice { sink, volume, position, min, max, pan });
+        self.voices.insert(id, Voice { sink, volume, position, min, max, pan, forward: Vec3::NEG_Z, cone: 360.0 });
     }
 
     /// Stops everything (call when the game stops).
@@ -125,7 +128,9 @@ impl AudioEngine {
             keep
         });
         for e in entities {
-            let position = hierarchy::global_matrix(&scene.world, e).w_axis.truncate();
+            let matrix = hierarchy::global_matrix(&scene.world, e);
+            let position = matrix.w_axis.truncate();
+            let forward = matrix.z_axis.truncate();
             let Some(src) = scene.world.get_mut::<AudioSource>(e) else { continue };
             let snapshot = src.clone();
             let trigger = std::mem::take(&mut src.trigger);
@@ -149,6 +154,8 @@ impl AudioEngine {
                     voice.min = snapshot.min_distance;
                     voice.max = snapshot.max_distance;
                     voice.pan = snapshot.pan;
+                    voice.forward = -forward;
+                    voice.cone = snapshot.cone_angle;
                 }
             }
         }
@@ -158,7 +165,7 @@ impl AudioEngine {
         self.voices.retain(|_, v| !v.sink.empty());
         for v in self.voices.values() {
             let (gain, pan) = match v.position {
-                Some(p) => (distance_gain((p - listener).length(), v.min, v.max), stereo_pan(listener, right, p)),
+                Some(p) => (distance_gain((p - listener).length(), v.min, v.max) * cone_gain(v.forward, listener - p, v.cone), stereo_pan(listener, right, p)),
                 None => (1.0, v.pan),
             };
             v.sink.set_volume(v.volume * gain * master);

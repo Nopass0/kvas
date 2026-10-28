@@ -100,13 +100,15 @@ pub struct Scene {
     pub signals: crate::signals::SignalBus,
     /// Sound requests for the shell's audio backend. Not serialized.
     pub audio: crate::audio::AudioBus,
+    /// Named values shared by all scripts (score, difficulty...). Not serialized; see `Ctx::set_global`.
+    pub globals: std::collections::BTreeMap<String, Value>,
 }
 
 impl Default for Scene {
     fn default() -> Self {
         let mut world = World::new();
         register_all(&mut world);
-        Scene { world, settings: SceneSettings::default(), signals: Default::default(), audio: Default::default() }
+        Scene { world, settings: SceneSettings::default(), signals: Default::default(), audio: Default::default(), globals: Default::default() }
     }
 }
 

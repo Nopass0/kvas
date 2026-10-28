@@ -9,7 +9,7 @@ fn walk(dir: &Path, root: &Path, out: &mut Vec<(String, String)>) {
         let p = e.path();
         if p.is_dir() {
             walk(&p, root, out);
-        } else if p.extension().is_some_and(|x| x == "rs" || x == "wgsl" || x == "py" || x == "json") {
+        } else if p.extension().is_some_and(|x| x == "rs" || x == "wgsl" || x == "py" || x == "json" || x == "kmat") {
             let rel = p.strip_prefix(root).unwrap().to_string_lossy().replace(std::path::MAIN_SEPARATOR, "/");
             out.push((rel, p.to_string_lossy().replace(std::path::MAIN_SEPARATOR, "/")));
         }

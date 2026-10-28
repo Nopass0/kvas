@@ -164,3 +164,97 @@ impl Ctx<'_> {
         self.random() < p
     }
 }
+
+/// Hierarchy, tags and shared variables.
+impl Ctx<'_> {
+    /// The parent of this entity, if it has a living one.
+    pub fn parent(&self) -> Option<Entity> {
+        hierarchy::parent_of(&self.scene.world, self.entity)
+    }
+
+    /// The parent of any entity.
+    pub fn parent_of(&self, entity: Entity) -> Option<Entity> {
+        hierarchy::parent_of(&self.scene.world, entity)
+    }
+
+    /// The top-most ancestor (the entity itself when it has no parent).
+    pub fn root(&self) -> Entity {
+        let mut e = self.entity;
+        while let Some(p) = hierarchy::parent_of(&self.scene.world, e) {
+            e = p;
+        }
+        e
+    }
+
+    /// Every entity below `entity`: children, grandchildren and so on.
+    pub fn descendants(&self, entity: Entity) -> Vec<Entity> {
+        hierarchy::descendants(&self.scene.world, entity)
+    }
+
+    /// The first descendant of this entity with the given name.
+    pub fn find_child(&self, name: &str) -> Option<Entity> {
+        hierarchy::find_descendant(&self.scene.world, self.entity, name, false)
+    }
+
+    /// Entities carrying `tag` within `radius` metres of a world point, nearest first.
+    pub fn tagged_within(&self, tag: &str, center: Vec3, radius: f32) -> Vec<Entity> {
+        let mut found: Vec<(Entity, f32)> = self.tagged(tag).into_iter().filter_map(|e| self.position_of(e).map(|p| (e, p.distance(center)))).filter(|(_, d)| *d <= radius).collect();
+        found.sort_by(|a, b| a.1.total_cmp(&b.1));
+        found.into_iter().map(|(e, _)| e).collect()
+    }
+
+    /// All tags of an entity.
+    pub fn tags_of(&self, entity: Entity) -> Vec<String> {
+        self.scene.world.get::<crate::gameplay::Tags>(entity).map(|t| t.value.split_whitespace().map(str::to_string).collect()).unwrap_or_default()
+    }
+
+    /// Stores a value that every script can read with [`Ctx::global`]. Lives until the game stops.
+    pub fn set_global(&mut self, key: &str, value: serde_json::Value) {
+        self.scene.globals.insert(key.to_string(), value);
+    }
+
+    /// A shared value, if it was set.
+    pub fn global(&self, key: &str) -> Option<&serde_json::Value> {
+        self.scene.globals.get(key)
+    }
+
+    /// A shared number (integers are converted), or `default`.
+    pub fn global_f32(&self, key: &str, default: f32) -> f32 {
+        self.global(key).and_then(|v| v.as_f64()).map_or(default, |v| v as f32)
+    }
+
+    /// A shared flag, or `default`.
+    pub fn global_bool(&self, key: &str, default: bool) -> bool {
+        self.global(key).and_then(|v| v.as_bool()).unwrap_or(default)
+    }
+
+    /// Adds to a shared number (starting from 0) and returns the new value: `ctx.add_global("score", 10.0)`.
+    pub fn add_global(&mut self, key: &str, delta: f32) -> f32 {
+        let value = self.global_f32(key, 0.0) + delta;
+        self.set_global(key, serde_json::json!(value));
+        value
+    }
+}
+
+/// Vertex access and deformation (see [`crate::mesh_deform`]).
+impl Ctx<'_> {
+    /// Makes the entity's built-in primitive mesh (`primitive:sphere`...) editable so its vertices
+    /// can be changed from scripts. Returns `true` when the entity is editable afterwards.
+    pub fn make_editable(&mut self, entity: Entity) -> bool {
+        use crate::components::MeshRenderer;
+        use crate::mesh::MeshData;
+        use crate::mesh_edit::EditableMesh;
+        if self.scene.world.has::<EditableMesh>(entity) {
+            return true;
+        }
+        let Some(name) = self.scene.world.get::<MeshRenderer>(entity).and_then(|m| m.mesh.strip_prefix("primitive:").map(str::to_string)) else { return false };
+        let Some(editable) = MeshData::primitive(&name).and_then(|m| EditableMesh::from_mesh(&m).ok()) else { return false };
+        self.scene.world.insert(entity, editable);
+        true
+    }
+
+    /// The editable mesh of an entity, for deformation: `ctx.editable(e)?.twist(Vec3::Y, 30.0)`.
+    pub fn editable(&mut self, entity: Entity) -> Option<&mut crate::mesh_edit::EditableMesh> {
+        self.scene.world.get_mut::<crate::mesh_edit::EditableMesh>(entity)
+    }
+}

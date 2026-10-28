@@ -204,6 +204,34 @@ impl Script for DoorButton {
 }
 // #endregion signals
 
+// #region jelly
+/// Wobbles the vertices of a sphere like jelly and counts frames in a shared variable.
+#[derive(Default)]
+pub struct Jelly {
+    ready: bool,
+}
+
+impl Script for Jelly {
+    fn update(&mut self, ctx: &mut Ctx) {
+        let me = ctx.entity;
+        if !self.ready {
+            self.ready = ctx.make_editable(me);
+        }
+        let t = ctx.elapsed();
+        if let Some(mesh) = ctx.editable(me) {
+            // Start from the original shape every frame, then bend it: cheap and drift-free.
+            let mut fresh = kvas_engine::mesh_edit::EditableMesh::from_mesh(&kvas_engine::mesh::MeshData::primitive("sphere").unwrap()).unwrap();
+            fresh.wave(Vec3::Y, Vec3::X, 0.1, 0.6, t);
+            fresh.taper(Vec3::Y, 1.0, 1.0 + 0.2 * (t * 3.0).sin());
+            mesh.vertices = fresh.vertices;
+            mesh.changed();
+        }
+        // Any script can read this: `ctx.global_f32("jelly_frames", 0.0)`.
+        ctx.add_global("jelly_frames", 1.0);
+    }
+}
+// #endregion jelly
+
 fn defs() -> ScriptHost {
     ScriptHost::from_defs(vec![
         ScriptDef::of::<Spinner>("Spinner"),
@@ -215,6 +243,7 @@ fn defs() -> ScriptHost {
         ScriptDef::of::<Shooter>("Shooter"),
         ScriptDef::of::<Door>("Door"),
         ScriptDef::of::<DoorButton>("DoorButton"),
+        ScriptDef::of::<Jelly>("Jelly"),
     ])
     .unwrap()
 }
@@ -269,4 +298,18 @@ fn chaser_reaches_the_player_when_given_a_speed() {
     }
     let x = runtime.scene.world.get::<Transform>(chaser).unwrap().position.x;
     assert!((7.5..=8.5).contains(&x), "stopped {x} m along the way, expected about 8");
+}
+
+#[test]
+fn jelly_deforms_the_mesh_and_shares_a_global() {
+    let mut scene = Scene::default();
+    let e = attach(&mut scene, "Jelly", Vec3::ZERO, &["Jelly"]);
+    scene.world.insert(e, MeshRenderer { mesh: "primitive:sphere".into(), ..Default::default() });
+    let mut runtime = Runtime::new(scene, Some(defs()));
+    for _ in 0..10 {
+        runtime.tick(1.0 / 60.0);
+    }
+    let rev = runtime.scene.world.get::<kvas_engine::mesh_edit::EditableMesh>(e).unwrap().revision;
+    assert!(rev > 5, "the mesh was updated every frame");
+    assert!(runtime.scene.globals["jelly_frames"].as_f64().unwrap() >= 9.0);
 }

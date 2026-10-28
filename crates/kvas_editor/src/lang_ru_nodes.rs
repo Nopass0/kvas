@@ -96,4 +96,9 @@ pub const RU_NODES: &[(&str, &str)] = &[
     ("Detail", "Деталь"),
     ("Axis", "Ось"),
     ("Hue", "Оттенок"),
+    ("add tag", "добавить тег"),
+    ("Show preview in node", "Показать превью в ноде"),
+    ("Hide preview in node", "Скрыть превью в ноде"),
+    ("Saving...", "Сохранение..."),
+    ("Saved", "Сохранено"),
 ];

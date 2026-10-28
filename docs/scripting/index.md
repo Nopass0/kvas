@@ -81,6 +81,29 @@ register_scripts!(Spinner);
 | `set_color(e, rgba)`, `set_visible(e, bool)`, `set_texture(e, path)` | внешний вид |
 | `attach_script(e, "Name")`, `var(e, "Script", "field")` | общение со скриптами других объектов |
 
+### Иерархия, теги и общие переменные
+
+| Метод | Описание |
+|---|---|
+| `parent()`, `parent_of(e)`, `root()` | родитель, родитель другого объекта, корень иерархии |
+| `children(e)`, `descendants(e)`, `find_child(name)` | дети, все потомки, потомок по имени |
+| `tagged(tag)`, `tagged_within(tag, center, radius)`, `tags_of(e)` | объекты по тегу, по тегу в радиусе (ближайшие первыми), теги объекта |
+| `set_global(key, json)`, `global(key)`, `global_f32(key, default)`, `global_bool(..)`, `add_global(key, delta)` | переменные, общие для всех скриптов (счёт, сложность) |
+| `var(e, "Script", "field")`, `set_var(e, "Script", "field", json)` | поле скрипта на другом объекте |
+
+### Вершины и деформация
+
+`ctx.make_editable(e)` делает встроенный примитив редактируемым, `ctx.editable(e)` отдаёт `EditableMesh`:
+
+| Метод | Описание |
+|---|---|
+| `vertex_count()`, `position(i)`, `set_position(i, p)`, `bounds()` | доступ к вершинам |
+| `select_sphere(c, r)`, `select_half_space(point, normal)`, `translate_vertices(ids, d)` | выбор и сдвиг вершин |
+| `wave`, `twist`, `taper`, `bend`, `inflate`, `smooth` | готовые деформаторы |
+| `noise_displace(&Noise, amp, time)` | смещение по нормалям шумом |
+| `map_positions(\|i, p, n\| ...)` | любая своя деформация |
+| `recalculate_normals()` | пересчитать нормали после деформации |
+
 ### Физика
 
 | Метод | Описание |
@@ -99,6 +122,10 @@ register_scripts!(Spinner);
 | `lock_cursor(true)` | захват курсора для шутера |
 
 ### Звук, небо, эффекты
+
+Компонент `AudioSource` умеет **направленный звук**: поле `cone_angle` (градусы, 360 - во все стороны) задаёт луч вдоль оси -Z объекта,
+громкость вне конуса падает до 10 %. Стереопозиция считается по положению слушателя (первая камера). В редакторе при выделении
+источника рисуются радиусы слышимости и конус.
 
 `play_sound("sfx/hit.wav", 1.0)`, `play_music(..)`, `play_sound_at(clip, volume, pos)`,
 `sky()`, `set_clouds(0.5)`, `post()`, `post_preset("cinematic")`, `set_exposure(1.2)`.

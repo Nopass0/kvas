@@ -145,3 +145,76 @@ pub fn drag_ghost(ctx: &egui::Context) {
     painter.galley(egui::pos2(badge.max.x + 7.0 * scale, rect.center().y - galley.size().y / 2.0), galley, Color32::WHITE);
     ctx.request_repaint();
 }
+
+/// A rounded "chip" (tag, label). Returns `true` when its cross was clicked (remove it).
+/// The colour is derived from the text so the same tag always looks the same.
+pub fn chip(ui: &mut Ui, text: &str, removable: bool) -> bool {
+    let hue = text.bytes().fold(7u32, |h, b| h.wrapping_mul(31).wrapping_add(b as u32)) % 360;
+    let (r, g, b) = hsv_to_rgb8(hue as f32, 0.55, if crate::theme::is_light() { 0.75 } else { 0.9 });
+    let base = Color32::from_rgb(r, g, b);
+    let font = egui::FontId::proportional(12.0);
+    let galley = ui.painter().layout_no_wrap(text.to_string(), font, pal().text);
+    let width = galley.size().x + 18.0 + if removable { 16.0 } else { 0.0 };
+    let (rect, resp) = ui.allocate_exact_size(egui::vec2(width, 20.0), egui::Sense::click());
+    let hover = animate(ui, resp.id.with("chip"), resp.hovered());
+    ui.painter().rect_filled(rect, 10.0, Color32::from_rgba_unmultiplied(base.r(), base.g(), base.b(), (46.0 + 30.0 * hover) as u8));
+    ui.painter().rect_stroke(rect, 10.0, Stroke::new(1.0, base.gamma_multiply(0.7)), egui::StrokeKind::Inside);
+    ui.painter().circle_filled(rect.left_center() + egui::vec2(8.0, 0.0), 3.0, base);
+    ui.painter().galley(egui::pos2(rect.left() + 15.0, rect.center().y - galley.size().y / 2.0), galley, pal().text);
+    let mut removed = false;
+    if removable {
+        let x = egui::Rect::from_center_size(rect.right_center() - egui::vec2(9.0, 0.0), egui::Vec2::splat(14.0));
+        let hot = ui.rect_contains_pointer(x);
+        crate::icons::Icon::X.image(10.0, if hot { crate::theme::red() } else { pal().text_dim }).paint_at(ui, egui::Rect::from_center_size(x.center(), egui::Vec2::splat(10.0)));
+        removed = resp.clicked() && hot;
+    }
+    removed
+}
+
+fn hsv_to_rgb8(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
+    let c = v * s;
+    let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
+    let m = v - c;
+    let (r, g, b) = match (h / 60.0) as u32 {
+        0 => (c, x, 0.0),
+        1 => (x, c, 0.0),
+        2 => (0.0, c, x),
+        3 => (0.0, x, c),
+        4 => (x, 0.0, c),
+        _ => (c, 0.0, x),
+    };
+    (((r + m) * 255.0) as u8, ((g + m) * 255.0) as u8, ((b + m) * 255.0) as u8)
+}
+
+/// A wrapping row of removable chips plus an input that adds one on Enter or Space.
+/// `items` is edited in place; returns `true` when it changed.
+pub fn chip_editor(ui: &mut Ui, id: egui::Id, items: &mut Vec<String>, hint: &str) -> bool {
+    let mut changed = false;
+    let mut buffer: String = ui.data_mut(|d| d.get_temp(id)).unwrap_or_default();
+    ui.horizontal_wrapped(|ui| {
+        ui.spacing_mut().item_spacing = egui::vec2(5.0, 5.0);
+        let mut remove = None;
+        for (i, tag) in items.iter().enumerate() {
+            if chip(ui, tag, true) {
+                remove = Some(i);
+            }
+        }
+        if let Some(i) = remove {
+            items.remove(i);
+            changed = true;
+        }
+        let resp = ui.add(egui::TextEdit::singleline(&mut buffer).hint_text(hint).desired_width(86.0).margin(egui::Margin::symmetric(6, 2)));
+        let submit = resp.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) || buffer.ends_with(' ');
+        let word = buffer.trim().to_string();
+        if submit && !word.is_empty() {
+            if !items.contains(&word) {
+                items.push(word);
+                changed = true;
+            }
+            buffer.clear();
+            resp.request_focus();
+        }
+    });
+    ui.data_mut(|d| d.insert_temp(id, buffer));
+    changed
+}

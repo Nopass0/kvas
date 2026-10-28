@@ -582,10 +582,15 @@ impl Editor {
         ui.separator();
 
         let mut remove: Option<&'static str> = None;
-        let mut tags = self.active().world.get::<Tags>(e).cloned().unwrap_or_default();
-        ui.horizontal(|ui| {
-            ui.label("Теги");
-            if ui.add(egui::TextEdit::singleline(&mut tags.value).hint_text("enemy damageable").desired_width(f32::INFINITY)).on_hover_text("Через пробел; ctx.tagged(\"enemy\"), ctx.has_tag(entity, \"enemy\")").changed() { self.active_mut().world.insert(e, tags); }
+        let tags = self.active().world.get::<Tags>(e).cloned().unwrap_or_default();
+        let mut list: Vec<String> = tags.value.split_whitespace().map(str::to_string).collect();
+        ui.horizontal_top(|ui| {
+            crate::icons::show(ui, crate::icons::Icon::Tag, 15.0).on_hover_text("ctx.tagged(\"enemy\"), ctx.has_tag(entity, \"enemy\")");
+            ui.vertical(|ui| {
+                if crate::ui_kit::chip_editor(ui, ui.make_persistent_id(("tags", e.to_bits())), &mut list, &t("add tag")) {
+                    self.active_mut().world.insert(e, Tags { value: list.join(" ") });
+                }
+            });
         });
         let count = self.selected_entities().len();
         if count > 1 { ui.weak(format!("Выделено: {count}. Инспектор — активный объект; gizmo и Ctrl+D/Delete — группа.")); }

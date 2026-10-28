@@ -11,6 +11,7 @@ include!(concat!(env!("OUT_DIR"), "/library_files.rs"));
 pub struct Report {
     pub scripts: usize,
     pub shaders: usize,
+    pub materials: usize,
 }
 
 /// `(folder, module, source)` of every library script.
@@ -57,6 +58,17 @@ pub fn install(project_root: &Path) -> Result<Report, String> {
         report.shaders += 1;
     }
 
+    // Procedural materials live in assets/materials/library/<category>.
+    for (rel, src) in FILES.iter().filter(|(r, _)| r.starts_with("materials/")) {
+        let target = project_root.join("assets/materials/library").join(rel.trim_start_matches("materials/"));
+        if target.exists() {
+            continue;
+        }
+        std::fs::create_dir_all(target.parent().unwrap()).map_err(io)?;
+        std::fs::write(&target, src).map_err(io)?;
+        report.materials += 1;
+    }
+
     // Blender exporter for node materials.
     for (rel, src) in FILES.iter().filter(|(r, _)| r.starts_with("blender/")) {
         let target = project_root.join("tools").join(rel);
@@ -100,14 +112,14 @@ impl Script for Spinner {}
 register_scripts!(Spinner);
 ").unwrap();
         let first = install(&dir).unwrap();
-        assert!(first.scripts >= 15 && first.shaders >= 15, "{first:?}");
+        assert!(first.scripts >= 15 && first.shaders >= 15 && first.materials >= 50, "{first:?}");
         let names: Vec<String> = scan_scripts(&dir).into_iter().map(|(n, _)| n).collect();
         assert!(names.contains(&"FpsPlayer".to_string()) && names.contains(&"Spinner".to_string()));
         assert_eq!(names.iter().filter(|n| *n == "Spinner").count(), 1, "the project's own Spinner is kept");
         assert!(dir.join("scripts/src/movement/fps_player.rs").exists());
         assert!(dir.join("scripts/build.rs").exists());
         let second = install(&dir).unwrap();
-        assert_eq!((second.scripts, second.shaders), (0, 0), "a second install changes nothing");
+        assert_eq!((second.scripts, second.shaders, second.materials), (0, 0, 0), "a second install changes nothing");
         let _ = std::fs::remove_dir_all(dir);
     }
 }

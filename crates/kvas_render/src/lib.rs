@@ -2098,6 +2098,11 @@ mod tests {
                 }
             }
         }
+        // Every shipped material compiles.
+        for preset in kvas_engine::material_presets::library() {
+            validate(preset.name, &format!("{PRELUDE}
+{}{}{}{}{}", shader_lib::LIB_COLOR, shader_lib::LIB_NOISE, shader_lib::LIB_MATH, shader_lib::LIB_NODES, to_wgsl(&preset.graph).unwrap()));
+        }
         // The shader graph's vertex offset runs through its own stage.
         let mut g = MaterialGraph::default_graph_for(GraphMode::Shader);
         let wave = g.add_node("Pulse", [0.0, 0.0]);

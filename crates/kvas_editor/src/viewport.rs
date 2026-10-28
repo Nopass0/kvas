@@ -147,9 +147,79 @@ impl Editor {
                 let _ = p.runtime.scene.signals.send(&channel, serde_json::json!({"clicked": true}), Some(entity), None);
             }
         }
+        if !playing {
+            self.scene_icons(ui, rect, &view);
+        }
         self.viewport_overlay(ui, rect);
         if resp.hovered() && ui.input(|i| i.pointer.any_down()) && playing {
             ui.painter().rect_stroke(rect, 0.0, egui::Stroke::new(1.0, crate::theme::ACCENT), egui::StrokeKind::Inside);
+        }
+    }
+
+    /// Clickable badges for objects that have no mesh to click on (lights, cameras, sounds, particles...).
+    /// Only drawn while editing.
+    fn scene_icons(&mut self, ui: &mut egui::Ui, rect: egui::Rect, view: &View) {
+        let mut items: Vec<(Entity, Icon, Color32, Vec3, String)> = Vec::new();
+        {
+            let world = &self.scene.world;
+            let place = |e: Entity| world.get::<GlobalTransform>(e).map(|g| g.0.w_axis.truncate());
+            let name = |e: Entity| hierarchy::name_of(world, e).to_string();
+            for (e, l) in world.iter::<Light>() {
+                if let Some(p) = place(e) {
+                    let icon = if matches!(l.kind, LightKind::Directional) { Icon::Sun } else { Icon::Lightbulb };
+                    items.push((e, icon, Color32::from_rgb(0xF2, 0xC2, 0x4B), p, name(e)));
+                }
+            }
+            for (e, _) in world.iter::<Camera>() {
+                if let Some(p) = place(e) {
+                    items.push((e, Icon::Camera, Color32::from_rgb(0x4B, 0xB8, 0xE8), p, name(e)));
+                }
+            }
+            for (e, a) in world.iter::<AudioSource>() {
+                if let Some(p) = place(e) {
+                    let tip = if a.cone_angle < 359.0 { format!("{} ({}°)", name(e), a.cone_angle as i32) } else { name(e) };
+                    items.push((e, Icon::Volume, Color32::from_rgb(0x58, 0xC8, 0x7A), p, tip));
+                }
+            }
+            for (e, _) in world.iter::<ParticleEmitter>() {
+                if let Some(p) = place(e) {
+                    items.push((e, Icon::Sparkles, Color32::from_rgb(0xE8, 0x6B, 0xB8), p, name(e)));
+                }
+            }
+            for (e, _) in world.iter::<Cloth>() {
+                if let Some(p) = place(e) {
+                    items.push((e, Icon::Shirt, Color32::from_rgb(0xB0, 0x8A, 0xE8), p, name(e)));
+                }
+            }
+            for (e, _) in world.iter::<VoxelWater>() {
+                if let Some(p) = place(e) {
+                    items.push((e, Icon::Waves, Color32::from_rgb(0x4B, 0x8F, 0xE8), p, name(e)));
+                }
+            }
+        }
+        let selected = self.selected_entities();
+        let painter = ui.painter_at(rect);
+        let pal = crate::theme::pal();
+        let mut clicked = None;
+        for (e, icon, color, pos, name) in items {
+            let Some(at) = to_screen(view, rect, pos).filter(|p| rect.shrink(10.0).contains(*p)) else { continue };
+            let badge = egui::Rect::from_center_size(at, egui::Vec2::splat(24.0));
+            let id = ui.id().with(("scene-icon", e.to_bits()));
+            let resp = ui.interact(badge, id, egui::Sense::click());
+            let on = selected.contains(&e);
+            let hover = crate::ui_kit::animate(ui, id.with("h"), resp.hovered());
+            painter.circle_filled(at + egui::vec2(0.0, 1.5), 13.0, Color32::from_black_alpha(70));
+            painter.circle_filled(at, 12.0 + hover * 1.5, if on { crate::theme::ACCENT } else { Color32::from_rgba_unmultiplied(pal.panel.r(), pal.panel.g(), pal.panel.b(), 235) });
+            painter.circle_stroke(at, 12.0 + hover * 1.5, egui::Stroke::new(1.5, if on { Color32::WHITE } else { color }));
+            icon.image(14.0, if on { Color32::WHITE } else { color }).paint_at(ui, egui::Rect::from_center_size(at, egui::Vec2::splat(14.0)));
+            if resp.clicked() {
+                clicked = Some(e);
+            }
+            resp.on_hover_text(name);
+        }
+        if let Some(e) = clicked {
+            let modifiers = ui.input(|i| i.modifiers);
+            self.select_entity(Some(e), modifiers, &[]);
         }
     }
 
@@ -367,6 +437,32 @@ impl Editor {
                 }
             }
             if !playing {
+                for (e, a) in world.iter::<AudioSource>() {
+                    if Some(e) != selected {
+                        continue;
+                    }
+                    let Some(g) = world.get::<GlobalTransform>(e) else { continue };
+                    let (pos, fwd) = (g.0.w_axis.truncate(), g.0.transform_vector3(Vec3::NEG_Z).normalize_or_zero());
+                    let color = [0.35, 0.85, 0.5, 0.8];
+                    let (u, v) = (fwd.any_orthonormal_vector(), fwd.cross(fwd.any_orthonormal_vector()));
+                    if a.spatial {
+                        for (radius, alpha) in [(a.min_distance, 0.9), (a.max_distance, 0.3)] {
+                            draw.circle(pos, Vec3::X * radius, Vec3::Z * radius, [color[0], color[1], color[2], alpha]);
+                            draw.circle(pos, Vec3::X * radius, Vec3::Y * radius, [color[0], color[1], color[2], alpha * 0.6]);
+                        }
+                    }
+                    if a.cone_angle < 359.0 {
+                        let reach = a.max_distance.clamp(1.0, 12.0);
+                        let half = (a.cone_angle * 0.5).clamp(1.0, 89.0).to_radians();
+                        let tip = pos + fwd * reach * half.cos();
+                        let radius = reach * half.sin();
+                        draw.circle(tip, u * radius, v * radius, color);
+                        for off in [u, -u, v, -v] {
+                            draw.line(pos, tip + off * radius, color);
+                        }
+                    }
+                    draw.arrow(pos, pos + fwd * 1.2, color);
+                }
                 for (e, l) in world.iter::<Light>() {
                     let Some(g) = world.get::<GlobalTransform>(e) else { continue };
                     let (pos, fwd) = (g.0.w_axis.truncate(), g.0.transform_vector3(Vec3::NEG_Z).normalize_or_zero());
