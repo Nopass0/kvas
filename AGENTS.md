@@ -25,6 +25,7 @@ The code is authoritative for actual behavior. Verify API names, file paths, fea
 - Keep UI work consistent with existing localization, themes, keyboard navigation, accessibility, saved state, and small-window behavior. Add translation keys rather than hard-coded user-facing strings.
 - Avoid adding dependencies unless existing facilities cannot reasonably solve the problem. Explain material size, license, maintenance, and platform costs in the change.
 - Respect asset provenance. Never add imported assets unless redistribution rights and required attribution are clear. Keep secrets, credentials, machine-local data, build output, recordings, and private user content out of Git.
+- Use repository-relative paths for project dependencies and resources. Never commit absolute paths tied to a developer machine; validate projects from a clean clone or CI checkout.
 
 ## Tests, coverage, and performance
 

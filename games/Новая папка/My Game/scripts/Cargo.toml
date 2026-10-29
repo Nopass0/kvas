@@ -7,6 +7,6 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-kvas_engine = { path = "C:/Projects/kvas/crates/kvas_engine" }
+kvas_engine = { path = "../../../../crates/kvas_engine" }
 
 [workspace]
