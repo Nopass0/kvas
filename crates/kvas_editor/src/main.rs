@@ -30,6 +30,7 @@ mod prefs;
 mod script_files;
 mod script_templates;
 mod scripting;
+mod api_docs;
 mod settings;
 mod settings_extra;
 mod selection;
@@ -176,7 +177,14 @@ struct App {
 
 impl App {
     fn shortcuts(&mut self, ctx: &egui::Context) {
-        if ctx.input_mut(|i| i.consume_key(Modifiers::NONE, Key::F1)) { self.editor.help.open = true; }
+        if ctx.input_mut(|i| i.consume_key(Modifiers::SHIFT, Key::F1)) { self.editor.api.open = true; }
+        if ctx.input_mut(|i| i.consume_key(Modifiers::NONE, Key::F1)) {
+            // In the code editor F1 explains the word under the cursor; elsewhere it opens the docs.
+            match self.editor.code_word() {
+                Some(word) => self.editor.api.show(&word),
+                None => self.editor.help.open = true,
+            }
+        }
         if ctx.egui_wants_keyboard_input() || self.editor.mat.visible || self.editor.code.open || self.editor.image_editor.open {
             return;
         }
@@ -336,6 +344,7 @@ impl App {
             });
             ui.menu_button(t("Help"), |ui| {
                 if ui.button("Документация (F1)").clicked() { ed.help.open = true; ui.close(); }
+                if ui.button("Справочник API — rustdoc (Shift+F1)").clicked() { ed.api.open = true; ui.close(); }
                 ui.label(t("Scene view: RMB + WASD fly, MMB pan, scroll zoom,"));
                 ui.label(t("Alt+LMB orbit, F focus, W/E/R move/rotate/scale."));
                 ui.label(t("Ctrl while dragging a handle snaps."));
@@ -606,6 +615,7 @@ impl eframe::App for App {
         self.editor.image_editor_window(&ctx);
         self.editor.gui_window(&ctx);
         self.editor.help_window(&ctx);
+        self.editor.api_window(&ctx);
         ui_kit::drag_ghost(&ctx);
     }
 

@@ -1,6 +1,9 @@
 // Built-in particle shader (the prelude is prepended). Quad corner (-1..1) and normalised life
 // (0..1) travel in the vertex normal; colours come from MeshRenderer.user (start rgba, end rgba)
 // and the glow from `emissive`. Unlit and soft-edged; an optional texture supplies the shape.
+// Every quad is turned to the camera that draws it: uv.x is the half size in metres, uv.y the
+// mode (-1 billboard around the particle centre, -2 streak: the length is already in the
+// position, only the width is turned). Positive uv.y means a plain textured quad.
 
 struct PIn {
     @builtin(position) clip: vec4<f32>,
@@ -12,11 +15,24 @@ struct PIn {
 @vertex
 fn vs_main(v: VertexIn) -> PIn {
     var out: PIn;
-    let world = object.model * vec4<f32>(v.position, 1.0);
-    out.clip = globals.view_proj * world;
-    out.world_pos = world.xyz;
-    out.corner_life = v.normal;
+    var world = (object.model * vec4<f32>(v.position, 1.0)).xyz;
     out.uv = v.uv;
+    if (v.uv.y < 0.0) {
+        let to_eye = normalize(globals.camera_pos.xyz - world);
+        var right = cross(vec3<f32>(0.0, 1.0, 0.0), to_eye);
+        if (dot(right, right) < 1e-6) {
+            right = vec3<f32>(1.0, 0.0, 0.0);
+        }
+        right = normalize(right);
+        world += right * (v.normal.x * v.uv.x);
+        if (v.uv.y > -1.5) {
+            world += cross(to_eye, right) * (v.normal.y * v.uv.x);
+        }
+        out.uv = vec2<f32>(v.normal.x * 0.5 + 0.5, v.normal.y * 0.5 + 0.5);
+    }
+    out.clip = globals.view_proj * vec4<f32>(world, 1.0);
+    out.world_pos = world;
+    out.corner_life = v.normal;
     return out;
 }
 

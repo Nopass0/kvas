@@ -1068,6 +1068,11 @@ fn parse_gltf(assets: &Assets, path: &str, bytes: &[u8]) -> Result<MeshData, Str
     mesh.parts = merge_parts(std::mem::take(&mut mesh.parts));
     // A single material needs no runs; the renderer treats the mesh as one piece.
     if mesh.parts.len() <= 1 && mesh.parts.iter().all(|p| p.normal.is_none() && p.orm.is_none()) {
+        // The run's image already carries the material colour (a 1x1 swatch for an untextured
+        // material, or the texture tinted by its factor); keep it as the mesh's image.
+        if let Some(albedo) = mesh.parts.first().and_then(|p| p.albedo.clone()) {
+            mesh.albedo = Some(albedo);
+        }
         mesh.parts.clear();
     }
     mesh.validate_geometry()?;

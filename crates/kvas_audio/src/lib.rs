@@ -19,6 +19,8 @@ struct Voice {
     min: f32,
     max: f32,
     pan: f32,
+    /// Looping 2D clip started as music (follows the music volume).
+    music: bool,
     /// Direction the source points (world), and its beam angle in degrees (360 = omni).
     forward: Vec3,
     cone: f32,
@@ -37,6 +39,8 @@ pub struct AudioEngine {
     sources: HashMap<Entity, (u64, String)>,
     cache: HashMap<String, Option<Arc<[u8]>>>,
     next_source_id: u64,
+    /// Room echo for new sounds (from the scene's `AudioBus`).
+    reverb: (f32, f32),
     /// Problems worth showing in the console (missing clips, undecodable files).
     pub warnings: Vec<String>,
 }
@@ -45,7 +49,7 @@ impl AudioEngine {
     /// Opens the default output device; `None` when there is no sound card.
     pub fn new() -> Option<Self> {
         let (stream, handle) = OutputStream::try_default().ok()?;
-        Some(Self { _stream: stream, handle, voices: HashMap::new(), sources: HashMap::new(), cache: HashMap::new(), next_source_id: 1 << 62, warnings: Vec::new() })
+        Some(Self { _stream: stream, handle, voices: HashMap::new(), sources: HashMap::new(), cache: HashMap::new(), next_source_id: 1 << 62, reverb: (0.0, 45.0), warnings: Vec::new() })
     }
 
     fn bytes(&mut self, assets: &Assets, clip: &str) -> Option<Arc<[u8]>> {
@@ -73,13 +77,25 @@ impl AudioEngine {
         };
         let Ok(sink) = SpatialSink::try_new(&self.handle, [pan, 0.0, 0.0], [-1.0, 0.0, 0.0], [1.0, 0.0, 0.0]) else { return };
         let source = decoder.speed(pitch);
-        if looped {
+        let music = looped && position.is_none();
+        let (wet, room) = self.reverb;
+        if wet > 0.01 && !music {
+            // Room echo: three reflections at prime-ish spacings, each quieter than the last.
+            let ms = |k: f32| std::time::Duration::from_millis((room.clamp(5.0, 400.0) * k) as u64);
+            let wet = wet.clamp(0.0, 1.0);
+            let echo = source.buffered().reverb(ms(1.0), 0.45 * wet).buffered().reverb(ms(1.73), 0.32 * wet).buffered().reverb(ms(2.91), 0.22 * wet);
+            if looped {
+                sink.append(echo.buffered().repeat_infinite());
+            } else {
+                sink.append(echo);
+            }
+        } else if looped {
             sink.append(source.repeat_infinite());
         } else {
             sink.append(source);
         }
         sink.set_volume(volume);
-        self.voices.insert(id, Voice { sink, volume, position, min, max, pan, forward: Vec3::NEG_Z, cone: 360.0 });
+        self.voices.insert(id, Voice { sink, volume, position, min, max, pan, music, forward: Vec3::NEG_Z, cone: 360.0 });
     }
 
     /// Stops everything (call when the game stops).
@@ -100,6 +116,7 @@ impl AudioEngine {
 
     fn run(&mut self, scene: &mut Scene, assets: &Assets, components: bool) {
         let (listener, right) = listener(&scene.world);
+        self.reverb = (scene.audio.reverb, scene.audio.reverb_room_ms);
         let commands = scene.audio.drain();
         for cmd in commands {
             match cmd {
@@ -168,7 +185,8 @@ impl AudioEngine {
                 Some(p) => (distance_gain((p - listener).length(), v.min, v.max) * cone_gain(v.forward, listener - p, v.cone), stereo_pan(listener, right, p)),
                 None => (1.0, v.pan),
             };
-            v.sink.set_volume(v.volume * gain * master);
+            let bus = if v.music { scene.audio.music_volume } else { scene.audio.effects_volume };
+            v.sink.set_volume(v.volume * gain * master * bus.clamp(0.0, 2.0));
             v.sink.set_emitter_position([pan, 0.0, 0.0]);
         }
     }
@@ -176,7 +194,7 @@ impl AudioEngine {
 
 /// The listener is the first camera in the scene: its position and right-hand direction.
 fn listener(world: &World) -> (Vec3, Vec3) {
-    match world.entities_with::<Camera>().into_iter().next() {
+    match kvas_engine::components::active_camera(world) {
         Some(e) => {
             let m = hierarchy::global_matrix(world, e);
             (m.w_axis.truncate(), m.x_axis.truncate().normalize_or(Vec3::X))

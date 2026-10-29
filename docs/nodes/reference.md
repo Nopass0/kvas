@@ -4,7 +4,7 @@ outline: [2, 2]
 
 # Справочник нод
 
-Страница создаётся автоматически из библиотеки нод (`cargo run -p kvas_engine --example gen_node_docs`). Всего нод: **190**.
+Страница создаётся автоматически из библиотеки нод (`cargo run -p kvas_engine --example gen_node_docs`). Всего нод: **215**.
 
 Буквы показывают, где ноду можно использовать: **M** - материал (`.kmat`), **S** - шейдер объекта (`.kshader`), **E** - эффект камеры (`.kfx`).
 
@@ -22,6 +22,8 @@ outline: [2, 2]
 | **Time** | MSE | - | - | Seconds since the game started. |
 | **Object colour** | MS | - | - | Цвет, заданный в MeshRenderer объекта. |
 | **Triplanar texture** | MS | - | slot (0..2), scale (0.01..50), sharpness (1..32) | Проецирует картинку материала по трём осям мира, без растяжения на склонах. |
+| **Image texture** | MS | Vector | slot (0..2), tiling x (0.01..100), tiling y (0.01..100), offset x (-10..10), offset y (-10..10), rotation (-1..1) | Картинка из проекта. Выберите файл прямо в ноде; до трёх картинок на материал (слоты 0..2). Выходы: цвет, каналы и яркость. |
+| **RGB** | MSE | Colour | - | Цвет с выходами R, G, B и яркости. |
 
 ## Геометрия
 
@@ -51,6 +53,8 @@ outline: [2, 2]
 | **Normal UV** | MS | - | - | Сферические координаты из нормали (для небесного маппинга). |
 | **Wave offset** | MS | - | height (0..5), frequency (0..30), speed (-10..10) | Смещение вершин для волн. Подключается в Shader output > Vertex offset. |
 | **Wind sway** | MS | - | strength (0..3), speed (0..20), scale (0..10) | Смещение вершин, раскачивающее объект ветром сильнее наверху. В Vertex offset. |
+| **Texture coordinate** | MS | - | - | Все системы координат сразу: UV, объект, мир, нормаль, отражение и экран. |
+| **Geometry info** | MS | - | - | Позиция, нормаль, направление взгляда, высота, обратная сторона и наклон точки поверхности. |
 
 ## Свет
 
@@ -77,6 +81,7 @@ outline: [2, 2]
 | **Sky light** | MS | - | - | Рассеянный свет неба в направлении нормали. |
 | **Glow** | MSE | - | цвет, intensity (0..50) | Постоянный цвет, умноженный на яркость. В Emission - чтобы объект светился. |
 | **Pulsing glow** | MSE | - | цвет, intensity (0..50), speed (0..20) | Свечение, пульсирующее во времени. |
+| **Layer weight** | MS | Blend | - | Маски Френеля и «лицом к камере» с регулировкой; для лаков и окантовок. |
 
 ## Нормали
 
@@ -91,6 +96,7 @@ outline: [2, 2]
 | **Normal to colour** | MS | Normal | - | Показывает нормаль как цвет (для превью и отладки). |
 | **Noise bump** | MS | Coords | scale (0.05..100), strength (0..10) | Бугры по фрактальному шуму. Подключайте в Output > Normal. |
 | **Height to normal** | MS | UV | slot (0..2), tiling (0.01..100), strength (0..32) | Строит цвет карты нормалей из высоты в слоте текстуры. Подключайте в Normal map. |
+| **Bump** | MS | Height, Strength, Distance | invert (0..1) | Рельеф поверхности из высоты; подключайте к Output > Normal. |
 
 ## Шумы
 
@@ -114,6 +120,8 @@ outline: [2, 2]
 | **Clouds** | MSE | Coords | scale (0.01..100), coverage (0..1), softness (0.01..1) | Мягкие облакообразные пятна. Coverage задаёт заполненность. |
 | **Grunge** | MSE | Coords | scale (0.01..100), contrast (0.1..8) | Маска грязи и износа. Умножайте на цвет или используйте для шероховатости. |
 | **Scratches** | MSE | Coords | density (2..400), angle (-3.15..3.15) | Тонкие вытянутые царапины под углом. |
+| **Noise texture** | MSE | Vector, Scale, Detail, Roughness, Distortion | type (0..2), lacunarity (1.2..4) | Фрактальный шум с входами масштаба, детализации, шероховатости и искажения; выходы: коэффициент и цвет. |
+| **Voronoi texture** | MSE | Vector, Scale, Randomness | feature (0..3) | Ячейки: расстояние, края, значение и цвет каждой ячейки. |
 
 ## Узоры
 
@@ -138,6 +146,9 @@ outline: [2, 2]
 | **Grid lines** | MSE | Coords | cells (1..200), line width (0.001..0.5) | Сетка тонких линий (белые линии на чёрном). |
 | **Planks** | MSE | Coords | rows (1..100), plank length (0.2..40), gap (0..0.3) | Доски пола со случайными оттенками и зазорами. |
 | **Weave** | MSE | Coords | threads (1..200) | Тканое плетение нитей. |
+| **Wave texture** | MSE | Vector, Scale, Distortion, Detail | type (0..1), profile (0..2) | Полосы или кольца с синусом, пилой или треугольником, изогнутые шумом. |
+| **Gradient texture** | MSE | Vector | type (0..6) | Линейный, квадратичный, плавный, диагональный, радиальный или сферический градиент. |
+| **Brick texture** | MSE | Vector, Colour 1, Colour 2, Mortar, Scale | brick ratio (0.2..6), row offset (0..1), mortar size (0..0.3), mortar smooth (0..0.3), colour variation (0..1) | Кирпичи двух цветов с раствором, сдвигом рядов и значением каждого кирпича. |
 
 ## Цвет
 
@@ -160,7 +171,7 @@ Color ramp, режимы наложения, HSV, цветокоррекция.
 | **Levels** | MSE | Colour | black (0..1), white (0..2) | Задаёт чёрную и белую точки. |
 | **Threshold** | MSE | Colour | level (0..1) | Чёрно-белое по порогу яркости. |
 | **Tone map** | MSE | Colour | - | Кинематографичное (ACES) тональное отображение HDR-цвета. |
-| **Color ramp** | MSE | Position, Stop 1, Stop 2, Stop 3, Stop 4 | position 1 (0..1), position 2 (0..1), position 3 (0..1), position 4 (0..1) | Переводит 0..1 в градиент из четырёх цветовых точек в заданных позициях. |
+| **Color ramp** | MSE | Position, Stop 1, Stop 2, Stop 3, Stop 4 | position 1 (0..1), position 2 (0..1), position 3 (0..1), position 4 (0..1), interpolation (0..2) | Переводит 0..1 в градиент из четырёх цветовых точек в заданных позициях. |
 | **Blend colours** | MSE | A, B, Factor | mode (0..12) | Режимы наложения как в Photoshop: 0 mix, 1 multiply, 2 screen, 3 overlay, 4 add, 5 subtract, 6 difference, 7 darken, 8 lighten, 9 soft light, 10 dodge, 11 burn, 12 hard light. |
 | **HSV adjust** | MSE | Colour | hue shift (-0.5..0.5), saturation (0..3), value (0..3) | Сдвигает оттенок и масштабирует насыщенность и яркость. |
 | **HSV to RGB** | MSE | Hue, Saturation, Value | - | Собирает цвет из оттенка, насыщенности и яркости. |
@@ -170,6 +181,11 @@ Color ramp, режимы наложения, HSV, цветокоррекция.
 | **Colour key** | MSE | Colour | цвет, tolerance (0..1.75), softness (0..1) | Белое там, где цвет близок к выбранному. |
 | **S-curve** | MSE | Value | amount (0.05..0.95) | Контрастная кривая, сохраняющая чёрное и белое. |
 | **Bias curve** | MSE | Value | bias (0.01..0.99) | Сдвигает средние тона к тёмному или светлому. |
+| **Mix colour** | MSE | Factor, A, B | blend mode (0..12), clamp result (0..1) | Смешивает A и B в режиме (обычный, умножение, перекрытие, экран...) по коэффициенту. |
+| **Hue saturation value** | MSE | Colour, Hue, Saturation, Value, Factor | - | Сдвигает оттенок и меняет насыщенность и яркость. |
+| **Invert** | MSE | Colour, Factor | - | Инвертирует цвет на заданную долю. |
+| **RGB curves** | MSE | Colour, Factor | y at 0 (-1..2), y at 0.25 (-1..2), y at 0.5 (-1..2), y at 0.75 (-1..2), y at 1 (-1..2) | Тоновая кривая цвета через пять точек. |
+| **Bright contrast** | MSE | Colour, Bright, Contrast | - | Яркость и контраст как входы. |
 
 ## Математика
 
@@ -220,6 +236,9 @@ Color ramp, режимы наложения, HSV, цветокоррекция.
 | **Smootherstep** | MSE | Value | edge 0 (-10..10), edge 1 (-10..10) | Более гладкая версия Smoothstep. |
 | **Less than** | MSE | A, B | - | 1 где A < B, иначе 0. |
 | **Average** | MSE | A, B | - | Среднее двух значений. |
+| **Math** | MSE | A, B, C | operation (0..25), clamp (0..1) | Одна нода на 26 операций с числами (сложение, степень, плавный минимум, шаг, пинг-понг...). Операция выбирается в списке. |
+| **Float curve** | MSE | Value | y at 0 (-1..2), y at 0.25 (-1..2), y at 0.5 (-1..2), y at 0.75 (-1..2), y at 1 (-1..2) | Меняет значение по плавной кривой через пять точек. |
+| **Clamp range** | MSE | Value, Min, Max | - | Ограничивает значение двумя входами. |
 
 ## Векторы
 
@@ -247,6 +266,12 @@ Color ramp, режимы наложения, HSV, цветокоррекция.
 | **Rotate around axis** | MSE | Vector, Axis | angle (-6.3..6.3) | Поворачивает вектор вокруг оси на угол (радианы). |
 | **Refract** | MSE | Incident, Normal | index ratio (0.1..2) | Преломляет направление на поверхности (стекло, вода). |
 | **Twirl coords** | MSE | Coords | amount (-20..20) | Закручивает координаты вокруг центра. |
+| **Vector math** | MSE | A, B | operation (0..16) | Операции с векторами: векторное и скалярное произведение, проекция, отражение, расстояние, нормализация... |
+| **Separate RGB** | MSE | Colour | - | Разделяет цвет на R, G и B. |
+| **Separate XYZ** | MSE | Vector | - | Разделяет вектор на X, Y и Z. |
+| **Combine XYZ** | MSE | X, Y, Z | - | Собирает вектор из трёх чисел. |
+| **Mapping** | MSE | Vector | location x (-100..100), location y (-100..100), location z (-100..100), rotation (-1..1), scale x (-100..100), scale y (-100..100), scale z (-100..100) | Сдвигает, поворачивает и масштабирует координаты текстуры. |
+| **Jitter coords** | MSE | Vector, Amount | scale (0.01..100) | Добавляет к координатам плавный шум, чтобы убрать заметные повторы. |
 
 ## Утилиты
 

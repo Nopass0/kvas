@@ -30,3 +30,18 @@ __pycache__/
 # Built-in materials and shaders the editor copies into a project when it opens it.
 /games/*/assets/materials/library/
 /games/*/assets/shaders/library/
+# LAST SERVICE: third-party assets copied by tools/import_last_service.py (own licences).
+/games/last_service/assets/world/
+/games/last_service/assets/models/
+/games/last_service/assets/audio/
+/games/last_service/assets/backgrounds/
+/games/last_service/assets/grass/
+/games/last_service/assets/decals/
+/games/last_service/assets/shaders/ls/
+/games/last_service/assets/ui/branding/
+/games/last_service/assets/ui/font/
+/games/last_service/assets/ui/icons/
+/games/last_service/assets/ui/notes/
+/games/last_service/assets/scenes/probe.scene.json
+/games/last_service/build/
+/games/last_service/.kvas/

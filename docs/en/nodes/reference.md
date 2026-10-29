@@ -4,7 +4,7 @@ outline: [2, 2]
 
 # Node reference
 
-This page is generated from the node library (`cargo run -p kvas_engine --example gen_node_docs`). Nodes in total: **190**.
+This page is generated from the node library (`cargo run -p kvas_engine --example gen_node_docs`). Nodes in total: **215**.
 
 The letters show where a node can be used: **M** - material (`.kmat`), **S** - object shader (`.kshader`), **E** - camera effect (`.kfx`).
 
@@ -22,6 +22,8 @@ Constants, textures, time, UV.
 | **Time** | MSE | - | - | Seconds since the game started. |
 | **Object colour** | MS | - | - | The colour set in the MeshRenderer of the object. |
 | **Triplanar texture** | MS | - | slot (0..2), scale (0.01..50), sharpness (1..32) | Projects a material image from three world axes, no stretching on any slope. |
+| **Image texture** | MS | Vector | slot (0..2), tiling x (0.01..100), tiling y (0.01..100), offset x (-10..10), offset y (-10..10), rotation (-1..1) | An image file of the project. Pick it in the node; up to three images per material (slots 0..2). Outputs colour, channels and brightness. |
+| **RGB** | MSE | Colour | - | A colour with R, G, B and brightness outputs. |
 
 ## Geometry
 
@@ -51,6 +53,8 @@ Position, normal, height, direction masks, vertex offsets.
 | **Normal UV** | MS | - | - | Spherical coordinates from the normal (for sky-like mapping). |
 | **Wave offset** | MS | - | height (0..5), frequency (0..30), speed (-10..10) | Vertex offset for waves. Connect to Shader output > Vertex offset. |
 | **Wind sway** | MS | - | strength (0..3), speed (0..20), scale (0..10) | Vertex offset that bends things in the wind, more at the top. Connect to Vertex offset. |
+| **Texture coordinate** | MS | - | - | Every coordinate system at once: UV, object, world, normal, reflection and screen. |
+| **Geometry info** | MS | - | - | Position, normal, view direction, height, back side and slope of the surface point. |
 
 ## Light
 
@@ -77,6 +81,7 @@ Sun, shadows, highlights, rim light, glow (Emission).
 | **Sky light** | MS | - | - | Ambient light from the sky in the direction of the normal. |
 | **Glow** | MSE | - | colour, intensity (0..50) | A constant colour multiplied by an intensity. Plug into Emission to make things shine. |
 | **Pulsing glow** | MSE | - | colour, intensity (0..50), speed (0..20) | A glow that pulses over time. |
+| **Layer weight** | MS | Blend | - | Fresnel and facing masks with a blend control; good for coatings and rims. |
 
 ## Normals
 
@@ -91,6 +96,7 @@ Normal maps, bump from height, normal blending.
 | **Normal to colour** | MS | Normal | - | Shows a normal as a colour (for previews and debugging). |
 | **Noise bump** | MS | Coords | scale (0.05..100), strength (0..10) | Bumps the surface with fractal noise. Connect to Output > Normal. |
 | **Height to normal** | MS | UV | slot (0..2), tiling (0.01..100), strength (0..32) | Makes a normal-map colour from the height in a texture slot. Feed it to Normal map. |
+| **Bump** | MS | Height, Strength, Distance | invert (0..1) | Surface relief from a height value; connect to Output > Normal. |
 
 ## Noise
 
@@ -114,6 +120,8 @@ Fractal, Perlin, Voronoi, cracks, clouds, grunge. They show a preview by default
 | **Clouds** | MSE | Coords | scale (0.01..100), coverage (0..1), softness (0.01..1) | Soft cloud-like blobs. Coverage sets how much is filled. |
 | **Grunge** | MSE | Coords | scale (0.01..100), contrast (0.1..8) | Dirt and wear mask. Multiply with a base colour or use for roughness. |
 | **Scratches** | MSE | Coords | density (2..400), angle (-3.15..3.15) | Thin stretched scratches at an angle. |
+| **Noise texture** | MSE | Vector, Scale, Detail, Roughness, Distortion | type (0..2), lacunarity (1.2..4) | Fractal noise with scale, detail, roughness and distortion inputs; outputs a factor and a colour. |
+| **Voronoi texture** | MSE | Vector, Scale, Randomness | feature (0..3) | Cells: distance, edges, a value and a colour per cell. |
 
 ## Patterns
 
@@ -138,6 +146,9 @@ Checker, bricks, hexagons, planks, weave, gradients and shapes.
 | **Grid lines** | MSE | Coords | cells (1..200), line width (0.001..0.5) | A grid of thin lines (white lines on black). |
 | **Planks** | MSE | Coords | rows (1..100), plank length (0.2..40), gap (0..0.3) | Wooden floor boards with random tones and gaps. |
 | **Weave** | MSE | Coords | threads (1..200) | Over-under fabric weave pattern. |
+| **Wave texture** | MSE | Vector, Scale, Distortion, Detail | type (0..1), profile (0..2) | Bands or rings with sine, saw or triangle profile, bent by noise. |
+| **Gradient texture** | MSE | Vector | type (0..6) | Linear, quadratic, eased, diagonal, radial or spherical gradient. |
+| **Brick texture** | MSE | Vector, Colour 1, Colour 2, Mortar, Scale | brick ratio (0.2..6), row offset (0..1), mortar size (0..0.3), mortar smooth (0..0.3), colour variation (0..1) | Bricks with two colours, mortar, row offset and a value per brick. |
 
 ## Colour
 
@@ -160,7 +171,7 @@ Color ramp, blend modes, HSV, colour correction.
 | **Levels** | MSE | Colour | black (0..1), white (0..2) | Sets the black and white points. |
 | **Threshold** | MSE | Colour | level (0..1) | Black and white by a brightness threshold. |
 | **Tone map** | MSE | Colour | - | Filmic (ACES) tone mapping of HDR colour. |
-| **Color ramp** | MSE | Position, Stop 1, Stop 2, Stop 3, Stop 4 | position 1 (0..1), position 2 (0..1), position 3 (0..1), position 4 (0..1) | Maps 0..1 to a gradient of four colour stops placed at four positions. |
+| **Color ramp** | MSE | Position, Stop 1, Stop 2, Stop 3, Stop 4 | position 1 (0..1), position 2 (0..1), position 3 (0..1), position 4 (0..1), interpolation (0..2) | Maps 0..1 to a gradient of four colour stops placed at four positions. |
 | **Blend colours** | MSE | A, B, Factor | mode (0..12) | Photoshop-style blend modes: 0 mix, 1 multiply, 2 screen, 3 overlay, 4 add, 5 subtract, 6 difference, 7 darken, 8 lighten, 9 soft light, 10 dodge, 11 burn, 12 hard light. |
 | **HSV adjust** | MSE | Colour | hue shift (-0.5..0.5), saturation (0..3), value (0..3) | Shifts hue and scales saturation and brightness. |
 | **HSV to RGB** | MSE | Hue, Saturation, Value | - | Builds a colour from hue, saturation and value. |
@@ -170,6 +181,11 @@ Color ramp, blend modes, HSV, colour correction.
 | **Colour key** | MSE | Colour | colour, tolerance (0..1.75), softness (0..1) | White where the colour is close to the key colour. |
 | **S-curve** | MSE | Value | amount (0.05..0.95) | Contrast curve that keeps black and white fixed. |
 | **Bias curve** | MSE | Value | bias (0.01..0.99) | Bends mid-tones towards dark or light. |
+| **Mix colour** | MSE | Factor, A, B | blend mode (0..12), clamp result (0..1) | Blends A and B with a mode (mix, multiply, overlay, screen...) by a factor. |
+| **Hue saturation value** | MSE | Colour, Hue, Saturation, Value, Factor | - | Shifts hue and scales saturation and brightness. |
+| **Invert** | MSE | Colour, Factor | - | Inverts a colour by a factor. |
+| **RGB curves** | MSE | Colour, Factor | y at 0 (-1..2), y at 0.25 (-1..2), y at 0.5 (-1..2), y at 0.75 (-1..2), y at 1 (-1..2) | Tone curve for colours through five points. |
+| **Bright contrast** | MSE | Colour, Bright, Contrast | - | Brightness and contrast as inputs. |
 
 ## Math
 
@@ -220,6 +236,9 @@ Arithmetic, curves, comparisons, transitions.
 | **Smootherstep** | MSE | Value | edge 0 (-10..10), edge 1 (-10..10) | A smoother version of Smoothstep. |
 | **Less than** | MSE | A, B | - | 1 where A < B, otherwise 0. |
 | **Average** | MSE | A, B | - | Mean of two values. |
+| **Math** | MSE | A, B, C | operation (0..25), clamp (0..1) | One node for 26 operations on numbers (add, power, smooth min, snap, ping-pong...). Pick the operation in the list. |
+| **Float curve** | MSE | Value | y at 0 (-1..2), y at 0.25 (-1..2), y at 0.5 (-1..2), y at 0.75 (-1..2), y at 1 (-1..2) | Reshapes a value by a smooth curve through five points. |
+| **Clamp range** | MSE | Value, Min, Max | - | Keeps a value between two inputs. |
 
 ## Vectors
 
@@ -247,6 +266,12 @@ Components, dot and cross products, rotations, coordinates.
 | **Rotate around axis** | MSE | Vector, Axis | angle (-6.3..6.3) | Rotates a vector around an axis by an angle (radians). |
 | **Refract** | MSE | Incident, Normal | index ratio (0.1..2) | Bends a direction through a surface (glass, water). |
 | **Twirl coords** | MSE | Coords | amount (-20..20) | Swirls coordinates around the centre. |
+| **Vector math** | MSE | A, B | operation (0..16) | Operations on vectors: cross, dot, project, reflect, distance, normalize... |
+| **Separate RGB** | MSE | Colour | - | Splits a colour into R, G and B. |
+| **Separate XYZ** | MSE | Vector | - | Splits a vector into X, Y and Z. |
+| **Combine XYZ** | MSE | X, Y, Z | - | Builds a vector from three numbers. |
+| **Mapping** | MSE | Vector | location x (-100..100), location y (-100..100), location z (-100..100), rotation (-1..1), scale x (-100..100), scale y (-100..100), scale z (-100..100) | Moves, turns and scales texture coordinates. |
+| **Jitter coords** | MSE | Vector, Amount | scale (0.01..100) | Adds smooth noise to coordinates to break visible repetition. |
 
 ## Utility
 

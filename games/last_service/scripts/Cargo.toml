@@ -1,0 +1,12 @@
+[package]
+name = "last_service_scripts"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+kvas_engine.workspace = true
+serde.workspace = true
+serde_json.workspace = true

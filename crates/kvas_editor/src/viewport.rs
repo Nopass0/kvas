@@ -150,12 +150,17 @@ impl Editor {
                 }
             }
         }
-        if let Some(asset) = resp.dnd_release_payload::<AssetDrag>().filter(|a| self.is_camera_effect(&a.0)) {
-            self.drop_asset(None, &asset.0);
-        }
+        // `dnd_release_payload` takes the payload, so it is read exactly once here.
+        let asset_drop = resp.dnd_release_payload::<AssetDrag>();
+        let asset_drop = match asset_drop {
+            Some(a) if self.is_camera_effect(&a.0) => {
+                self.drop_asset(None, &a.0);
+                None
+            }
+            other => other,
+        };
         // Alt while dropping an image: a decal on the surface instead of a new texture.
         let alt_drop = ui.input(|i| i.modifiers.alt);
-        let asset_drop = resp.dnd_release_payload::<AssetDrag>();
         let asset_drop = match asset_drop {
             Some(a) if alt_drop && [".png", ".jpg", ".jpeg"].iter().any(|x| a.0.to_ascii_lowercase().ends_with(x)) => {
                 if let Some(pos) = ui.input(|i| i.pointer.interact_pos()).filter(|p| rect.contains(*p)) {

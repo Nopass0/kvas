@@ -9,6 +9,9 @@ use kvas_engine::material_nodes_ext::CATEGORIES;
 use kvas_engine::material_presets::library;
 use std::fmt::Write;
 
+#[path = "support/node_pages.rs"]
+mod node_pages;
+
 struct Text {
     russian: bool,
 }
@@ -120,4 +123,13 @@ fn main() {
     write("docs/en/nodes/reference.md", reference(&en));
     write("docs/nodes/materials.md", materials(&ru));
     write("docs/en/nodes/materials.md", materials(&en));
+    write("docs/nodes/wiring.md", node_pages::wiring(true));
+    write("docs/en/nodes/wiring.md", node_pages::wiring(false));
+    for category in CATEGORIES {
+        let slug = category.to_lowercase();
+        let (title, about) = ru.category(category);
+        write(&format!("docs/nodes/ref/{slug}.md"), node_pages::category_page(true, category, title, about));
+        let (title, about) = en.category(category);
+        write(&format!("docs/en/nodes/ref/{slug}.md"), node_pages::category_page(false, category, title, about));
+    }
 }

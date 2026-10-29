@@ -631,11 +631,13 @@ impl Component for RigidBody {
 }
 
 choice_enum!(
-    /// Primitive collider shapes; dimensions are full extents in the Collider component.
-    ShapeKind { Box, Sphere, Capsule, Cylinder } default Box);
+    /// Collider shapes. Primitives use full extents; `Mesh` is the exact triangles of the entity's
+    /// model (for static level geometry), `Hull` its convex hull (for moving props).
+    ShapeKind { Box, Sphere, Capsule, Cylinder, Mesh, Hull } default Box);
 
 /// Collision shape. `size` is the full extent: box = (w, h, d); sphere = diameter in x;
-/// capsule/cylinder = diameter in x and total height in y. Scaled by the entity's world scale.
+/// capsule/cylinder = diameter in x and total height in y; mesh/hull = a multiplier on the model
+/// (`MeshRenderer.mesh`, a box of `size` if it has none). Scaled by the entity's world scale.
 /// Without a RigidBody on the entity or an ancestor it is static geometry.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]

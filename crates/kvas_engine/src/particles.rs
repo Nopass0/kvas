@@ -310,43 +310,31 @@ fn camera_position(world: &World) -> Option<Vec3> {
     Some(world.get::<GlobalTransform>(entity)?.0.w_axis.truncate())
 }
 
-fn camera_axes(world: &World) -> Option<(Vec3, Vec3)> {
-    let (entity, _) = world.iter::<Camera>().find(|(_, c)| c.primary).or_else(|| world.iter::<Camera>().next())?;
-    let m = world.get::<GlobalTransform>(entity)?.0;
-    Some((m.x_axis.truncate().normalize_or_zero(), m.y_axis.truncate().normalize_or_zero()))
-}
-
-fn build_mesh(e: &ParticleEmitter, st: &ParticleState, to_local: &Mat4, axes: Option<(Vec3, Vec3)>, eye: Option<Vec3>) -> MeshData {
+/// Quads are turned towards the viewer by the particle shader, so they face whichever camera
+/// draws them (the game camera, the editor view, a preview). Each vertex carries the particle
+/// centre, `normal = (corner x, corner y, life)` and `uv = (half size in metres, mode)`:
+/// mode -1 faces the camera, mode -2 is a streak whose length is already in the position
+/// (along the motion) and only its width is turned to the camera.
+fn build_mesh(e: &ParticleEmitter, st: &ParticleState, to_local: &Mat4) -> MeshData {
     let mut m = MeshData::default();
     m.vertices.reserve(st.particles.len() * 4);
-    // Without a camera (editor view of a scene that has none) draw two crossed quads instead.
-    let planes: Vec<(Vec3, Vec3)> = match axes {
-        Some((r, u)) => vec![(r, u)],
-        None => vec![(Vec3::X, Vec3::Y), (Vec3::Z, Vec3::Y)],
-    };
+    m.indices.reserve(st.particles.len() * 6);
     for p in &st.particles {
         let t = (p.age / p.life).clamp(0.0, 1.0);
         let size = if p.splash { e.size_start.max(0.006) * 0.8 } else { e.size_start + (e.size_end - e.size_start) * t };
         let center = to_local.transform_point3(p.pos);
-        // Stretched particles: one axis along the motion, the other across it facing the camera.
-        let streak = (e.stretch > 0.0 && !p.splash && p.vel.length_squared() > 1e-4).then(|| {
-            let along = p.vel.normalize();
-            let to_eye = eye.map_or(Vec3::Z, |c| (c - p.pos).normalize_or(Vec3::Z));
-            let across = along.cross(to_eye).normalize_or(Vec3::X);
-            (across, along, (p.vel.length() * e.stretch).max(size))
-        });
-        let one = [(Vec3::ZERO, Vec3::ZERO)];
-        for (right, up) in if streak.is_some() { &one[..] } else { &planes[..] } {
-            let (r, u) = match streak {
-                Some((across, along, len)) => (to_local.transform_vector3(across) * size, to_local.transform_vector3(along) * len),
-                None => (to_local.transform_vector3(*right) * size, to_local.transform_vector3(*up) * size),
+        // Stretched particles (rain): the length follows the motion.
+        let streak = (e.stretch > 0.0 && !p.splash && p.vel.length_squared() > 1e-4)
+            .then(|| to_local.transform_vector3(p.vel.normalize()) * (p.vel.length() * e.stretch).max(size));
+        let base = m.vertices.len() as u32;
+        for (qx, qy) in [(-1.0f32, -1.0f32), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)] {
+            let (pos, mode) = match streak {
+                Some(along) => (center + along * qy, -2.0),
+                None => (center, -1.0),
             };
-            let base = m.vertices.len() as u32;
-            for (qx, qy) in [(-1.0f32, -1.0f32), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)] {
-                m.vertices.push(Vertex { pos: (center + r * qx + u * qy).into(), normal: [qx, qy, t], uv: [qx * 0.5 + 0.5, qy * 0.5 + 0.5] });
-            }
-            m.indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
+            m.vertices.push(Vertex { pos: pos.into(), normal: [qx, qy, t], uv: [size, mode] });
         }
+        m.indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
     }
     m
 }
@@ -383,7 +371,7 @@ pub fn update(world: &mut World, time: f32, dt: f32, simulate: bool) {
         let inverse = if global.determinant().abs() > 1e-9 { global.inverse() } else { Mat4::IDENTITY };
         let real = world.get::<GlobalTransform>(entity).map_or(Mat4::IDENTITY, |g| g.0);
         let inverse = if emitter.follow_camera && real.determinant().abs() > 1e-9 { real.inverse() } else { inverse };
-        let mesh = build_mesh(&emitter, &st, &inverse, camera_axes(world), eye);
+        let mesh = build_mesh(&emitter, &st, &inverse);
         let version = st.version;
         emitter.state = Some(st);
         if let Some(slot) = world.get_mut::<ParticleEmitter>(entity) {

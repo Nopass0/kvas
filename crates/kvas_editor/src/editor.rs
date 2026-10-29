@@ -63,6 +63,7 @@ pub struct Editor {
     pub animation_open: bool,
     pub gui_open: bool,
     pub help: crate::help::HelpState,
+    pub api: crate::api_docs::ApiState,
     pub mesh_edit: crate::mesh_editor::MeshEditState,
     pub image_editor: crate::image_editor::ImageEditorState,
     pub training: crate::neural_editor::NeuralTraining,
@@ -137,6 +138,7 @@ impl Editor {
             animation_open: false,
             gui_open: false,
             help: Default::default(),
+            api: Default::default(),
             mesh_edit: Default::default(),
             image_editor: Default::default(),
             training: Default::default(),
@@ -881,7 +883,10 @@ impl Editor {
 
         self.console.pump();
         let log = self.console.sender();
-        self.scripts.poll(&self.project, &log);
+        let scene = &self.scene;
+        self.scripts.poll(&self.project, &log, || {
+            scene.world.iter::<kvas_engine::components::Scripts>().flat_map(|(_, s)| s.0.iter().map(|slot| slot.name.clone())).collect()
+        });
         if self.scripts.is_building() || self.build.is_some() {
             ctx.request_repaint_after(Duration::from_millis(100));
         }

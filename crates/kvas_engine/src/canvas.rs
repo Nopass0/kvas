@@ -23,13 +23,17 @@ pub const UI_HEIGHT: f32 = 720.0;
 /// Horizontal text alignment.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum Align {
+    /// The x position is where the text starts.
     #[default]
     Left,
+    /// The x position is the middle of the text.
     Center,
+    /// The x position is where the text ends.
     Right,
 }
 
-/// One drawing command of the interface.
+/// One drawing command of the interface (fields as in the matching `Canvas` methods).
+#[allow(missing_docs)]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum UiCmd {
     /// Filled rounded rectangle, optional outline.
@@ -47,13 +51,21 @@ pub enum UiCmd {
 /// Look of buttons and sliders.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ButtonStyle {
+    /// Font asset (`.ttf` / `.otf`), empty = the default font.
     pub font: String,
+    /// Text size in interface units.
     pub size: f32,
+    /// Text colour.
     pub text: [f32; 4],
+    /// Background colour.
     pub background: [f32; 4],
+    /// Background while the pointer is over it (also the slider fill).
     pub hover: [f32; 4],
+    /// Outline colour (alpha 0 = none).
     pub outline: [f32; 4],
+    /// Corner radius.
     pub radius: f32,
+    /// Text alignment inside the button.
     pub align: Align,
 }
 

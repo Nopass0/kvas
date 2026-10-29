@@ -547,6 +547,11 @@ fn expand_inner(assets: &Assets, source: &str, base_dir: &str, seen: &mut Vec<St
         if name.is_empty() {
             return Err("#include needs a path".into());
         }
+        // Declaration stubs for code completion: the engine provides these names itself, so the
+        // include works even where the stub file was never written (older projects, built games).
+        if name.ends_with("kvas_camera_api.wgsl") || name.ends_with("kvas_mesh_api.wgsl") {
+            continue;
+        }
         let resolved = if builtin(&name).is_some() || name.contains('/') && assets.read(&name).is_ok() || base_dir.is_empty() { name.clone() } else { format!("{base_dir}/{name}") };
         if seen.contains(&resolved) {
             continue;

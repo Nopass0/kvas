@@ -60,13 +60,22 @@ pub struct AudioBus {
     pub master_volume: f32,
     /// Silences every sound without losing their state.
     pub muted: bool,
+    /// Room echo added to sounds started from now on, 0 (dry) .. 1 (cathedral).
+    pub reverb: f32,
+    /// Size of the room for the echo: delay of the first reflection in milliseconds (20 small
+    /// room .. 120 hall).
+    pub reverb_room_ms: f32,
+    /// Separate gain of music (2D looping clips started with `play_music`).
+    pub music_volume: f32,
+    /// Separate gain of every other sound.
+    pub effects_volume: f32,
     next: u64,
     commands: Vec<AudioCmd>,
 }
 
 impl Default for AudioBus {
     fn default() -> Self {
-        Self { master_volume: 1.0, muted: false, next: 1, commands: Vec::new() }
+        Self { master_volume: 1.0, muted: false, reverb: 0.0, reverb_room_ms: 45.0, music_volume: 1.0, effects_volume: 1.0, next: 1, commands: Vec::new() }
     }
 }
 

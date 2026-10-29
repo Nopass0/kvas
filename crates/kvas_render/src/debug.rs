@@ -63,6 +63,8 @@ impl DebugDraw {
         let radius = size.x.max(size.z) * 0.5;
         match shape {
             ShapeKind::Box => self.wire_box(pose, -size * 0.5, size * 0.5, color),
+            // Model-shaped colliders follow the drawn mesh; outlining every triangle would hide it.
+            ShapeKind::Mesh | ShapeKind::Hull => {}
             ShapeKind::Sphere => {
                 let r = size.max_element() * 0.5;
                 self.circle(c, x * r, y * r, color);

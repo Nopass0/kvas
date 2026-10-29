@@ -16,6 +16,7 @@ members = [
     "games/showcase/scripts",
     "games/village/scripts",
     "games/library_check/scripts",
+    "games/last_service/scripts",
 ]
 
 [workspace.package]

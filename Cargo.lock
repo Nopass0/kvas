@@ -1650,6 +1650,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "last_service_scripts"
+version = "0.1.0"
+dependencies = [
+ "kvas_engine",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

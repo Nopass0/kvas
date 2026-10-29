@@ -11,6 +11,7 @@ use glam::{Mat4, Quat, Vec3};
 use kvas_ecs::{Entity, World};
 use rapier3d::prelude as r;
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 /// Closest solid-collider hit. Distances are metres along a normalized ray.
 #[derive(Clone, Copy, Debug)]
@@ -33,6 +34,9 @@ pub struct QueryOptions {
     pub exclude: Option<Entity>,
     /// Whether sensor volumes participate in the query. Defaults to false.
     pub include_triggers: bool,
+    /// Only sensor volumes are hit; solid geometry is ignored (e.g. finding "use" areas behind a
+    /// thin rim, then checking line of sight with a second, solid-only query).
+    pub only_triggers: bool,
     /// Query membership bits used against collider filter masks.
     pub memberships: u32,
     /// Collider membership bits accepted by this query.
@@ -41,7 +45,7 @@ pub struct QueryOptions {
 
 impl Default for QueryOptions {
     fn default() -> Self {
-        Self { exclude: None, include_triggers: false, memberships: u32::MAX, filter: u32::MAX }
+        Self { exclude: None, include_triggers: false, only_triggers: false, memberships: u32::MAX, filter: u32::MAX }
     }
 }
 
@@ -59,7 +63,7 @@ pub struct Physics {
     joints: HashMap<Entity, r::ImpulseJointHandle>,
     owners: HashMap<r::ColliderHandle, Entity>,
     anchors: HashMap<Entity, r::RigidBodyHandle>,
-    shapes: HashMap<Entity, (ShapeKind, Vec3, Vec3)>,
+    shapes: HashMap<Entity, ShapeKey>,
     joint_configs: HashMap<Entity, (u64, Option<r::RigidBodyHandle>)>,
 }
 
@@ -77,11 +81,63 @@ fn global(world: &World, e: Entity) -> Mat4 {
     world.get::<GlobalTransform>(e).map_or_else(|| hierarchy::global_matrix(world, e), |transform| transform.0)
 }
 
-fn make_shape(c: &Collider, scale: Vec3) -> r::ColliderBuilder {
+/// What a collider's Rapier shape was built from; a change rebuilds it.
+type ShapeKey = (ShapeKind, Vec3, Vec3, String);
+
+type Triangles = Arc<(Vec<Vec3>, Vec<[u32; 3]>)>;
+
+/// Positions and triangles of a model file, loaded once per path for mesh colliders.
+fn model_triangles(path: &str) -> Option<Triangles> {
+    static CACHE: Mutex<Option<HashMap<String, Option<Triangles>>>> = Mutex::new(None);
+    let mut cache = CACHE.lock().ok()?;
+    cache
+        .get_or_insert_with(HashMap::new)
+        .entry(path.to_string())
+        .or_insert_with(|| {
+            let assets = crate::meshmod::assets().unwrap_or(crate::assets::Assets::Dir(std::path::PathBuf::new()));
+            let mesh = crate::mesh::MeshData::load(&assets, path).ok()?;
+            let points: Vec<Vec3> = mesh.vertices.iter().map(|v| Vec3::from(v.pos)).collect();
+            let tris: Vec<[u32; 3]> = mesh
+                .indices
+                .chunks_exact(3)
+                .map(|t| [t[0], t[1], t[2]])
+                .filter(|t| t.iter().all(|&i| (i as usize) < points.len()) && t[0] != t[1] && t[1] != t[2] && t[0] != t[2])
+                .collect();
+            (!tris.is_empty()).then(|| Arc::new((points, tris)))
+        })
+        .clone()
+}
+
+fn shape_key(world: &World, e: Entity, c: &Collider, scale: Vec3) -> ShapeKey {
+    let mesh = match c.shape {
+        ShapeKind::Mesh | ShapeKind::Hull => world.get::<MeshRenderer>(e).map(|m| m.mesh.clone()).unwrap_or_default(),
+        _ => String::new(),
+    };
+    (c.shape, c.size, scale, mesh)
+}
+
+/// Exact triangles for static geometry, a convex hull for moving props; `None` if the model is missing.
+fn mesh_shape(c: &Collider, scale: Vec3, mesh: &str) -> Option<r::ColliderBuilder> {
+    let tris = model_triangles(mesh)?;
+    let s = c.size.abs() * scale.abs();
+    let points: Vec<Vec3> = tris.0.iter().map(|p| *p * s).collect();
+    if c.shape == ShapeKind::Hull {
+        return r::ColliderBuilder::convex_hull(&points);
+    }
+    let flags = r::TriMeshFlags::FIX_INTERNAL_EDGES | r::TriMeshFlags::MERGE_DUPLICATE_VERTICES;
+    r::ColliderBuilder::trimesh_with_flags(points.clone(), tris.1.clone(), flags)
+        .or_else(|_| r::ColliderBuilder::trimesh(points, tris.1.clone()))
+        .ok()
+}
+
+fn make_shape(c: &Collider, scale: Vec3, mesh: &str) -> r::ColliderBuilder {
     let s = scale.abs();
     let size = c.size.abs().max(Vec3::splat(0.001)) * s;
     let radius = size.x.max(size.z) * 0.5;
     match c.shape {
+        ShapeKind::Mesh | ShapeKind::Hull => {
+            mesh_shape(c, scale, mesh).unwrap_or_else(|| r::ColliderBuilder::cuboid(size.x * 0.5, size.y * 0.5, size.z * 0.5))
+        }
         ShapeKind::Box => r::ColliderBuilder::cuboid(size.x * 0.5, size.y * 0.5, size.z * 0.5),
         ShapeKind::Sphere => r::ColliderBuilder::ball(size.x.max(size.y).max(size.z) * 0.5),
         ShapeKind::Capsule => r::ColliderBuilder::capsule_y((size.y * 0.5 - radius).max(0.0), radius),
@@ -135,7 +191,9 @@ impl Physics {
 
     fn query_filter(&self, options: QueryOptions) -> r::QueryFilter<'_> {
         let mut filter = r::QueryFilter::default().groups(groups(options.memberships, options.filter));
-        if !options.include_triggers {
+        if options.only_triggers {
+            filter = filter.exclude_solids();
+        } else if !options.include_triggers {
             filter = filter.exclude_sensors();
         }
         if let Some(handle) = options.exclude.and_then(|e| self.colliders.get(&e)) {
@@ -295,11 +353,11 @@ impl Physics {
                 }
                 let g = global(world, e);
                 let (_, scale) = pose_mat(g);
-                let shape_key = (c.shape, c.size, scale);
+                let shape_key = shape_key(world, e, c, scale);
                 let shape_changed = self.shapes.get(&e) != Some(&shape_key);
                 if let Some(collider) = self.world.colliders.get_mut(handle) {
                     if shape_changed {
-                        collider.set_shape(make_shape(c, scale).build().shared_shape().clone());
+                        collider.set_shape(make_shape(c, scale, &shape_key.3).build().shared_shape().clone());
                     }
                     collider.set_friction(c.friction);
                     collider.set_restitution(c.restitution);
@@ -317,7 +375,8 @@ impl Physics {
             }
             let g = global(world, e);
             let (_, scale) = pose_mat(g);
-            let builder = make_shape(c, scale)
+            let key = shape_key(world, e, c, scale);
+            let builder = make_shape(c, scale, &key.3)
                 .friction(c.friction)
                 .restitution(c.restitution)
                 .sensor(c.is_trigger)
@@ -334,7 +393,7 @@ impl Physics {
             };
             self.colliders.insert(e, handle);
             self.owners.insert(handle, e);
-            self.shapes.insert(e, (c.shape, c.size, scale));
+            self.shapes.insert(e, key);
         }
 
         // Bodies can have disappeared above, and Inspector/scripts may edit

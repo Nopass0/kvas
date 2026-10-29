@@ -28,4 +28,17 @@ fn main() {
     src.push_str("];\n");
     let out = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap()).join("library_files.rs");
     std::fs::write(out, src).unwrap();
+
+    // Engine sources for the in-editor API reference (rustdoc comments of every public item).
+    let engine = Path::new(env!("CARGO_MANIFEST_DIR")).join("../kvas_engine/src");
+    println!("cargo:rerun-if-changed=../kvas_engine/src");
+    let mut sources = Vec::new();
+    walk(&engine, &engine, &mut sources);
+    let mut api = String::from("pub const ENGINE_SOURCES: &[(&str, &str)] = &[\n");
+    for (rel, abs) in sources.iter().filter(|(rel, _)| rel.ends_with(".rs")) {
+        api.push_str(&format!("    ({rel:?}, include_str!({abs:?})),\n"));
+    }
+    api.push_str("];\n");
+    let out = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap()).join("engine_sources.rs");
+    std::fs::write(out, api).unwrap();
 }

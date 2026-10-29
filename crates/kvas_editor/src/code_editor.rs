@@ -106,6 +106,16 @@ impl CodeEditor {
 }
 
 impl Editor {
+    /// The word under the cursor in the open Rust/WGSL file (for F1 help), if the editor is open.
+    pub fn code_word(&self) -> Option<String> {
+        let ce = &self.code;
+        let d = ce.docs.get(ce.active).filter(|_| ce.open)?;
+        let byte = d.text.char_indices().nth(ce.cursor_idx).map_or(d.text.len(), |(b, _)| b);
+        let end = d.text[byte..].char_indices().find(|(_, c)| !(c.is_alphanumeric() || *c == '_')).map_or(d.text.len(), |(i, _)| byte + i);
+        let (_, word) = word_at(&d.text, end);
+        (!word.is_empty()).then_some(word)
+    }
+
     pub fn code_editor_ui(&mut self, ctx: &egui::Context) {
         // Requests from "open file" actions anywhere in the editor.
         let pending: Vec<(PathBuf, usize)> = REQUESTS.lock().map(|mut r| std::mem::take(&mut *r)).unwrap_or_default();
@@ -133,6 +143,7 @@ impl Editor {
         let mut saved_path: Option<PathBuf> = None;
         let mut close_tab: Option<usize> = None;
         let ce = &mut self.code;
+        let api = &mut self.api;
         let project_root = self.project.root.clone();
         egui::Window::new(t("Code editor")).id(egui::Id::unique("kvas-code-editor")).open(&mut open).default_size([920.0, 620.0]).collapsible(false).show(ctx, |ui| {
             if ce.docs.is_empty() {
@@ -202,7 +213,7 @@ impl Editor {
             }
             ui.separator();
             let i = ce.active;
-            editor_area(ui, ce, i);
+            editor_area(ui, ce, i, api);
             ui.separator();
             let d = &ce.docs[ce.active];
             ui.horizontal(|ui| {
@@ -297,7 +308,7 @@ fn find_bar(ui: &mut egui::Ui, ce: &mut CodeEditor) {
 }
 
 /// Line-number gutter + highlighted text + hints.
-fn editor_area(ui: &mut egui::Ui, ce: &mut CodeEditor, i: usize) {
+fn editor_area(ui: &mut egui::Ui, ce: &mut CodeEditor, i: usize, api: &mut crate::api_docs::ApiState) {
     let dark = !theme::is_light();
     let lang = ce.docs[i].lang;
     let id = ui.make_persistent_id(("code-text", ce.docs[i].path.clone()));
@@ -363,7 +374,8 @@ fn editor_area(ui: &mut egui::Ui, ce: &mut CodeEditor, i: usize) {
     } else if lang == Lang::Wgsl {
         wgsl_edit::API.iter().filter(|a| a.0.contains(short.as_str())).take(5).map(|a| (a.0.to_string(), a.1.to_string(), a.2.to_string())).collect()
     } else {
-        wgsl_edit::rust_api().iter().filter(|a| a.0.contains(short.as_str())).take(5).cloned().collect()
+        // Everything public in the engine, from its rustdoc (methods of `Ctx` first after `ctx.`).
+        crate::api_docs::complete(&word, 6).into_iter().map(|it| (it.name.clone(), it.signature.clone(), format!("{}  ·  {}", it.path(), it.summary()))).collect()
     };
     let mut insert = None;
     egui::ScrollArea::vertical().id_salt(id.with("hints")).max_height(hints_h).show(ui, |ui| {
@@ -372,6 +384,9 @@ fn editor_area(ui: &mut egui::Ui, ce: &mut CodeEditor, i: usize) {
         }
         for (name, sig, doc) in &shown {
             ui.horizontal_wrapped(|ui| {
+                if lang != Lang::Wgsl && ui.small_button("📖").on_hover_text(t("Full documentation (F1)")).clicked() {
+                    api.show(doc.split("  ·  ").next().unwrap_or(name));
+                }
                 if ui.link(RichText::new(name).monospace().strong()).clicked() {
                     insert = Some(name.clone());
                 }

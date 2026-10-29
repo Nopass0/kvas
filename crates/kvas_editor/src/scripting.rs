@@ -120,6 +120,12 @@ pub struct ScriptState {
     last_check: Option<Instant>,
     /// Set when a new library finished loading; the editor swaps it into a running game.
     pub reloaded: bool,
+    /// `(script name, file)` of every script in the sources, refreshed only when a file changes
+    /// (the panels must not read every script file each frame).
+    pub scanned: Vec<(String, PathBuf)>,
+    scanned_stamp: Option<SystemTime>,
+    /// Scripts on objects of the open scene, as last written to `.kvas/used_scripts.txt`.
+    used: Vec<String>,
 }
 
 impl ScriptState {
@@ -162,8 +168,45 @@ impl ScriptState {
         }
     }
 
+    /// Scripts declared in the sources (cached; see [`Self::scanned`]).
+    pub fn source_names(&self) -> Vec<String> {
+        let mut names: Vec<String> = self.scanned.iter().map(|(n, _)| n.clone()).collect();
+        names.dedup();
+        names
+    }
+
+    /// Re-reads script names from the sources if any file changed since the last scan.
+    pub fn rescan(&mut self, project: &Project) {
+        let stamp = newest_source_stamp(&project.scripts_dir());
+        if stamp != self.scanned_stamp || self.scanned.is_empty() {
+            self.scanned = crate::script_files::scan_scripts(&project.root);
+            self.scanned_stamp = stamp;
+        }
+    }
+
+    /// Records the scripts the open scene uses. Only used scripts are compiled (see the project's
+    /// `build.rs`), so attaching one that the loaded library lacks starts a build.
+    fn note_used(&mut self, project: &Project, mut used: Vec<String>, log: &Log) {
+        used.sort();
+        used.dedup();
+        if used == self.used {
+            return;
+        }
+        let file = project.root.join(".kvas").join("used_scripts.txt");
+        let _ = std::fs::create_dir_all(file.parent().unwrap());
+        let _ = std::fs::write(&file, used.join("
+"));
+        let missing = self.host.as_ref().is_some_and(|h| used.iter().any(|n| !h.names().contains(&n.as_str())));
+        let declared = |n: &String| self.scanned.iter().any(|(s, _)| s == n);
+        if missing && self.auto_reload && used.iter().all(declared) {
+            self.start_build(project, log.clone());
+        }
+        self.used = used;
+    }
+
     /// Call every frame: collects build results and starts auto-builds when sources change.
-    pub fn poll(&mut self, project: &Project, log: &Log) {
+    /// `used` lists the scripts attached in the open scene.
+    pub fn poll(&mut self, project: &Project, log: &Log, used: impl FnOnce() -> Vec<String>) {
         if let Some(rx) = &self.building {
             if let Ok(result) = rx.try_recv() {
                 self.building = None;
@@ -190,9 +233,12 @@ impl ScriptState {
             return;
         }
         self.last_check = Some(Instant::now());
-        let stamp = newest_source_stamp(&project.scripts_dir());
+        self.rescan(project);
+        let stamp = self.scanned_stamp;
         if stamp.is_some() && stamp != self.built_stamp {
             self.start_build(project, log.clone());
+            return;
         }
+        self.note_used(project, used(), log);
     }
 }

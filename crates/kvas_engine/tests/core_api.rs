@@ -298,6 +298,30 @@ fn removed_physics_components_and_live_collider_edits_reach_rapier() {
 }
 
 #[test]
+fn mesh_colliders_follow_the_model_triangles() {
+    use kvas_engine::physics::Physics;
+    let mut scene = Scene::default();
+    let floor = scene.spawn("floor");
+    scene.world.get_mut::<Transform>(floor).unwrap().scale = Vec3::new(10.0, 1.0, 10.0);
+    scene.world.insert(floor, MeshRenderer { mesh: "primitive:plane".into(), ..Default::default() });
+    scene.world.insert(floor, Collider { shape: ShapeKind::Mesh, ..Default::default() });
+    let ball = scene.spawn("ball");
+    scene.world.get_mut::<Transform>(ball).unwrap().position = Vec3::new(20.0, 0.0, 0.0);
+    scene.world.insert(ball, MeshRenderer { mesh: "primitive:sphere".into(), ..Default::default() });
+    scene.world.insert(ball, Collider { shape: ShapeKind::Hull, size: Vec3::splat(2.0), ..Default::default() });
+    let mut physics = Physics::new();
+    physics.step(&mut scene, 1.0 / 60.0);
+    // A box fallback would be one metre tall; the plane's triangles are flat.
+    let hit = physics.raycast(Vec3::new(3.0, 5.0, 3.0), Vec3::NEG_Y, 10.0).unwrap();
+    assert_eq!(hit.entity, floor);
+    assert!(hit.point.y.abs() < 0.01, "{:?}", hit.point);
+    assert!(physics.raycast(Vec3::new(6.0, 5.0, 0.0), Vec3::NEG_Y, 10.0).is_none());
+    let hit = physics.raycast(Vec3::new(20.0, 5.0, 0.0), Vec3::NEG_Y, 10.0).unwrap();
+    assert_eq!(hit.entity, ball);
+    assert!((hit.point.y - 1.0).abs() < 0.05, "{:?}", hit.point);
+}
+
+#[test]
 fn physics_sensor_queries_and_invalid_rays_are_safe() {
     use kvas_engine::physics::Physics;
     let mut scene = Scene::default();

@@ -132,6 +132,20 @@ impl Ctx<'_> {
         }
     }
 
+    // ---- sound mix
+    /// Room echo for sounds started from now on: `amount` 0..1, `room_ms` first reflection delay
+    /// (20 small room .. 120 hall). Call when the player enters a space.
+    pub fn set_reverb(&mut self, amount: f32, room_ms: f32) {
+        self.scene.audio.reverb = amount.clamp(0.0, 1.0);
+        self.scene.audio.reverb_room_ms = room_ms.clamp(5.0, 400.0);
+    }
+    /// Volumes of the mix: everything, music, other sounds (0..1, kept up to 2).
+    pub fn set_volumes(&mut self, master: f32, music: f32, effects: f32) {
+        self.scene.audio.master_volume = master.clamp(0.0, 2.0);
+        self.scene.audio.music_volume = music.clamp(0.0, 2.0);
+        self.scene.audio.effects_volume = effects.clamp(0.0, 2.0);
+    }
+
     // ---- host
     /// Closes the game (in the editor it stops Play).
     pub fn quit_game(&self) {

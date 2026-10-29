@@ -127,7 +127,16 @@ pub fn split_inline(source: &str) -> Vec<(String, String)> {
 /// Converts a project that lists scripts by hand into the automatic layout: every script gets its own
 /// file under `scripts/src` and `build.rs` registers them. Returns true when something changed.
 pub fn ensure_auto(root: &std::path::Path) -> Result<bool, String> {
-    if is_auto(root) || !root.join("scripts/Cargo.toml").exists() {
+    if is_auto(root) {
+        // Projects made by an older editor get the current build.rs (it is generated, never edited).
+        let build = root.join("scripts/build.rs");
+        let old = std::fs::read_to_string(&build).unwrap_or_default();
+        if old.starts_with("// Kvas script auto-registration") && old.replace("\r\n", "\n") != BUILD_RS.replace("\r\n", "\n") {
+            std::fs::write(&build, BUILD_RS).map_err(|e| e.to_string())?;
+        }
+        return Ok(false);
+    }
+    if !root.join("scripts/Cargo.toml").exists() {
         return Ok(false);
     }
     let io = |e: std::io::Error| e.to_string();
@@ -151,6 +160,9 @@ impl Editor {
 
     /// The source file of a script: its own module when it has one, otherwise lib.rs.
     pub fn script_source(&self, name: &str) -> PathBuf {
+        if let Some((_, file)) = self.scripts.scanned.iter().find(|(n, _)| n == name) {
+            return file.clone();
+        }
         if let Some((_, file)) = scan_scripts(&self.project.root).into_iter().find(|(n, _)| n == name) {
             return file;
         }
@@ -178,9 +190,7 @@ impl Editor {
 
     /// Scripts declared in the project's source, in registration order.
     pub fn script_names(&self) -> Vec<String> {
-        let mut names: Vec<String> = scan_scripts(&self.project.root).into_iter().map(|(n, _)| n).collect();
-        names.dedup();
-        names
+        self.scripts.source_names()
     }
 
     /// Creates a script from a template as its own file (scripts/src/<name>.rs); build.rs registers it.

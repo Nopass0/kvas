@@ -37,6 +37,10 @@ fn main() -> Result<(), String> {
     // Rebuild editor-mode procedural geometry without running gameplay scripts.
     kvas_engine::procedural::update(&mut scene.world, 0.0, 0.0, false);
     hierarchy::update_globals(&mut scene.world);
+    // Two seconds of particles, so emitters show up as they would in a running game.
+    for step in 0..60 {
+        kvas_engine::particles::update(&mut scene.world, step as f32 / 30.0, 1.0 / 30.0, true);
+    }
     let mut camera = Transform::at(Vec3::new(4.5, 3.0, 6.0));
     camera.look_at(Vec3::Y * 0.6, Vec3::Y);
     let view = kvas_render::game_view(&scene, 16.0 / 9.0).unwrap_or_else(|| View::new(camera.matrix(), 50.0, 16.0 / 9.0, 0.05, 1000.0));
