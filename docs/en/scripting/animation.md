@@ -45,3 +45,29 @@ The character's axes (up, right, forward) come from the rest pose, and arms in a
 
 * `MonsterAi` picks the clip from the monster's state: `Idle_Watchful`, `Walk_Nervous`, `Run_Frantic`, `Scream` at the first sighting, `Attack_Lunge` when it catches you; the clip speed follows the movement speed.
 * The `Npc` script on Anna and Pavel: work (`Wipe`, Anna wipes the counter; `Look`, Pavel looks around), turning to the player with `Idle` when close, `Talk` while one of that character's lines plays, `Sit` at the end.
+
+## IK: feet on the ground and looking
+
+The **CharacterIk** component next to an `Animator` (humanoids only):
+
+* `feet`: feet stand on the real colliders under them. On stairs, slopes and kerbs the hips drop for the lower leg and the knees bend (two-bone IK, the knee stays in its plane); the clip's own foot lift is kept. `max_step` is how far a foot may go up or down. Works in the running game (it needs physics).
+* `look_at`: the name of an object to look at, or a point from a script. The chest, neck and head turn (20 / 30 / 50 %) within `look_limit` degrees, smoothly; a target behind the back is let go.
+
+```rust
+let eyes = ctx.find("Eyes").map(|e| ctx.world_matrix_of(e).w_axis.truncate());
+ctx.look_at_point(npc, eyes);   // look at the player
+ctx.look_at_point(npc, None);   // let go
+```
+
+## Ragdoll
+
+The **Ragdoll** component (or `ctx.ragdoll(entity, impulse)`): the character's body becomes physics capsules (pelvis, chest, head, upper arms, forearms, thighs, shins) on ball joints. They start exactly in the clip's pose, get the object's velocity and the `impulse` on the chest, and collide with the world but not with each other. The skeleton follows the bodies; hands and feet ride on the forearms and shins.
+
+```rust
+ctx.ragdoll(enemy, hit_dir * 40.0); // fall from a hit
+ctx.stop_ragdoll(enemy);            // remove the bodies, the clip plays again
+```
+
+`mass` is the total mass (shared out over the parts), `damping` how stiff the joints feel.
+
+In LAST SERVICE Anna and Pavel meet Lida's eyes when she is close; the Counter follows her with its head and plants its feet on the floor, and at the bus stop at the end it goes limp and falls.

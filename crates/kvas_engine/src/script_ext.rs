@@ -236,6 +236,40 @@ impl Ctx<'_> {
         }
     }
 
+    /// Makes an animated humanoid go limp: its body becomes physics capsules joined at the
+    /// joints, starting in the current pose and pushed by `impulse` (newton-seconds, world space).
+    /// Adds a [`crate::ragdoll::Ragdoll`] when there is none. Returns false for a stale entity.
+    pub fn ragdoll(&mut self, entity: Entity, impulse: Vec3) -> bool {
+        if !self.is_alive(entity) {
+            return false;
+        }
+        match self.scene.world.get_mut::<crate::ragdoll::Ragdoll>(entity) {
+            Some(r) => {
+                r.active = true;
+                r.impulse = impulse;
+            }
+            None => self.scene.world.insert(entity, crate::ragdoll::Ragdoll { active: true, impulse, ..Default::default() }),
+        }
+        true
+    }
+
+    /// Ends a ragdoll: the bodies are removed and the clip animates the character again.
+    pub fn stop_ragdoll(&mut self, entity: Entity) {
+        if let Some(r) = self.scene.world.get_mut::<crate::ragdoll::Ragdoll>(entity) {
+            r.active = false;
+        }
+    }
+
+    /// Turns an animated humanoid's head (and chest) towards a world point, or lets go with
+    /// `None`. Adds a [`crate::ik::CharacterIk`] when there is none.
+    pub fn look_at_point(&mut self, entity: Entity, point: Option<Vec3>) {
+        match self.scene.world.get_mut::<crate::ik::CharacterIk>(entity) {
+            Some(ik) => ik.look_point = point,
+            None if point.is_some() => self.scene.world.insert(entity, crate::ik::CharacterIk { look_point: point, ..Default::default() }),
+            None => {}
+        }
+    }
+
     /// The clips an animated object's model offers (empty until its first frame was skinned).
     pub fn animation_clips(&self, entity: Entity) -> Vec<String> {
         self.scene.world.get::<crate::skeletal::Animator>(entity).map(|a| a.clips.clone()).unwrap_or_default()

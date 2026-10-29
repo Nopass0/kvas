@@ -13,20 +13,49 @@ use glam::{Mat4, Quat, Vec3};
 const L: usize = 0;
 const R: usize = 1;
 
-/// Bone indices of the recognised parts.
-#[derive(Default, Clone)]
-struct Rig {
-    hips: Option<usize>,
-    spine: Option<usize>,
-    chest: Option<usize>,
-    neck: Option<usize>,
-    head: Option<usize>,
-    upper_arm: [Option<usize>; 2],
-    forearm: [Option<usize>; 2],
-    hand: [Option<usize>; 2],
-    thigh: [Option<usize>; 2],
-    shin: [Option<usize>; 2],
-    foot: [Option<usize>; 2],
+/// Bone indices (into [`SkinnedModel::nodes`]) of the recognised parts of a humanoid; sides
+/// are `[left, right]`. Used by procedural clips, IK and ragdolls.
+#[derive(Default, Clone, Debug)]
+pub struct HumanoidBones {
+    /// Hips or pelvis: the root of the legs and the spine.
+    pub hips: Option<usize>,
+    /// Lower spine.
+    pub spine: Option<usize>,
+    /// Upper spine / chest.
+    pub chest: Option<usize>,
+    /// Neck.
+    pub neck: Option<usize>,
+    /// Head.
+    pub head: Option<usize>,
+    /// Upper arms.
+    pub upper_arm: [Option<usize>; 2],
+    /// Forearms.
+    pub forearm: [Option<usize>; 2],
+    /// Hands.
+    pub hand: [Option<usize>; 2],
+    /// Thighs.
+    pub thigh: [Option<usize>; 2],
+    /// Shins.
+    pub shin: [Option<usize>; 2],
+    /// Feet.
+    pub foot: [Option<usize>; 2],
+    /// The character's up axis in model space.
+    pub up: Vec3,
+    /// The character's right (from its left shoulder to its right one).
+    pub right: Vec3,
+    /// The direction it faces.
+    pub forward: Vec3,
+}
+
+type Rig = HumanoidBones;
+
+/// Finds the humanoid bones of a model by name (see the module docs); `None` when there are no
+/// hips and two complete legs.
+pub fn find_bones(model: &SkinnedModel) -> Option<HumanoidBones> {
+    let mut rig = Rig::of(model)?;
+    let f = frame(model, &rig);
+    (rig.up, rig.right, rig.forward) = (f.up, f.right, f.forward);
+    Some(rig)
 }
 
 fn norm(s: &str) -> String {
@@ -52,6 +81,9 @@ impl Rig {
         let names: Vec<String> = model.nodes.iter().map(|n| norm(&n.name)).collect();
         let side = |bases: &[&str]| [find_side(&names, bases, L), find_side(&names, bases, R)];
         let rig = Rig {
+            up: Vec3::Y,
+            right: Vec3::NEG_X,
+            forward: Vec3::Z,
             hips: find(&names, &["hips", "pelvis", "hip"]),
             spine: find(&names, &["spine", "spine01", "spine1"]),
             chest: find(&names, &["chest", "spine2", "spine02", "upperchest", "spine03"]),

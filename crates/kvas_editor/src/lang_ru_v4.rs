@@ -252,4 +252,6 @@ pub const RU_V4: &[(&str, &str)] = &[
     ("Loop", "Повтор"),
     ("Playing", "Играет"),
     ("Full documentation (F1)", "Полная справка (F1)"),
+    ("CharacterIk", "IK персонажа"),
+    ("Ragdoll", "Рэгдолл"),
 ];

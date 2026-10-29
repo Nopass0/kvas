@@ -561,7 +561,8 @@ impl GameDirector {
             "I_bus_stop" if self.s.anna_ack => {
                 self.s.finished = true;
                 set_mode(ctx, Mode::Ending);
-                self.monster(ctx, "hide");
+                // The names are written; the Counter has nothing left to count.
+                self.monster(ctx, "collapse");
                 self.set_music(ctx, "audio/music/roll_credits.m4a", 0.6);
                 sfx(ctx, "amb_dawn_engine", 0.8);
                 ctx.set_setting("finished", true.into());

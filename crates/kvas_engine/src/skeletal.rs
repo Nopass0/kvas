@@ -116,6 +116,10 @@ pub struct SkinnedModel {
     pub skin: Vec<Joint>,
     /// Clips from the file and the procedural humanoid ones.
     pub clips: Vec<Clip>,
+    /// The humanoid parts, when the bones have recognisable names (IK, ragdolls).
+    pub humanoid: Option<crate::humanoid::HumanoidBones>,
+    /// `children[i]`: nodes whose parent is `i`.
+    pub children: Vec<Vec<usize>>,
 }
 
 fn norm_name(s: &str) -> String {
@@ -320,7 +324,7 @@ fn load_fbx(assets: &Assets, path: &str, bytes: &[u8]) -> Result<SkinnedModel, S
         let name = stack.element.name.to_string();
         clips.push(Clip { name: name.rsplit('|').next().unwrap_or(&name).to_string(), duration, fps, frames });
     }
-    Ok(SkinnedModel { mesh, bind, joints, weights, nodes, skin, clips })
+    Ok(SkinnedModel { mesh, bind, joints, weights, nodes, skin, clips, humanoid: None, children: Vec::new() })
 }
 
 // ---------------------------------------------------------------- glTF
@@ -478,7 +482,7 @@ fn load_gltf(assets: &Assets, path: &str, bytes: &[u8]) -> Result<SkinnedModel, 
         }
         clips.push(Clip { name: anim.name().unwrap_or("Clip").to_string(), duration, fps, frames });
     }
-    Ok(SkinnedModel { mesh, bind, joints, weights, nodes, skin, clips })
+    Ok(SkinnedModel { mesh, bind, joints, weights, nodes, skin, clips, humanoid: None, children: Vec::new() })
 }
 
 /// Loads a skinned model (FBX, glTF, GLB) with its clips, plus procedural humanoid clips.
@@ -494,6 +498,13 @@ pub fn load(assets: &Assets, path: &str) -> Result<SkinnedModel, String> {
     };
     model.in_place();
     crate::humanoid::add_clips(&mut model);
+    model.humanoid = crate::humanoid::find_bones(&model);
+    model.children = vec![Vec::new(); model.nodes.len()];
+    for (i, n) in model.nodes.iter().enumerate() {
+        if let Some(p) = n.parent {
+            model.children[p].push(i);
+        }
+    }
     Ok(model)
 }
 
@@ -561,15 +572,30 @@ pub struct AnimatorState {
     version: u64,
     pose: Vec<Trs>,
     blend: Vec<Trs>,
+    ik: crate::ik::IkState,
+    ragdoll: crate::ragdoll::RagdollState,
 }
 
+/// Traces down for foot IK: `(from, length, the character)` → height of the hit (world space).
+pub type GroundQuery<'a> = &'a dyn Fn(Vec3, f32, Entity) -> Option<f32>;
+
 /// Advances every animator and skins its model. `simulate` is false in the editor outside Play:
-/// the animation then runs on wall-clock `time` as a preview.
+/// the animation then runs on wall-clock `time` as a preview. Without a ground query the
+/// feet are not planted (see [`update_with`]).
 pub fn update(world: &mut World, time: f32, dt: f32, simulate: bool) {
-    // Animators that were removed leave their skinned mesh behind; drop it.
+    update_with(world, time, dt, simulate, None);
+}
+
+/// [`update`] with physics: `ground` plants the feet ([`crate::ik::CharacterIk`]); ragdolls
+/// ([`crate::ragdoll::Ragdoll`]) run only when `simulate` is true. Called by the runtime after
+/// the physics steps of a frame.
+pub fn update_with(world: &mut World, time: f32, dt: f32, simulate: bool, ground: Option<GroundQuery>) {
+    // Animators that were removed leave their skinned mesh (and ragdoll bodies) behind; drop them.
     let stale: Vec<Entity> = world.iter::<AnimatorState>().map(|(e, _)| e).filter(|e| !world.has::<Animator>(*e)).collect();
     for e in stale {
-        world.remove::<AnimatorState>(e);
+        if let Some(mut st) = world.remove::<AnimatorState>(e) {
+            crate::ragdoll::deactivate(world, &mut st.ragdoll);
+        }
         world.remove::<DynamicMesh>(e);
     }
     let list: Vec<(Entity, Animator, String)> = world.iter::<Animator>().filter_map(|(e, a)| Some((e, a.clone(), world.get::<MeshRenderer>(e)?.mesh.clone()))).collect();
@@ -609,6 +635,27 @@ pub fn update(world: &mut World, time: f32, dt: f32, simulate: bool) {
                 }
                 st.blend = from;
             }
+        }
+        // Ragdoll or IK on top of the clip.
+        let owner_world = world.get::<crate::components::GlobalTransform>(e).map_or_else(|| crate::hierarchy::global_matrix(world, e), |g| g.0);
+        let rd = world.get::<crate::ragdoll::Ragdoll>(e).cloned();
+        let want_rag = simulate && model.humanoid.is_some() && rd.as_ref().is_some_and(|r| r.active);
+        if want_rag && !st.ragdoll.is_active() {
+            let velocity = world.get::<crate::components::RigidBody>(e).map_or(Vec3::ZERO, |r| r.velocity);
+            st.ragdoll = crate::ragdoll::activate(world, e, &model, &pose, owner_world, rd.as_ref().unwrap(), velocity);
+        } else if !want_rag && st.ragdoll.is_active() {
+            crate::ragdoll::deactivate(world, &mut st.ragdoll);
+        }
+        if st.ragdoll.is_active() {
+            crate::ragdoll::pose(world, &model, &st.ragdoll, owner_world, &mut pose);
+        } else if let Some(ik) = world.get::<crate::ik::CharacterIk>(e).cloned() {
+            let target = ik.look_point.or_else(|| {
+                let t = (!ik.look_at.is_empty()).then(|| crate::hierarchy::find_by_name(world, &ik.look_at)).flatten()?;
+                Some(world.get::<crate::components::GlobalTransform>(t).map_or_else(|| crate::hierarchy::global_matrix(world, t), |g| g.0).w_axis.truncate())
+            });
+            let probe = ground.map(|g| move |from: Vec3, len: f32| g(from, len, e));
+            let probe_ref = probe.as_ref().map(|p| p as &dyn Fn(Vec3, f32) -> Option<f32>);
+            crate::ik::apply(&model, &mut pose, owner_world, &ik, target, probe_ref, &mut st.ik, if simulate { dt } else { step });
         }
         let mut data = model.mesh.clone();
         model.skin_into(&pose, &mut data);

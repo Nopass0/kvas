@@ -18,6 +18,8 @@ enum State {
     Search,
     Table,
     Follow,
+    /// Collapsed (a ragdoll) when the story lets it go.
+    Fallen,
 }
 
 /// Navigation points (plan coordinates) and the passages between them; a passage can need a door.
@@ -240,10 +242,24 @@ impl Script for MonsterAi {
         let dt = ctx.dt().min(0.1);
         for sig in ctx.signals("ls.monster") {
             match sig.payload["cmd"].as_str().unwrap_or("") {
-                "reset" => self.reset(ctx),
+                "reset" => {
+                    let me = ctx.entity;
+                    ctx.stop_ragdoll(me);
+                    self.reset(ctx);
+                }
                 "hide" => {
+                    let me = ctx.entity;
+                    ctx.stop_ragdoll(me);
                     self.state = State::Hidden;
                     self.pos = AWAY;
+                }
+                "collapse" if self.state != State::Hidden => {
+                    // It goes limp where it stands, falling the way it was walking.
+                    let me = ctx.entity;
+                    let push = look_dir(self.yaw, 0.0) * 30.0 + Vec3::Y * 5.0;
+                    ctx.ragdoll(me, push);
+                    ctx.look_at_point(me, None);
+                    self.state = State::Fallen;
                 }
                 "glimpse" => {
                     // First sight of it, behind the office door.
@@ -255,7 +271,17 @@ impl Script for MonsterAi {
                 _ => {}
             }
         }
+        // It watches Lida with its head while it stands guard, follows or hunts.
+        let me = ctx.entity;
+        let watching = matches!(self.state, State::Table | State::Follow | State::Chase | State::Search);
+        let eye_point = self.eyes.map(|e| ctx.world_matrix_of(e).w_axis.truncate());
+        ctx.look_at_point(me, if watching { eye_point } else { None });
         let playing = mode(ctx) == Mode::Playing;
+        if self.state == State::Fallen {
+            self.fear = (self.fear - dt * 0.5).max(0.0);
+            ctx.set_global(FEAR, self.fear.into());
+            return;
+        }
         if !playing {
             if self.state == State::Hidden || mode(ctx) == Mode::Menu {
                 self.fear = 0.0;

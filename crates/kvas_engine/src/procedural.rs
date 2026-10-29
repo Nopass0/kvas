@@ -48,7 +48,6 @@ pub fn update(world: &mut World, time: f32, dt: f32, simulate: bool) {
     crate::voxel::update_smoke(world, dt, simulate);
     crate::cloth::update(world, time, dt, simulate);
     crate::particles::update(world, time, dt, simulate);
-    crate::skeletal::update(world, time, dt, simulate);
     crate::water::update_water(world, time);
     crate::mesh_edit::update(world);
 }

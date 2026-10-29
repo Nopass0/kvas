@@ -965,6 +965,9 @@ impl Editor {
                 // Procedural objects show their initial state while editing.
                 let t = self.started.elapsed().as_secs_f32();
                 kvas_engine::procedural::update(&mut self.scene.world, t, 0.0, false);
+                // Animated characters play their clip as a preview (IK looks at targets; feet
+                // and ragdolls need physics, so they act in Play).
+                kvas_engine::skeletal::update(&mut self.scene.world, t, 0.0, false);
             }
         }
 

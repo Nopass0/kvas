@@ -349,6 +349,12 @@ fn main() {
     s.scene.world.insert(anna, Animator { clip: "Wipe".into(), fade: 0.4, ..Default::default() });
     s.scripts(anna, vec![script("Npc", json!({ "speaker": "Anna", "work_clip": "Wipe", "notice": 2.6 }))]);
     s.scene.world.insert(pavel, Animator { clip: "Look".into(), fade: 0.4, ..Default::default() });
+    // IK: the Counter and Pavel keep their feet on the real floors; heads turn to Lida (scripts
+    // give the point). Anna stands on the staff step, which has no collider, so her feet stay.
+    s.scene.world.insert(monster, CharacterIk { look_limit: 85.0, ..Default::default() });
+    s.scene.world.insert(monster, Ragdoll { mass: 80.0, damping: 2.0, ..Default::default() });
+    s.scene.world.insert(pavel, CharacterIk::default());
+    s.scene.world.insert(anna, CharacterIk { feet: false, look_limit: 65.0, ..Default::default() });
     s.scripts(pavel, vec![script("Npc", json!({ "speaker": "Pavel", "work_clip": "Look", "notice": 4.0 }))]);
     let eye_glow = s.light("Counter glow", Vec3::new(0.0, -50.0, 0.0), [1.0, 0.25, 0.15, 1.0], 0.0, 3.5);
     s.scene.world.insert(eye_glow, tags("monster_light"));

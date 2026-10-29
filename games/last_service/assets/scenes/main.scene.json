@@ -20401,6 +20401,16 @@
             "playing": true,
             "speed": 1.0
           }
+        },
+        {
+          "type": "CharacterIk",
+          "data": {
+            "feet": false,
+            "look_at": "",
+            "look_limit": 65.0,
+            "look_weight": 1.0,
+            "max_step": 0.44999998807907104
+          }
         }
       ]
     },
@@ -20487,6 +20497,16 @@
             "playing": true,
             "speed": 1.0
           }
+        },
+        {
+          "type": "CharacterIk",
+          "data": {
+            "feet": true,
+            "look_at": "",
+            "look_limit": 75.0,
+            "look_weight": 1.0,
+            "max_step": 0.44999998807907104
+          }
         }
       ]
     },
@@ -20568,6 +20588,29 @@
             "looping": true,
             "playing": true,
             "speed": 1.0
+          }
+        },
+        {
+          "type": "CharacterIk",
+          "data": {
+            "feet": true,
+            "look_at": "",
+            "look_limit": 85.0,
+            "look_weight": 1.0,
+            "max_step": 0.44999998807907104
+          }
+        },
+        {
+          "type": "Ragdoll",
+          "data": {
+            "active": false,
+            "damping": 2.0,
+            "impulse": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "mass": 80.0
           }
         }
       ]

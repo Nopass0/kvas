@@ -16,6 +16,7 @@ pub struct Npc {
     talking: f32,
     home_yaw: Option<f32>,
     player: Option<Entity>,
+    eyes: Option<Entity>,
 }
 
 impl Default for Npc {
@@ -30,6 +31,7 @@ impl Default for Npc {
             talking: 0.0,
             home_yaw: None,
             player: None,
+            eyes: None,
         }
     }
 }
@@ -37,6 +39,7 @@ impl Default for Npc {
 impl Script for Npc {
     fn start(&mut self, ctx: &mut Ctx) {
         self.player = ctx.find("Lida");
+        self.eyes = ctx.find("Eyes");
         self.home_yaw = Some(ctx.transform().rotation.y);
     }
 
@@ -64,6 +67,9 @@ impl Script for Npc {
         };
         let me_e = ctx.entity;
         ctx.play_animation(me_e, &clip.clone());
+        // Eye contact while Lida is close or while talking (IK turns the head and chest).
+        let eyes = self.eyes.map(|e| ctx.world_matrix_of(e).w_axis.truncate());
+        ctx.look_at_point(me_e, if near || self.talking > 0.0 { eyes } else { None });
         // Turn to Lida while she is close or while talking, back to the work afterwards. A
         // seated character stays as the director placed her.
         if sitting {

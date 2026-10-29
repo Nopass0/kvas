@@ -795,6 +795,8 @@ pub use crate::meshmod::{MeshModifiers, ModifierStateCell};
 pub use crate::paint::TexturePaint;
 pub use crate::particles::ParticleEmitter;
 pub use crate::skeletal::{Animator, AnimatorState};
+pub use crate::ik::CharacterIk;
+pub use crate::ragdoll::Ragdoll;
 pub use crate::modifiers::{Bob, ColorCycle, Pulse, Spin, Wobble};
 pub use crate::tween::MoveTween;
 pub use crate::voxel::{VoxelClouds, VoxelSmoke};
@@ -808,6 +810,8 @@ name_components!(
     ParticleEmitter,
     Animator,
     AnimatorState,
+    CharacterIk,
+    Ragdoll,
     TexturePaint,
     MeshModifiers,
     ModifierStateCell,

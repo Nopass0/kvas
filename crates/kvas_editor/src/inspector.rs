@@ -145,6 +145,8 @@ fn component_icon(name: &str) -> Option<Icon> {
         "Shape" => Icon::Shapes,
         "Camera" => Icon::Camera,
         "Animator" => Icon::Play,
+        "CharacterIk" => Icon::Target,
+        "Ragdoll" => Icon::Capsule,
         "Light" => Icon::Lightbulb,
         "RigidBody" => Icon::Package,
         "Collider" => Icon::Scan,

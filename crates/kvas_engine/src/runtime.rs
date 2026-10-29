@@ -222,6 +222,13 @@ impl Runtime {
             self.physics.step(&mut self.scene, self.config.fixed_dt);
             self.stats.fixed_steps += 1;
         }
+        // Characters: clips, then ragdolls and feet planted on the colliders just simulated.
+        let physics = &self.physics;
+        let ground = |from: glam::Vec3, len: f32, me: kvas_ecs::Entity| {
+            let opts = crate::physics::QueryOptions { exclude: Some(me), filter: !crate::ragdoll::RAGDOLL_GROUP, ..Default::default() };
+            physics.raycast_with_options(from, glam::Vec3::NEG_Y, len, opts).map(|h| h.point.y)
+        };
+        crate::skeletal::update_with(&mut self.scene.world, self.time.elapsed, dt, true, Some(&ground));
         if self.accumulator >= self.config.fixed_dt {
             let remainder = self.accumulator % self.config.fixed_dt;
             self.stats.dropped_time = self.accumulator - remainder;

@@ -110,6 +110,8 @@ impl Default for Registry {
                 info::<TexturePaint>(),
                 info::<ParticleEmitter>(),
                 info::<Animator>(),
+                info::<CharacterIk>(),
+                info::<Ragdoll>(),
             ],
         }
     }

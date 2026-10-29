@@ -71,6 +71,8 @@ pub mod params;
 pub mod particles;
 pub mod skeletal;
 pub mod humanoid;
+pub mod ik;
+pub mod ragdoll;
 pub mod physics;
 pub mod procedural;
 pub mod project;
