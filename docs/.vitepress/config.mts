@@ -27,6 +27,8 @@ const ruSidebar = [
     items: [
       { text: 'Быстрый старт', link: '/guide/getting-started' },
       { text: 'Рабочие сценарии редактора', link: '/EDITOR_WORKFLOWS' },
+      { text: 'Разработка проекта', link: '/DEVELOPMENT' },
+      { text: 'Дорожная карта', link: '/ROADMAP' },
     ],
   },
   {
@@ -85,6 +87,9 @@ const enSidebar = [
     items: [
       { text: 'Quick start', link: '/en/guide/getting-started' },
       { text: 'The editor', link: '/en/editor' },
+      { text: 'Development and contribution', link: '/en/development' },
+      { text: 'Project map', link: '/PROJECT_MAP' },
+      { text: 'Roadmap', link: '/ROADMAP' },
     ],
   },
   {
@@ -174,6 +179,7 @@ export default defineConfig({
       themeConfig: {
         nav: [
           { text: 'Start', link: '/en/guide/getting-started' },
+          { text: 'Development', link: '/en/development' },
           { text: 'Scripting', link: '/en/scripting/' },
           { text: 'Nodes and materials', link: '/en/nodes/' },
           { text: 'Rust API', link: `${base}api/kvas_engine/index.html`, target: '_self' },

@@ -28,8 +28,8 @@ __pycache__/
 /docs/.vitepress/dist/
 /docs/.vitepress/cache/
 # Built-in materials and shaders the editor copies into a project when it opens it.
-/games/*/assets/materials/library/
-/games/*/assets/shaders/library/
+/games/**/assets/materials/library/
+/games/**/assets/shaders/library/
 # LAST SERVICE: third-party assets copied by tools/import_last_service.py (own licences).
 /games/last_service/assets/world/
 /games/last_service/assets/models/

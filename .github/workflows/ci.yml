@@ -5,15 +5,73 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
-  test:
-    name: Tests (engine, ECS, scripts cookbook)
+  documentation:
+    name: Documentation build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - name: System libraries
+
+      - name: Install system libraries for Rust documentation
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libasound2-dev libudev-dev pkg-config
-      - name: Test
-        run: cargo test -p kvas_ecs -p kvas_engine
+
+      - name: Build the bilingual documentation site
+        working-directory: docs
+        run: npm ci && npm run build
+
+      - name: Build Rust API documentation
+        run: cargo doc --no-deps -p kvas_ecs -p kvas_engine -p kvas_render
+
+  validate:
+    name: Workspace validation and coverage
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Check changed Rust formatting
+        env:
+          RUSTFMT_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'HEAD^' }}
+        run: ./tools/check-rustfmt.ps1
+
+      - name: Check the nested sample game scripts
+        run: cargo check --manifest-path "games/Новая папка/My Game/scripts/Cargo.toml"
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Run all workspace targets with coverage
+        env:
+          CARGO_TARGET_DIR: target/llvm-cov-target
+          CARGO_LLVM_COV_TARGET_DIR: target/llvm-cov-target
+        run: cargo llvm-cov --workspace --all-targets --lcov --output-path lcov.info
+
+      - name: Run workspace doctests
+        run: cargo test --workspace --doc
+
+      - name: Upload coverage report
+        if: always() && hashFiles('lcov.info') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-coverage-lcov
+          path: lcov.info
+          if-no-files-found: warn
+          retention-days: 14

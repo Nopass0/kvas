@@ -4,157 +4,124 @@
 
 # Kvas Engine
 
-**Игровой 3D-движок на Rust с редактором в стиле Unity**
+**An open-source 3D game engine written in Rust, with a Unity-style editor.**
 
-ECS · wgpu · Rapier · нодовые материалы · скрипты на Rust с горячей перезагрузкой
+ECS · wgpu renderer · Rapier physics · visual materials · hot-reloaded Rust scripts
 
-[Документация](https://nopass0.github.io/kvas/) ·
-[Быстрый старт](#быстрый-старт) ·
-[Скрипты](https://nopass0.github.io/kvas/scripting/) ·
-[Ноды](https://nopass0.github.io/kvas/nodes/) ·
-[Rust API](https://nopass0.github.io/kvas/api/kvas_engine/index.html)
+[Documentation](https://nopass0.github.io/kvas/en/) · [Quick start](#quick-start) · [Roadmap](ROADMAP.md) · [Contributing](CONTRIBUTING.md) · [Русская версия](https://nopass0.github.io/kvas/)
 
-<img src="docs/images/demo.png" alt="Демо-сцена Kvas: пирамида из кубов, вода, стекло и металл" width="860">
-
-<sub>Кадр демо-проекта <code>games/demo</code>, снятый без окна тем же рендерером, что работает в редакторе и в игре.</sub>
+<img src="docs/images/demo.png" alt="Kvas demo scene" width="860">
 
 </div>
 
-## Возможности
+Kvas is an actively developed engine and editor. The repository includes the Rust workspace, sample projects, a bilingual documentation site, and tools for building standalone games. Some roadmap items are experimental or not implemented; this README and [ROADMAP.md](ROADMAP.md) distinguish current functionality from plans.
 
-| | |
-|---|---|
-| **Редактор** | Иерархия, Инспектор, гизмо, браузер проекта с 3D-превью, Sculpt и UV, texture paint, анимация, звук, GUI, отмена/повтор, русский и английский интерфейс |
-| **Нодовый редактор** | 190 нод: шумы с превью, Color Ramp, карты нормалей и высот, свет, углы, стороны, свечение, режимы наложения. Материалы `.kmat`, шейдеры объектов `.kshader`, эффекты камеры `.kfx` |
-| **Скрипты** | Rust, горячая перезагрузка, макрос `script!` (переменные Инспектора и колбэки в одном блоке), `ctx.watch` для отладки, помощники `look_at`, `move_towards`, `Rng`, `lerp`, `damp`, сообщения между скриптами, таймеры, твины |
-| **Рендер** | PBR, тени, HDRI-окружение, процедурное небо и облака, вода, трава, дым, частицы, постобработка, собственный апскейлер в стиле FSR |
-| **Физика** | Rapier: тела, коллайдеры, соединения, лучи, CCD, слои, триггеры |
-| **Сборка** | Одна папка: `game.exe` + `game.pak` + библиотека скриптов |
+## Features
 
-## Быстрый старт
+- **Editor:** scene hierarchy, inspector, transform gizmos, project browser, material/node editor, texture painting, animation and audio panels, undo/redo, English and Russian UI.
+- **Rendering:** wgpu, PBR materials, shadows, HDRI and procedural skies, particles, post-processing, camera effects, and a custom spatial upscaler inspired by FSR. This is not AMD FSR SDK integration.
+- **Materials and shaders:** node-based `.kmat` materials, WGSL object shaders and camera effects, reusable shader libraries.
+- **Gameplay:** sparse-set ECS, Rapier physics, scene serialization, asset management and Rust scripts with hot reload.
+- **Player builds:** package a project into a standalone player and asset archive. See [building and distribution](docs/en/guide/getting-started.md).
 
-Нужен [Rust](https://rustup.rs) и видеокарта с Vulkan или DirectX 12 (проверено на Windows).
+Check [known limitations and roadmap](ROADMAP.md) before relying on platform support or vendor-specific features. DLSS and official FSR SDK integration, hardware ray tracing, skeletal animation, and broad cross-platform support are not currently claimed as complete.
 
-```bash
-cargo run -p kvas_editor                      # менеджер проектов: недавние, открыть, создать 3D / 2D
-cargo run -p kvas_editor -- games/demo        # открыть демо-проект
-cargo run -p kvas_editor -- games/demo --play # открыть и сразу нажать Play
-cargo build -p kvas_player                    # один раз: редактор копирует его в собранную игру
-```
+## Quick start
 
-Добавьте `--release`, когда нужна скорость. Скрипты редактор собирает тем же профилем, которым собран сам.
-Собрать игру без окна: `cargo run -p kvas_editor -- --build games/demo` (результат в `<проект>/build/`).
+### Requirements
 
-| Действие | Ввод |
-|---|---|
-| Летать камерой | зажать ПКМ, затем W A S D Q E (Shift - быстрее) |
-| Панорама / зум / вращение | СКМ / колесо / Alt + ЛКМ |
-| Показать выбранное | F |
-| Двигать / Вращать / Масштабировать | W / E / R (Ctrl при перетаскивании - привязка) |
-| Play / Stop | Ctrl+P (изменения во время игры отбрасываются) |
-| Сохранить, Отменить, Повторить, Дублировать, Удалить | Ctrl+S, Ctrl+Z, Ctrl+Y, Ctrl+D, Del |
+- Rust toolchain via [rustup](https://rustup.rs) (stable; see `rust-toolchain.toml` if present).
+- A graphics adapter supported by wgpu. Windows with Vulkan or DirectX 12 is the primary development target; other platforms need validation.
+- Git and (only for the documentation site) Node.js 22 or later with npm.
 
-## Скрипт за минуту
-
-```rust
-use kvas_engine::prelude::*;
-
-#[derive(Default)]
-pub struct Chaser { speed: f32, stop_distance: f32 }
-
-impl Script for Chaser {
-    fn update(&mut self, ctx: &mut Ctx) {
-        let Some(player) = ctx.find("Player") else { return };
-        let Some(target) = ctx.position_of(player) else { return };
-        ctx.look_at_flat(target);
-        if ctx.distance_to(player).is_some_and(|d| d > self.stop_distance) {
-            ctx.move_towards(target, self.speed);
-        }
-    }
-    fn fields(&mut self) -> Vec<Field<'_>> {       // видно в Инспекторе, сохраняется в сцене
-        vec![Field::f32("speed", &mut self.speed), Field::f32("stop_distance", &mut self.stop_distance)]
-    }
-}
-register_scripts!(Chaser);
-```
-
-Сохраните файл - редактор пересоберёт библиотеку и перезагрузит скрипты, не закрывая сцену.
-Больше примеров: [рецепты](https://nopass0.github.io/kvas/scripting/cookbook) (код проверяется тестами), [шпаргалка по `Ctx`](https://nopass0.github.io/kvas/scripting/).
-
-## Нодовые материалы
-
-Двойной клик по `.kmat` открывает редактор нод: категории с описаниями в меню добавления (Shift+A),
-превью прямо в нодах, Color Ramp с градиентом, карты нормалей и высот, свет и углы поверхности,
-свечение, шумы (фрактальный, Перлин, Вороной, трещины, облака), режимы наложения как в Photoshop.
-См. [как работать с нодами](https://nopass0.github.io/kvas/nodes/) и [справочник всех нод](https://nopass0.github.io/kvas/nodes/reference).
-
-![PBR-лаборатория: металл, стекло, мрамор и дерево на нодовых материалах](docs/images/pbr-lab.png)
-
-## Встроенные материалы
-
-В каждом проекте есть `assets/materials/library/` (326 материалов: реалистичные, стилизованные, вода, глубокие космические слои), `assets/shaders/library/` (380 шейдеров, включая pixel-art для 3D и экрана) и 236 готовых скриптов; материалы - 326 процедурных материалов (камень, земля, металл, дерево, ткани, лава, стекло, стилизованные toon-материалы...).
-Файлы `.kmat` - обычные графы нод, их можно открыть и изменить.
-
-![326 встроенных материалов](docs/images/materials.png)
-
-## Документация
-
-Сайт на русском и английском: **https://nopass0.github.io/kvas/** ([English](https://nopass0.github.io/kvas/en/)) - VitePress + rustdoc. Источники лежат в [`docs/`](docs).
-
-| Раздел | Файл |
-|---|---|
-| Большое руководство с примерами (шейдеры, камера, частицы, звук, сборка) | [docs/GUIDE.md](docs/GUIDE.md) |
-| Рабочие сценарии редактора | [docs/EDITOR_WORKFLOWS.md](docs/EDITOR_WORKFLOWS.md) |
-| Rust API: ECS, физика, иерархия, время, сообщения | [docs/ENGINE_API.md](docs/ENGINE_API.md) |
-| NVIDIA, DLSS, генерация кадров: что работает, а что нет | [docs/NVIDIA.md](docs/NVIDIA.md) |
-| Планы и известные проблемы | [ROADMAP.md](ROADMAP.md) |
-
-Локально:
+### Clone, build, and run
 
 ```bash
-cd docs && npm install && npm run dev                       # сайт на http://localhost:5173/kvas/
-cargo doc -p kvas_ecs -p kvas_engine -p kvas_render --no-deps --open
-./tools/verify.ps1                                          # проверка, тесты, doctest, строгий rustdoc
-./tools/verify.ps1 -Gpu                                     # плюс GPU-тесты
+git clone https://github.com/Nopass0/kvas.git
+cd kvas
+cargo run -p kvas_editor -- games/demo
 ```
 
-Сайт публикуется GitHub Actions ([`.github/workflows/docs.yml`](.github/workflows/docs.yml)) при каждом пуше в `main`.
-Один раз включите: **Settings → Pages → Source: GitHub Actions**.
+Run the project manager without a project argument:
 
-## Устройство репозитория
-
-```
-crates/kvas_ecs      ECS на разреженных множествах, без зависимостей
-crates/kvas_engine   компоненты, сцена (JSON), иерархия, ассеты (+ .pak), меши, физика, скрипты, Runtime, ноды
-crates/kvas_render   wgpu-рендерер, WGSL-прелюдия и библиотеки, отладочные линии, склейка с egui
-crates/kvas_editor   редактор (панели в отдельных файлах)
-crates/kvas_player   запускает собранную игру или папку проекта
-crates/kvas_audio    звук
-games/demo           демо-проект: сцена, шейдеры, материалы, модели, скрипты
-docs/                сайт документации (VitePress)
-third_party/         egui_dock под egui 0.37; SDK NVIDIA (локально, вне Git)
+```bash
+cargo run -p kvas_editor
 ```
 
-Принципы (DRY / KISS):
+Open the demo and immediately enter Play mode:
 
-- **Одна рефлексия.** Компонент или скрипт перечисляет поля как `Field` - Инспектор, сохранение сцены и отмена используют тот же список.
-- **Один путь к ассетам.** Всё грузится через `Assets` (папка в редакторе, `.pak` в игре).
-- **Один игровой цикл.** `Runtime` работает и в Play-режиме редактора, и в проигрывателе.
-- **Один рендерер.** Сцена рисуется в текстуру и показывается в egui, в редакторе и в игре.
-- Play-режим запускает **копию** сцены, поэтому Stop возвращает всё как было.
+```bash
+cargo run -p kvas_editor -- games/demo --play
+```
 
-## Что реально работает с апскейлом и кадрами
+Build the player once so the editor can use it for packaged projects:
 
-- Собственный пространственный апскейлер в стиле FSR (это **не** официальный AMD FSR SDK).
-- Экспериментальная интерполяция кадров ×2 на optical flow.
-- Выбор DLSS и Frame Generation в настройках пока подставляет собственный апскейлер: интеграция Streamline требует нативного бэкенда
-  (подробности и причины - в [docs/NVIDIA.md](docs/NVIDIA.md)).
+```bash
+cargo build -p kvas_player
+```
 
-## Известные ограничения
+Build a game without opening the editor UI:
 
-- Освещение: одно солнце с картой теней, до 8 точечных и прожекторных ламп без теней, HDRI и процедурное небо. Нет трассировки лучей, преломления и отражений в экранном пространстве.
-- glTF: статические меши с запечёнными трансформациями; скиннинг и скелетная анимация не поддерживаются.
-- Скрипты не могут определять новые типы компонентов (только встроенные и поля скрипта).
-- Проверено на Windows с Rust 1.99; другие платформы не тестировались.
+```bash
+cargo run -p kvas_editor -- --build games/demo
+```
 
-Полный список планов и проблем - в [ROADMAP.md](ROADMAP.md). Лицензия - в [LICENSE](LICENSE).
+The output is written to the project's `build/` directory. Use `--release` for optimized editor/player binaries, for example `cargo run --release -p kvas_editor -- games/demo`.
+
+## Validate changes
+
+Before committing, install the repository hook once and run the same checks locally:
+
+```powershell
+cargo install cargo-llvm-cov --locked
+git config core.hooksPath .githooks
+./tools/pre-commit.ps1
+```
+
+The hook checks formatting, compilation, the complete workspace test suite, and Rust doctests. Pull requests run the same required validation in GitHub Actions. See [CONTRIBUTING.md](CONTRIBUTING.md) for documentation, performance, and review requirements. GPU-only tests need a suitable adapter and are not silently treated as covered by CPU CI.
+
+## Documentation
+
+- [English documentation site](https://nopass0.github.io/kvas/en/)
+- [Russian documentation site](https://nopass0.github.io/kvas/)
+- [Project and crate map](docs/PROJECT_MAP.md)
+- [Development and verification guide](DEVELOPMENT.md)
+- [Contribution guide](CONTRIBUTING.md)
+- [Agent instructions](AGENTS.md)
+- [Feature roadmap and current limitations](ROADMAP.md)
+- [Rust API documentation](https://nopass0.github.io/kvas/api/kvas_engine/index.html)
+
+Run the docs site locally:
+
+```bash
+cd docs
+npm ci
+npm run dev
+```
+
+GitHub Pages is built and deployed by `.github/workflows/docs.yml`. Enable **Settings → Pages → Build and deployment → GitHub Actions** in a fork to publish your own copy.
+
+## Workspace layout
+
+| Path | Purpose |
+|---|---|
+| `crates/kvas_ecs` | ECS primitives and world queries |
+| `crates/kvas_engine` | Runtime, scenes, assets, physics, scripting, materials and engine API |
+| `crates/kvas_render` | wgpu renderer, WGSL support and rendering utilities |
+| `crates/kvas_audio` | Audio playback and spatial audio |
+| `crates/kvas_editor` | Editor application and tools |
+| `crates/kvas_player` | Standalone game player |
+| `games/` | Demo, showcase, regression and sample game projects |
+| `docs/` | VitePress documentation in English and Russian |
+| `tools/` | Project generation, verification and content tools |
+| `third_party/` | Vendored dependencies; check each directory's license and local policy |
+
+## Community
+
+Use GitHub Issues for reproducible bugs and scoped feature proposals. Use Discussions for questions and design exploration when enabled. Please include engine revision, operating system, GPU/backend, exact steps, expected and observed behavior, and relevant logs. Do not attach secrets, private user data, or assets without redistribution rights.
+
+By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md). Security-sensitive reports should follow [SECURITY.md](SECURITY.md).
+
+## License
+
+See [LICENSE](LICENSE) for the project's license and any additional third-party notices that apply to specific assets or dependencies.

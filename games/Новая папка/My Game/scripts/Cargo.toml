@@ -1,0 +1,12 @@
+[package]
+name = "my_game_scripts"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+kvas_engine = { path = "C:/Projects/kvas/crates/kvas_engine" }
+
+[workspace]

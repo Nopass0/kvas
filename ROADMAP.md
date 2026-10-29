@@ -1,193 +1,182 @@
-# Kvas Engine — дорожная карта
+# Kvas Engine Roadmap
 
-Файл описывает, что уже есть, чего нет и что делать дальше. Приоритеты: **P0** — мешает работать
-сейчас, **P1** — важно для первой игры, **P2** — расширение, **P3** — мечты.
-Отмечено `[x]` — готово, `[~]` — сделано частично (в скобках что именно), `[ ]` — не начато.
+This is a community planning document, not a delivery promise. It separates implemented capabilities from partial work and proposals. Priorities indicate order of attention: **P0** blocks reliable everyday development or first-game workflows; **P1** is a core production capability; **P2** expands quality and creative workflows; **P3** is exploratory. Priorities can change after design discussion and contributor capacity.
 
----
+Status: `[x]` implemented and exercised; `[~]` partial, experimental, or awaiting a named validation step; `[ ]` not complete. A checkbox only changes to `[x]` when implementation, tests, docs, and platform limitations are reviewed together.
 
-## 0. Что уже работает (кратко)
+## Current capabilities and limits
 
-- Редактор в стиле JetBrains: тёмная/светлая тема, русский/английский, сохранение раскладки и настроек.
-- Сцена: иерархия с иконками, инспектор с секциями, привязки (сетка, вершины, грани), быстрые
-  повороты/отражения, режимы вида (Lit, Albedo, Normals, Depth, UV, Только свет, Глина, Материал, Рёбра).
-- Рендер: PBR, тени (мягкость/сила/дальность), постэффекты (bloom, блики, blur, motion blur,
-  виньетка, аберрация, зерно, sharpen), кинотональность, туман, FSR-подобный апскейлер,
-  глубина резкости + автофокус + letterbox + экспозиция у камеры, воксельная вода/дым/облака,
-  частицы (17 пресетов), модификаторы меша (14 штук), texture paint, шейдеры камеры (WGSL),
-  `#include` и библиотеки функций, нодовые материалы (`.kmat`), потоковая выгрузка по дальности.
-- Звук: компонент `AudioSource`, API `ctx.play_sound*`, панель «Звук» с волной.
-- Скрипты: шаблоны, отдельные файлы, стартовая библиотека (20 скриптов) и шейдеров (16) во всех проектах.
-- Сборка игры: кнопка «Собрать игру», иконка приложения, пакет ресурсов делится на тома по размеру.
+The editor has scene hierarchy and inspector, transform tools, project/asset browsing, node-based materials, texture painting, panels for animation and sound, undo/redo, and English/Russian UI. The engine has a sparse-set ECS, scene serialization, shared runtime and renderer, wgpu rendering, Rapier physics, Rust scripts with hot reload, asset packaging, particles, post-processing, and a custom spatial upscaler inspired by FSR.
 
----
+The following are not equivalent to full vendor/product integrations: the upscaler is not AMD's FSR SDK; DLSS selection currently falls back to the custom spatial upscaler; the frame-generation UI does not mean a production frame-generation backend is active. Hardware ray tracing/path tracing, complete skeletal animation, and broad non-Windows validation are not complete. Check [the NVIDIA notes](docs/NVIDIA.md) and the relevant code before relying on a capability.
 
-## 1. Производительность и рендер
+## 0. Reliability, performance and release engineering
 
-### 1.1 Инстансинг и батчинг (P0)
-- [ ] Инстансинг одинаковых мешей: массив `Object` в storage-буфере, `instance_index` в шейдерах
-      (потребует версии prelude v2 и обратно-совместимого режима для пользовательских шейдеров).
-- [ ] Статический батчинг: слияние неподвижных объектов с одним материалом в один меш на загрузке.
-- [ ] GPU-culling (compute) + indirect draw; иерархический Z-буфер для окклюзии.
-- [ ] LOD: автогенерация упрощённых мешей (decimation), переключение по экранному размеру, билборды деревьев.
-- [ ] Сортировка прозрачных объектов по слоям и мягкие частицы (нужна копия глубины).
-- [~] Потоковая выгрузка мешей по дальности (`view_distance`) — есть; нет потоковой загрузки текстур по mip-уровням.
+### 0.1 Test and benchmark foundation (P0)
 
-### 1.2 Загрузка ресурсов (P0)
-- [ ] Асинхронная загрузка моделей и текстур в потоках, экран загрузки с прогрессом
-      (сейчас первый кадр блокируется: в debug-сборке деревня грузится ~90 с; показывается «Loading...»).
-- [ ] Кэш декодированных ресурсов (мипы, сжатые текстуры) на диске.
-- [ ] Сжатие текстур BC7/ASTC (KTX2), сжатие мешей (meshopt), сжатие пакета (zstd).
-- [ ] Кнопка «Собрать игру (release)» — собирает плеер и скрипты в release и кладёт в build.
+- [x] Workspace formatting, check, unit/integration tests, and doctests are available through the local verification workflow.
+- [ ] Establish reproducible Criterion or equivalent benchmark suites for ECS queries, scene load/save, asset decode/pack, render submission, material compilation, and representative editor workloads.
+- [ ] Publish a baseline by OS, CPU, GPU/backend, build profile, and workload; record variance and define non-flaky regression policy.
+- [ ] Add memory/allocation and load-time benchmarks, with realistic showcase scenes and assets that can legally be distributed.
+- [ ] Add fuzz/property tests for scene, asset archive, import metadata, and project configuration parsers; define corpus and crash triage.
+- [ ] Add GPU correctness/performance smoke on an owned runner or a clearly documented manual process; do not treat CPU CI as GPU validation.
+- [ ] Add a CI coverage artifact and, after a stable baseline exists, propose a justified threshold by crate and changed code. Do not set an arbitrary global floor.
+- [ ] Track test duration and flaky failures; split fast PR checks from scheduled hardware/performance suites without weakening required correctness checks.
 
-### 1.3 Апскейл и кадры (P1)
-- [x] FSR-подобный пространственный апскейлер (EASU/RCAS-стиль, собственная реализация).
-- [ ] Временной апскейлер (TAA/TSR): векторы движения, jitter, истории кадров.
-- [ ] Генерация кадров: интерполяция на оптическом потоке/векторах движения (собственная реализация).
-- [x] Выбор DLSS / FSR / Bilinear и флажок «генерация кадров» в настройках сцены; определяется RTX-карта. Пока DLSS
-      откатывается на FSR-подобный апскейлер, а генерация кадров сохраняется, но не исполняется (честная подсказка в UI).
-- [ ] **DLSS / DLSS Frame Generation (RTX)**: реальный бэкенд: требует NVIDIA Streamline SDK (проприетарный), D3D12/Vulkan
-      хуки вне wgpu. Варианты: (a) отдельный бэкенд рендера на `ash`/D3D12 для Windows+NVIDIA;
-      (b) плагин-загрузчик Streamline DLL с общим текстурным интерфейсом. Исследовать лицензию и интеграцию.
-- [ ] FSR 2/3 (официальный SDK) как опциональный бэкенд рядом с собственным.
+### 0.2 Rendering throughput and memory (P0–P1)
 
-### 1.4 Качество картинки (P1–P2)
-- [ ] SSAO/GTAO, SSR, объёмный туман и god rays, тени облаков, cascaded shadow maps (сейчас одна карта).
-- [ ] Мягкие тени от точечных/прожекторных источников (сейчас только солнце).
-- [ ] Лайтмапы и запекание GI; световые пробы; отражающие зонды.
-- [ ] HDR-вывод, LUT-цветокоррекция, bokeh-формы диафрагмы, tilt-shift, lens dirt.
-- [ ] Рефракция/глубина воды (нужна копия цветового буфера и глубины), каустики, пена у берега, flow maps, реки по сплайну.
+- [ ] GPU instancing for repeated meshes, with stable object IDs, per-instance transforms/material data, and a compatibility plan for user WGSL.
+- [ ] Static batching where it improves measured workloads, with correct bounds, visibility, and invalidation when source objects change.
+- [ ] GPU frustum/occlusion culling and indirect draws, gated by backend support and validated against CPU visibility results.
+- [ ] LOD generation and screen-space selection, including mesh simplification, transition handling, and foliage impostors.
+- [ ] Sort transparent geometry correctly; add depth-aware soft particles and avoid unnecessary depth copies.
+- [ ] Streaming texture mip levels and meshes with bounded memory, predictable cancellation, and visible progress.
+- [ ] CPU/GPU profiler with render-pass timings, draw/instance counts, memory estimates, and exportable captures.
+- [ ] Documented frame-time and memory budgets for representative scenes; regression report on benchmark changes.
 
----
+### 0.3 Asset loading and packaging (P0–P1)
 
-## 2. Редактор
+- [ ] Async model/texture decode and upload with cancellation, progress, useful errors, and responsive first frame.
+- [ ] Cache imported/decoded intermediates by source content and importer settings; invalidate safely when either changes.
+- [ ] Optional KTX2/Basis Universal or platform-native texture compression, mesh optimization, and compressed package archives; keep licensing and target support explicit.
+- [ ] Release build pipeline that builds player and scripts with the chosen profile and reports missing assets/dependencies before packaging.
+- [ ] Deterministic asset manifest, hashes, diagnostics, package validation, and reproducible-build metadata.
+- [ ] Identify unused assets and support safe stripping without deleting source project content.
 
-### 2.1 Интерфейс (P1)
-- [~] Инспектор: секции с иконками и анимацией, drag-drop скриптов/шейдеров/текстур/моделей/звуков (сделано;
-      не хватает: множественное выделение, поиск по свойствам, закладки, копирование значений между объектами).
-- [ ] Панель профайлера (CPU/GPU по этапам), счётчики draw call, память.
-- [ ] Окно Build Settings (платформа, release/debug, иконка, сплэш, сжатие, версия).
-- [ ] Командная палитра (Ctrl+Shift+P), поиск везде (Shift+Shift), история отмен.
-- [ ] Мульти-выделение, группы, префабы (вложенные, с переопределениями), копирование между сценами.
-- [ ] Режимы вида: wireframe, overdraw, LOD, коллайдеры, освещение, мипы текстур.
-- [ ] Плавающие окна и сохранение пресетов раскладок; полный русский перевод всех сообщений консоли.
+### 0.4 Upscaling and frame generation (P1–P2)
 
-### 2.2 Ассеты (P1)
-- [x] Скрипты и шейдеры показываются как файлы; контекстное меню на пустом месте (создать файл/скрипт/шейдер/материал).
-- [ ] Предпросмотр моделей с вращением, анимаций, звуков; инспектор импорта (масштаб, оси, материалы).
-- [ ] Переименование/перемещение с обновлением ссылок в сценах; корзина; поиск по типу и тегам.
-- [ ] Импорт glTF-анимаций, скелетов и морф-таргетов (**см. 4**).
+- [x] Custom spatial upscaler in the EASU/RCAS family of approaches; not certified or branded as official AMD FSR.
+- [ ] Temporal anti-aliasing/upscaling foundation: motion vectors, jitter, history buffers, disocclusion handling, ghosting tests, and per-camera controls.
+- [ ] Add an open, vendor-neutral temporal upscaler only after quality, licensing, device support, and GPU cost have been measured.
+- [ ] Official AMD FSR integration as an optional backend after SDK version, license, API requirements, and supported wgpu/native backends are reviewed.
+- [ ] NVIDIA DLSS Super Resolution integration through a supported native graphics backend/Streamline path, with SDK redistribution and NVIDIA hardware requirements documented. UI selection must report unavailable or fallback state accurately.
+- [ ] Frame generation research and prototype: motion data/optical flow, latency controls, HUD handling, artifact evaluation, and explicit hardware support. Keep it opt-in and never present interpolated frames as simulation frames.
+- [ ] Remove or relabel settings that imply unavailable backends until the end-to-end implementation and hardware test pass.
 
-### 2.3 Texture paint (P1)
-- [x] Кисть по маске, 4 слоя, мягкие края, сглаживание, заливка, сохранение в `assets/paint`.
-- [ ] Откат/повтор штрихов (стек снимков маски; Ctrl+Z при активной кисти).
-- [ ] Больше 4 слоёв (несколько масок/текстурные массивы), слои с нормалями и roughness.
-- [ ] Рисование на мешах без UV (триплянарная проекция), несколько объектов сразу, кисть-спрайт, штамп-декали.
-- [ ] Запекание: слои + маска → один атлас/текстура (`Bake texture`), запись в `textures/baked`, замена материала.
-- [ ] Рисование цветом вершин; скульптинг высот (террейн); трава/деревья «краской».
+### 0.5 Lighting and image quality (P1–P2)
 
-### 2.4 Нодовый редактор материалов (P1)
-- [x] Выбор меша предпросмотра (примитивы и любые модели проекта), экспорт графа в `.wgsl`, открытие `.wgsl` в окне
-      «код + предпросмотр» (ПКМ по шейдеру → «Редактировать с предпросмотром»), узлы Voronoi/Bricks/Slope/Remap и др.
-- [ ] Разбор произвольного `.wgsl` обратно в граф узлов (сейчас шейдер открывается как код с предпросмотром, а не как узлы).
-- [x] Граф `.kmat`, кодогенерация WGSL, 45 узлов, предпросмотр сферы, drag-drop на модель, превью в инспекторе.
-- [~] Экспорт из Blender (`tools/blender/export_kmat.py`) — написан, **не проверен в самом Blender**; поддержка узлов частичная.
-- [ ] Zoom, мини-карта, комментарии/рамки, группы узлов, копирование/вставка, undo/redo, выбор нескольких узлов.
-- [ ] Узлы: смещение вершин, нормаль из высоты, parallax, depth fade, refraction, screen UV, нормали/ORM узлом,
-      векторные операции (split/combine, dot, cross, normalize), цикл времени, пользовательская WGSL-функция.
-- [ ] Параметры материала, видимые в инспекторе и из скриптов (`ctx.set_material_param`), инстансы материалов.
-- [ ] Больше 3 текстур на материал (сейчас слоты albedo/normal/ORM); библиотека готовых материалов.
-- [ ] Импорт материалов из glTF/Unity/Unreal-графов, полный Principled BSDF (подповерхностное, sheen, clearcoat).
+- [ ] Cascaded directional shadows, point/spot shadow options, contact shadows, and stable bias controls.
+- [ ] SSAO/GTAO, screen-space reflections, volumetric fog/light shafts, cloud shadows, and image-quality/performance controls.
+- [ ] Lightmap baking, probes, reflection captures, and a documented bake/update workflow.
+- [ ] HDR display output, tone mapping and color transforms, LUT workflows, lens effects, and color-managed screenshots.
+- [ ] Water depth/refraction, shoreline foam, caustics, and spline-based rivers with performance bounds.
+- [ ] Hardware ray tracing and path tracing investigation: first compare hardware/API requirements across D3D12 and Vulkan backends, wgpu exposure, fallback paths, shader architecture, licensing, deterministic reference scenes, and performance cost. Then implement an optional ray-query/RT backend only where device support and validation are real. Provide raster fallbacks and never advertise ray tracing before adapter-backed tests and user documentation exist.
 
-### 2.5 Камера (P1)
-- [x] Фокусное расстояние, диафрагма, автофокус, дистанция/скорость фокуса, экспозиция, letterbox, пресеты.
-- [ ] Сценарные камеры (виртуальные камеры с приоритетом и плавными переходами), рельсы/кран, shake-пресеты.
-- [ ] Несколько камер и вьюпортов (split screen), рендер в текстуру, порталы/зеркала.
-- [ ] Bokeh-формы, хроматика/дисторсия объектива на камере, ISO/выдержка, motion blur по скорости объекта.
+## 1. Editor usability and content tools
 
----
+### 1.1 Workspace and navigation (P1)
 
-## 3. Движок и игровая логика
+- [x] Dockable editor panels, saved preferences/layout, themes, language switching, hierarchy, inspector, project browser, and transform gizmos.
+- [ ] Command palette, global search, recent actions, contextual shortcuts, searchable settings, and shortcut customization.
+- [ ] Multi-select, grouping, prefabs/instances with overrides, scene-to-scene copy, and safe reference repair.
+- [ ] View modes for wireframe, overdraw, colliders, lighting, LOD, UVs, and texture mip diagnostics.
+- [ ] Better window/layout presets, floating panels, multi-viewport and multi-monitor recovery, keyboard-only navigation, and accessibility audit.
+- [ ] Clearer first-run project manager, templates, recoverable autosave, crash recovery, and actionable import/build errors.
+- [ ] Consistent menu organization, discoverable tooltips, inline help, and localization coverage for all visible errors and status messages.
 
-### 3.1 Скрипты (P1)
-- [x] **Авторегистрация:** `scripts/build.rs` сам подключает каждый файл из `scripts/src/**` и регистрирует все `impl Script for X`;
-      старые проекты с `register_scripts!` конвертируются при открытии (скрипты раскладываются по файлам). Демо-игры разнесены по файлам.
-- [x] Сбой скрипта (паника) отключает только его экземпляр; ошибка компиляции не трогает работающую библиотеку; ошибка шейдера → шейдер по умолчанию.
-- [x] Шаблоны, отдельные файлы, стартовая библиотека по папкам, открытие по двойному клику в редакторе кода на нужной строке,
-      автопересборка при изменении (опрос 0.4 с), автопересборка при несовместимом ABI.
-- [x] Встроенный редактор кода (вкладки, подсветка, поиск/замена, переход к строке, подсказки API, автосохранение→пересборка).
-- [ ] Ошибки компилятора прямо в файле (подчёркивание), rust-analyzer, мультикурсор, сворачивание блоков.
-- [ ] Горячая перезагрузка с сохранением состояния полей; отладчик; документация API с автодополнением.
-- [ ] Альтернативные языки (Lua/WASM) для быстрых итераций; визуальные скрипты.
-- [ ] `ctx.set_shader_param`, `ctx.material(...)`, сигналы-события с типами.
+### 1.2 Asset browser and import (P1)
 
-### 3.2 Физика (P2)
-- [x] Плавучесть воды (подъёмная сила по погружению, сопротивление), тест.
-- [ ] Кинематический контроллер персонажа (ступеньки, склоны, платформы), ragdoll, транспорт, канаты.
-- [ ] Всплески и пена от объектов, течение воды (силы по flow map), жидкости на частицах.
-- [ ] Столкновения частиц, разрушаемость.
+- [x] Project files, basic previews, context actions, script/shader/material creation, and drag-and-drop workflows.
+- [ ] Rich model/animation/audio/texture previews and import settings for scale, axis, color space, compression, material mapping, and collision.
+- [ ] Rename/move with scene reference updates, undo, trash/restore, duplicate detection, tags, filters, and dependency graph.
+- [ ] Import glTF scenes, skins, skeletal clips, morph targets, cameras, lights, and animation events with validation reports.
+- [ ] Asset metadata sidecars and stable importer versioning for reproducible reimport.
 
-### 3.3 Звук (P2)
-- [x] Источники, 3D-панорама, затухание, API, панель с волной.
-- [ ] Шины/микшер, эффекты (реверберация, low-pass под водой), звуковые зоны.
-- [ ] Стриминг длинной музыки (сейчас декодируется целиком), m4a через собственный декодер (rodio падает на части файлов).
-- [ ] Редактор клипов: обрезка, фейды, нормализация; Sound Cue с рандомизацией.
+### 1.3 Layered image and texture editor (P1–P2)
 
-### 3.4 Анимация (P0 для персонажей)
-- [ ] Скелетная анимация и скиннинг (glTF/FBX), анимационные клипы, блендинг, IK.
-- [ ] State machine аниматор, редактор таймлайна, события анимации, root motion.
-- [ ] Твины и анимация свойств компонентов (кривые), редактор кривых.
+- [x] Texture paint with masks and a small fixed layer set, brush tools, fill, and project asset output.
+- [ ] Scalable non-destructive layer stack with groups, visibility, opacity, blend modes, masks, clipping, locks, reorder, merge, and undo history.
+- [ ] Paint color, roughness, metallic, normal, height, and emission channels; preview channel packing and export texture sets.
+- [ ] Brush library, pressure/tilt/rotation support, stabilizer, symmetry, selection tools, gradient/fill, clone/heal, and tablet calibration.
+- [ ] Large-canvas tiling, mip preview, color management, autosave/recovery, and memory-budget controls.
+- [ ] Bake layers and masks into optimized texture atlases with explicit source preservation and export settings.
+- [ ] Consider PSD import/export only after format/library license and round-trip capability are evaluated; preserve interoperability with open formats.
+- [ ] Keep 3D texture painting, UV-aware painting, and image editing in a coherent workspace while allowing a standalone 2D canvas workflow.
 
-### 3.5 Частицы и эффекты (P1–P2)
-- [x] Эмиттер на CPU, 17 пресетов (огонь, дым, пар, туман, дымка, искры, взрыв, снег, дождь, светлячки, листья, пузыри…).
-- [ ] GPU-частицы (миллионы), ленты/следы, лист-анимация текстуры (flipbook), под-эмиттеры, кривые размера/цвета.
-- [ ] Свет от частиц, мягкие частицы по глубине, коллизии, силовые поля (вихрь, ветер).
-- [ ] Объёмный туман как компонент (локальные зоны, плотность, цвет, анимация), god rays.
-- [ ] Воксельный дым: исправить «кривой» вид (сглаживание, меньшие ячейки, сортировка), улучшенное освещение (сделан шейдер, нужна проверка).
+### 1.4 Audio workstation (P1–P2)
 
-### 3.6 Мир и контент (P2)
-- [ ] Террейн: карта высот, скульптинг, покраска слоёв, трава/деревья, дороги по сплайнам.
-- [ ] Генераторы: процедурные дома/города, деревья (L-системы), подземелья, дороги, реки.
-- [ ] Деформации: lattice, кривые, shape keys, мягкие тела, ткань на скелете; ещё модификаторы
-      (Bevel, Decimate, Weld, Boolean, Screw, Skin, Subdivision Surface, Curve, Displace по текстуре, Remesh).
-- [ ] Модификаторы с анимацией по времени и маски по вершинным группам.
+- [x] Audio source component, spatial playback, basic waveform panel, and script API.
+- [ ] Timeline with non-destructive clip trim, split, fades, gain, normalization preview, markers, loop regions, and undo/redo.
+- [ ] Mixer with buses, sends, meters, automation, mute/solo, voice limits, and reusable snapshots.
+- [ ] Effects chain (EQ, compressor, reverb, low-pass/underwater), spatial zones, snapshots, and preview without destructive source edits.
+- [ ] Stream long music from disk, improve codec/error reporting, and support loop points and metadata.
+- [ ] Sound cues with random selection, pitch/volume variation, concurrency limits, and deterministic preview.
+- [ ] Record/import workflow, waveform zoom, keyboard controls, accessibility, and a documented supported-format matrix.
 
----
+### 1.5 Animation workspace (P1)
 
-## 4. Сборка и распространение
+- [x] Initial animation panel and basic property/tween mechanisms; coverage and format limits must be verified per feature.
+- [ ] Animation timeline with keyframes, channels, curves, snapping, markers, events, copy/paste, loop modes, and undo/redo.
+- [ ] Curve editor with tangents, interpolation types, presets, and multi-channel selection.
+- [ ] Skeletal animation and skinning from glTF, clip import/export, blend spaces, retargeting, and root motion.
+- [ ] State-machine animator with transitions, parameters, preview, live debugging, and reproducible runtime/editor behavior.
+- [ ] IK solvers, constraints, additive layers, animation events, and property animation for components/materials/cameras.
+- [ ] Stylus pressure/tilt support for animation drawing workflows where relevant; validate input device APIs and accessibility.
 
-- [x] Кнопка «Собрать игру» (панель и меню), иконка `.exe` (PNG→ресурс Windows), иконка окна, пакет ресурсов по томам
-      (`game.pak` + `game.000.pkd`…; первый-подходящий по убыванию размера; потоковое чтение, без загрузки всего в RAM).
-- [x] Игра показывает «Loading...» пока грузит ресурсы; исправлен падение рендера при выгрузке мешей (`unwrap` в теневом проходе).
-- [ ] Запекание при сборке: сплаты и маски → текстуры, атласы, мипы, сжатие, удаление неиспользуемых ресурсов (tree shaking).
-- [x] Окно сборки: иконка, название, версия, размер окна, полноэкранный режим, VSync, release/debug; после сборки игра запускается на
-      несколько секунд (smoke-тест) и результат пишется в консоль. `[profile.release]`: thin LTO.
-- [ ] Сборка в один бинарник (скрипты статически, без `.dll`).
-- [ ] Установщик (zip/msi), подпись кода, ресурс версии в exe, сплэш-экран, меню настроек графики внутри игры.
-- [ ] Linux и macOS (иконки, bundle), веб-сборка (wasm + WebGPU).
-- [ ] Автотест собранной игры в CI (запуск, скриншот, сравнение с эталоном).
+## 2. Scripting and integrated code editor
 
----
+### 2.1 Current foundation and authoring (P1)
 
-## 5. Известные проблемы
+- [x] Rust project scripts, hot reload, templates, tabs, syntax highlighting, search/replace, line navigation, basic API hints, and error isolation.
+- [ ] Full language-server integration (rust-analyzer or a safe project-aware service) with diagnostics, code completion, hover docs, go-to definition, references, imports, rename, and formatting.
+- [ ] Import/dependency management with explicit workspace context, cache/progress, offline behavior, license visibility, and diagnostics for incompatible crates.
+- [ ] Symbol/outline panel, code folding, multi-cursor, snippets, refactor assists, bracket matching, diff/merge, and configurable keymaps.
+- [ ] Debugger with breakpoints, call stack, locals, watches, conditional breakpoints, and safe interaction with hot reload.
+- [ ] Compiler diagnostics embedded at exact lines, with structured error codes and links to relevant engine docs.
+- [ ] Autocomplete for engine API, project scripts, components, assets, and material parameters from the same metadata used by runtime/editor.
+- [ ] Securely constrain project builds and plugin/script execution; document trust boundaries and subprocess behavior.
+- [ ] Evaluate optional Lua/WASM scripting and visual scripting only after runtime safety, performance, packaging, and maintenance tradeoffs are reviewed.
 
-- Первый запуск большой сцены в debug-сборке очень долгий (синхронная загрузка), в release — в разы быстрее.
-- Скрипты, собранные старым движком, отклоняются проверкой ABI — редактор пересобирает их сам при открытии проекта;
-  собранные раньше игры нужно пересобрать (формат пакета изменился на `KVASPAK2`, старый `KVASPAK1` читается).
-- DLSS и Frame Generation выбираются в настройках, но реально работает только FSR-подобный апскейл (см. 1.3).
-- Нормали и roughness из FBX не подхватываются (только из glTF); модели с модификаторами рисуются без текстур модели.
-- Texture paint: нет отката штрихов.
-- Производительность тяжёлых сцен (1000+ объектов): ~25–35 кадров/с в debug; нужен инстансинг (1.1).
-- Экспорт из Blender не проверялся в реальном Blender.
+### 2.2 Engine APIs (P1–P2)
 
----
+- [x] Core lifecycle, input helpers, hierarchy queries, scene save/load, events/timers, and physics API coverage in progress.
+- [ ] Typed signals/events, material/shader parameter APIs, stable entity references, query filters, and clear borrow/lifecycle semantics.
+- [ ] Versioned script API, deprecation policy, migration helpers, and compatibility tests for saved scenes and scripts.
+- [ ] Expand doctests and cookbook examples across camera, audio, particles, materials, mesh editing, and UI.
 
-## 6. Документация и качество
+## 3. Materials, animation, simulation and content
 
-- [x] `docs/GUIDE.md` — подробное руководство с примерами (скрипты, шейдеры, материалы, сборка); `docs/ENGINE_API.md` — справочник API.
-- [x] В каждом проекте создаются `assets/shaders/kvas_mesh_api.wgsl` и `kvas_camera_api.wgsl` (объявления для редактора, `#include` их игнорирует).
-- [x] ~40 готовых шейдеров (20 для объектов, 20 для камеры).
+### 3.1 Node materials (P1)
 
-- [ ] Руководство пользователя (редактор, материалы, частицы, звук, сборка), обучающая игра-шоукейс.
-- [ ] Обновить `docs/ENGINE_API.md`: частицы, камера (DOF), материалы, шейдеры камеры, texture paint, пакеты.
-- [ ] GPU-тесты в CI (`--ignored`), эталонные изображения, нагрузочные тесты, fuzz загрузчиков.
+- [x] Node graph materials, generated WGSL, mesh preview, reusable nodes, and material library.
+- [ ] Graph UX: zoom/minimap, groups/frames, comments, multi-select, copy/paste, undo/redo, search, and accessible keyboard operations.
+- [ ] Parameters exposed to inspector and scripts, material instances, more texture channels, and shader compile diagnostics tied to nodes.
+- [ ] More complete Principled material model and import mappings for glTF; define semantics and fallbacks before adding nodes.
+- [ ] Partial WGSL-to-graph inspection where it can be represented without losing source; retain a safe editable-code path for unsupported constructs.
+- [ ] Validate Blender export against supported Blender versions and document unsupported node types.
+
+### 3.2 Physics, particles and world (P1–P2)
+
+- [x] Rapier integration, common rigid bodies/colliders/rays/triggers and CPU particles with multiple presets.
+- [ ] Character controller for slopes, steps, moving platforms, and predictable fixed-step behavior; add tests for each.
+- [ ] GPU particles, trails/ribbons, flipbooks, sub-emitters, collision and soft-particle depth, with measured memory limits.
+- [ ] Local volumetric fog/light zones, improved voxel smoke, particle lighting, and wind/vortex fields.
+- [ ] Terrain heightfield editor, sculpt/paint layers, foliage, spline roads/rivers, and streaming.
+- [ ] Procedural city/house/tree/dungeon tools with seeds, deterministic regeneration, LOD, and license-clear example outputs.
+- [ ] Cloth, soft-body, rope, vehicle and destruction prototypes only with stable solver/performance goals and representative regression scenes.
+
+## 4. Build, distribution and supported platforms
+
+- [x] Editor build command, player, project metadata, icon/basic window settings, and asset archives.
+- [ ] Build profiles/platform matrix, release automation, dependency report, reproducible artifact metadata, and actionable failure logs.
+- [ ] Installer/archive formats, application version resources, code signing guidance, splash screen, and in-game graphics settings.
+- [ ] Static or bundled script strategy that does not require shipping an unexplained local DLL; document platform constraints.
+- [ ] Linux and macOS validation, packaging, graphics backend coverage, input/audio support, and release artifacts.
+- [ ] WebAssembly/WebGPU feasibility study and minimal sample only after unsupported engine features and resource constraints are documented.
+- [ ] CI smoke test for a built game: launch where possible, load a deterministic scene, capture a frame, and compare robust metrics/images with a reviewed tolerance.
+- [ ] User-facing crash diagnostics and opt-in privacy-preserving reports; never collect project content or identifiers without explicit consent.
+
+## 5. Documentation, onboarding and community
+
+- [x] Bilingual VitePress site, getting-started guides, node references, scripting cookbook, and Rust API publication pipeline.
+- [ ] Audit every public subsystem against the project map and produce English and Russian guides for editor, assets/import, materials, animation, audio, physics, rendering, scripting, profiling, and packaging.
+- [ ] Keep API reference generation, examples, version compatibility, screenshots, and navigation checked in CI.
+- [ ] Tutorials built from clean clones and validated commands; provide a first playable project in under a documented onboarding target.
+- [ ] Add architecture decision records for renderer/backends, script API compatibility, asset formats, and serialization evolution.
+- [ ] Add benchmark methodology and reproducible sample-project documentation.
+- [ ] Enable and moderate GitHub Discussions; publish contribution labels, triage process, release notes, support matrix, and maintainer contact path.
+- [ ] Define release/versioning policy and migration notes before promising stable public APIs.
+
+## How to propose or complete a roadmap item
+
+Open an issue with the user problem, proposed scope, dependencies, acceptance criteria, expected platform support, licensing questions, tests, documentation, and measurable performance goal where applicable. Link the issue in the pull request. Break large editor or renderer initiatives into reviewable milestones. Update status only after behavior, tests, documentation, and limitations are verified.
