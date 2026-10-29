@@ -15,6 +15,7 @@ use kvas_engine::scene::Scene;
 use serde_json::{json, Value};
 
 const H: f32 = 3.1; // room height
+const DOOR: f32 = 2.2; // doorway height
 
 fn tags(t: &str) -> Tags {
     Tags { value: t.into() }
@@ -108,27 +109,30 @@ impl S {
         let e = self.ent(name, pos, 0.0, Vec3::ONE);
         self.scene.world.insert(e, AudioSource { clip: clip.into(), volume, looping: true, play_on_start: true, spatial: true, min_distance: 1.5, max_distance: max, ..Default::default() });
     }
-    /// The wall of the diner from `a` to `b` (engine xz) with doorways `(centre along the wall,
-    /// width)`. The production mesh already has the walls; this thin inner layer closes the gaps
-    /// it left (wall ends, the strip under the ceiling) and the wall above each doorway.
-    fn wall(&mut self, name: &str, a: Vec3, b: Vec3, gaps: &[(f32, f32)], parent: Entity) {
+    /// The wall of the diner from `a` to `b` (engine xz) with openings `(centre along the wall,
+    /// width, bottom, top)`: doorways ([`DOOR`]) and windows. The production mesh already has the
+    /// walls; this thin inner layer closes the gaps it left (wall ends, the strip under the
+    /// ceiling) around the real openings, which were measured with `examples/wall_scan.rs`.
+    fn wall(&mut self, name: &str, a: Vec3, b: Vec3, openings: &[(f32, f32, f32, f32)], parent: Entity) {
         const PLASTER: [f32; 4] = [0.36, 0.43, 0.35, 1.0];
         let dir = (b - a).normalize();
         let len = (b - a).length();
         let along_x = dir.x.abs() > 0.5;
         let size = |l: f32, h: f32| if along_x { Vec3::new(l, h, 0.1) } else { Vec3::new(0.1, h, l) };
-        let mut cuts: Vec<(f32, f32)> = gaps.iter().map(|(c, w)| (c - w * 0.5, c + w * 0.5)).collect();
+        let mut cuts: Vec<(f32, f32, f32, f32)> = openings.iter().map(|(c, w, lo, hi)| (c - w * 0.5, c + w * 0.5, *lo, *hi)).collect();
         cuts.sort_by(|x, y| x.0.total_cmp(&y.0));
         let mut start = 0.0;
-        for (s, e) in cuts.iter().copied().chain(std::iter::once((len, len))) {
+        for (s, e, lo, hi) in cuts.iter().copied().chain(std::iter::once((len, len, 0.0, 0.0))) {
             if s > start {
                 let mid = a + dir * (start + s) * 0.5 + Vec3::Y * H * 0.5;
                 self.shell(name, mid, size(s - start, H), PLASTER, parent);
             }
             if e > s {
-                // Above the door, up to the ceiling.
-                let mid = a + dir * (s + e) * 0.5 + Vec3::Y * (2.2 + (H - 2.2) * 0.5);
-                self.shell(&format!("{name} lintel"), mid, size(e - s, H - 2.2), PLASTER, parent);
+                let centre = a + dir * (s + e) * 0.5;
+                if lo > 0.0 {
+                    self.shell(&format!("{name} sill"), centre + Vec3::Y * lo * 0.5, size(e - s, lo), PLASTER, parent);
+                }
+                self.shell(&format!("{name} lintel"), centre + Vec3::Y * (hi + (H - hi) * 0.5), size(e - s, H - hi), PLASTER, parent);
             }
             start = e;
         }
@@ -234,28 +238,37 @@ fn main() {
     let diner = zones["Diner"];
     let shell = s.group("Diner shell", Some(diner));
     s.shell("Ceiling", Vec3::new(6.0, H + 0.04, -7.5), Vec3::new(12.2, 0.08, 15.2), [0.2, 0.21, 0.2, 1.0], shell);
-    s.wall("Wall south", b(0.0, 0.0), b(12.0, 0.0), &[(6.0, 1.3)], shell);
-    s.wall("Wall east", b(12.0, 0.0), b(12.0, 15.0), &[], shell);
-    s.wall("Wall west hall", b(0.0, 0.0), b(0.0, 8.0), &[(6.5, 1.2)], shell);
-    s.wall("Wall west kitchen", b(0.0, 8.0), b(0.0, 13.0), &[(2.0, 1.3)], shell);
+    // The real openings of the building (see `examples/wall_scan.rs`): the front door, the
+    // kitchen door and the serving hatch over the counter, three hall windows, the yard door,
+    // the emergency exit, the back door into the north corridor, corridor → storage → office.
+    let door = |c: f32, w: f32| (c, w, 0.0, DOOR);
+    s.wall("Wall south", b(0.0, 0.0), b(12.0, 0.0), &[door(6.03, 1.5)], shell);
+    s.wall("Wall east", b(12.0, 0.0), b(12.0, 15.0), &[(1.45, 1.1, 1.0, 2.0), (2.75, 1.1, 1.0, 2.0), (4.75, 1.1, 1.0, 2.0)], shell);
+    s.wall("Wall west hall", b(0.0, 0.0), b(0.0, 8.0), &[door(6.5, 1.35)], shell);
+    s.wall("Wall west kitchen", b(0.0, 8.0), b(0.0, 13.0), &[door(2.0, 1.45)], shell);
+    s.wall("Wall west corridor", b(0.0, 13.0), b(0.0, 15.0), &[door(1.0, 1.75)], shell);
     s.wall("Wall north kitchen", b(0.0, 13.0), b(7.0, 13.0), &[], shell);
+    s.wall("Wall north corridor", b(0.0, 15.0), b(7.0, 15.0), &[], shell);
     s.wall("Wall north storage", b(7.0, 15.0), b(12.0, 15.0), &[], shell);
-    s.wall("Wall storage west", b(7.0, 13.0), b(7.0, 15.0), &[], shell);
-    s.wall("Wall hall-kitchen", b(0.0, 8.0), b(12.0, 8.0), &[(6.5, 1.2)], shell);
-    s.wall("Wall kitchen-office", b(7.0, 8.0), b(7.0, 11.0), &[(1.1, 1.1)], shell);
-    s.wall("Wall office-storage", b(7.0, 11.0), b(12.0, 11.0), &[(2.0, 1.1)], shell);
-    s.wall("Wall kitchen-storage", b(7.0, 11.0), b(7.0, 13.0), &[(1.1, 1.1)], shell);
+    s.wall("Wall storage west", b(7.0, 13.0), b(7.0, 15.0), &[door(1.05, 1.8)], shell);
+    s.wall("Wall hall-kitchen", b(0.0, 8.0), b(12.0, 8.0), &[(3.2, 5.0, 1.05, 2.0), door(6.5, 1.2)], shell);
+    s.wall("Wall kitchen-office", b(7.0, 8.0), b(7.0, 11.0), &[], shell);
+    s.wall("Wall office-storage", b(7.0, 11.0), b(12.0, 11.0), &[door(2.1, 1.6)], shell);
+    s.wall("Wall kitchen-storage", b(7.0, 11.0), b(7.0, 13.0), &[], shell);
 
     // ---------- doors on hinges (the director locks and unlocks them as the story goes)
     let doors = s.group("Doors", Some(diner));
     let locked = |en: &str, ru: &str, swing: f32| json!({ "locked": true, "name_en": en, "name_ru": ru, "angle": 95.0 * swing });
-    s.door("Door entrance", b(6.0, 0.0), true, 1.3, json!({ "locked": false, "name_en": "front door", "name_ru": "входную дверь", "angle": -100.0 }), doors);
-    s.door("Door kitchen", b(6.5, 8.0), true, 1.2, locked("kitchen door", "дверь на кухню", -1.0), doors);
-    s.door("Door office", b(7.0, 9.1), false, 1.1, locked("office door", "дверь конторки", 1.0), doors);
-    s.door("Door storage", b(9.0, 11.0), true, 1.1, locked("storage door", "дверь кладовой", -1.0), doors);
-    s.door("Door ring", b(7.0, 12.1), false, 1.1, locked("back door", "заднюю дверь", 1.0), doors);
-    s.door("Door emergency", b(0.0, 10.0), false, 1.3, locked("emergency exit", "аварийную дверь", -1.0), doors);
-    s.door("Door side yard", b(0.0, 6.5), false, 1.2, locked("yard door", "дверь во двор", -1.0), doors);
+    // "Door office" is the back door of the office block (yard → north corridor, the card
+    // reader is next to it); "Door storage" leads from the storage room into the office; "Door
+    // ring" from the corridor into the storage room.
+    s.door("Door entrance", b(6.03, 0.0), true, 1.45, json!({ "locked": false, "name_en": "front door", "name_ru": "входную дверь", "angle": -100.0 }), doors);
+    s.door("Door kitchen", b(6.5, 8.0), true, 1.15, locked("kitchen door", "дверь на кухню", -1.0), doors);
+    s.door("Door office", b(0.0, 14.0), false, 1.7, locked("back door", "дверь служебного входа", 1.0), doors);
+    s.door("Door storage", b(9.1, 11.0), true, 1.55, locked("office door", "дверь конторки", 1.0), doors);
+    s.door("Door ring", b(7.0, 14.05), false, 1.75, locked("storage door", "дверь кладовой", -1.0), doors);
+    s.door("Door emergency", b(0.0, 10.0), false, 1.4, locked("emergency exit", "аварийную дверь", -1.0), doors);
+    s.door("Door side yard", b(0.0, 6.5), false, 1.3, locked("yard door", "дверь во двор", -1.0), doors);
 
     // ---------- the kitchen extractor fan: blades that turn, and its hum
     let fan = s.ent("Kitchen fan rotor", b(3.0, 12.72) + Vec3::Y * 2.11, 0.0, Vec3::ONE);
@@ -398,7 +411,8 @@ fn main() {
     s.sign("Max load sign", "decals/signs/max_load_4.png", b(6.9, 10.6) + Vec3::Y * 1.75, Vec3::new(0.0, 0.0, 90.0), 0.45);
     let e = s.prop("I_keycard", "keycard_red", b(3.5, 8.45) + Vec3::Y * 1.02, 30.0, 1.8);
     k(&mut s, e, Vec3::new(0.4, 0.3, 0.4));
-    let e = s.prop("I_reader", "card_reader", b(6.88, 8.32) + Vec3::Y * 1.25, -90.0, 2.0);
+    // On the yard side of the back door of the office block.
+    let e = s.prop("I_reader", "card_reader", b(-0.12, 12.75) + Vec3::Y * 1.25, -90.0, 2.0);
     k(&mut s, e, Vec3::new(0.4, 0.5, 0.5));
     let e = s.model("I_ledger", "models/misc/notebook_1.glb", b(9.4, 9.6) + Vec3::Y * 0.8, 10.0, 1.3);
     s.scene.world.get_mut::<MeshRenderer>(e).unwrap().texture = "models/textures/notebook_1.png".into();

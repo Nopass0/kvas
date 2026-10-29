@@ -298,6 +298,25 @@ fn removed_physics_components_and_live_collider_edits_reach_rapier() {
 }
 
 #[test]
+fn a_collider_on_a_child_follows_its_turning_parent() {
+    // A door: the hinge turns, the collider is a child of the hinge.
+    use kvas_engine::physics::Physics;
+    let mut scene = Scene::default();
+    let hinge = scene.spawn("hinge");
+    let leaf = scene.spawn("leaf");
+    scene.world.insert(leaf, Transform { position: Vec3::new(0.5, 1.0, 0.0), ..Default::default() });
+    scene.world.insert(leaf, Collider { size: Vec3::new(1.0, 2.0, 0.1), ..Default::default() });
+    hierarchy::set_parent_local(&mut scene.world, leaf, Some(hinge));
+    let mut physics = Physics::new();
+    physics.step(&mut scene, 1.0 / 60.0);
+    let through = |p: &Physics| p.raycast(Vec3::new(0.5, 1.0, 2.0), Vec3::NEG_Z, 4.0).map(|h| h.entity);
+    assert_eq!(through(&physics), Some(leaf), "closed door blocks");
+    scene.world.get_mut::<Transform>(hinge).unwrap().rotation.y = 90.0;
+    physics.step(&mut scene, 1.0 / 60.0);
+    assert_eq!(through(&physics), None, "the opened door no longer blocks the doorway");
+}
+
+#[test]
 fn mesh_colliders_follow_the_model_triangles() {
     use kvas_engine::physics::Physics;
     let mut scene = Scene::default();

@@ -170,7 +170,9 @@ impl GameDirector {
     /// Puts every object where the story says it is (new game, load, after each change).
     fn apply_world(&mut self, ctx: &mut Ctx, fresh_doors: bool) {
         let s = self.s.clone();
-        let open = [s.talked_anna, s.office_open, s.ledger_read, s.ring_open, s.exit_open, s.ledger_read];
+        // Kitchen, office-block back door (card), storage → office, corridor → storage, emergency
+        // exit, hall → yard.
+        let open = [s.talked_anna, s.office_open, s.office_open, true, s.exit_open, s.talked_anna];
         for (name, unlocked) in DOORS.iter().zip(open) {
             self.door(ctx, name, unlocked, fresh_doors);
         }
@@ -350,7 +352,7 @@ impl GameDirector {
             "I_ledger" if s.ledger_read => t("The ledger", "Журнал"),
             "I_vera_book" if s.ledger_read && !s.vera_book => t("Take the exercise book", "Взять тетрадь"),
             "I_crowbar" if !s.crowbar => t("Take the crowbar", "Взять лом"),
-            "I_yard_locker" if !s.locker_open && s.crowbar => t("Pry off the board", "Снять доску ломом"),
+            "I_yard_locker" if !s.locker_open && s.crowbar && s.ledger_read => t("Pry off the board", "Снять доску ломом"),
             "I_yard_locker" if !s.locker_open => t("The driver's locker. A board is nailed across it.", "Шкафчик водителя. Заколочен доской."),
             "I_key" if s.locker_open && !s.key => t("Take the key and the route sheet", "Взять ключ и путевой лист"),
             "I_doll" if !s.doll && s.key => t("Open the cupboard with the key", "Открыть шкаф ключом"),
@@ -520,7 +522,7 @@ impl GameDirector {
                 self.s.crowbar = true;
                 sfx(ctx, "sfx_latch", 0.5);
             }
-            "I_yard_locker" if self.s.crowbar => {
+            "I_yard_locker" if self.s.crowbar && self.s.ledger_read => {
                 self.s.locker_open = true;
                 sfx(ctx, "sfx_knock", 0.8);
             }

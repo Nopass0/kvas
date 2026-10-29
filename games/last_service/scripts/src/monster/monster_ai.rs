@@ -22,21 +22,24 @@ enum State {
     Fallen,
 }
 
-/// Navigation points (plan coordinates) and the passages between them; a passage can need a door.
-const NODES: [(f32, f32); 22] = [
+/// Navigation points (plan coordinates) and the passages between them, as the building really
+/// is (measured with `examples/wall_scan.rs`); a passage can need a door.
+const NODES: [(f32, f32); 23] = [
     (6.0, 4.0), (2.5, 3.0), (10.5, 2.5), (10.5, 6.5), (6.5, 7.3), // hall 0-4
-    (6.5, 8.8), (3.5, 10.5), (2.0, 9.2), (0.8, 10.0), (4.5, 12.3), // kitchen 5-9
-    (6.3, 9.1), (7.7, 9.1), (9.5, 10.0), // office 10-12
-    (9.0, 10.4), (9.0, 11.7), (10.0, 13.0), // storage 13-15
-    (7.7, 12.1), (6.3, 12.1), // ring 16-17
-    (-0.8, 10.0), (-2.5, 12.0), (-0.8, 6.5), (0.8, 6.5), // yard 18-21
+    (6.5, 8.8), (3.5, 10.5), (2.0, 9.2), (0.8, 10.0), (4.5, 12.0), // kitchen 5-9
+    (-0.8, 10.0), (-2.5, 12.0), (-0.8, 6.5), (0.8, 6.5), (-0.8, 14.0), // yard 10-14 (13 is inside the hall)
+    (0.8, 14.0), (4.0, 14.0), (6.3, 14.05), // north corridor 15-17
+    (7.7, 14.05), (9.5, 13.0), (9.1, 11.7), // storage 18-20
+    (9.1, 10.3), (9.5, 9.5), // office 21-22
 ];
-/// (a, b, door) — door: 0 none, 1 office, 2 storage, 3 ring, 4 emergency, 5 side yard.
-const EDGES: [(usize, usize, u8); 25] = [
-    (0, 1, 0), (0, 2, 0), (0, 4, 0), (2, 3, 0), (3, 4, 0), (1, 4, 0), (4, 5, 0), (5, 6, 0), (6, 7, 0), (6, 8, 0), (6, 9, 0), (5, 10, 0), (10, 11, 1), (11, 12, 0),
-    (12, 13, 0), (13, 14, 2), (14, 15, 0), (15, 16, 0), (16, 17, 3), (17, 9, 0), (17, 6, 0), (8, 18, 4), (18, 19, 0), (19, 20, 0), (20, 21, 5),
+/// (a, b, door) — door: 0 none, 1 back door of the office block, 2 storage → office, 3 corridor →
+/// storage, 4 emergency exit, 5 hall → yard, 6 kitchen.
+const EDGES: [(usize, usize, u8); 27] = [
+    (0, 1, 0), (0, 2, 0), (0, 4, 0), (2, 3, 0), (3, 4, 0), (1, 4, 0), (1, 13, 0), (4, 13, 0), (4, 5, 6), (5, 6, 0), (6, 7, 0), (6, 8, 0), (6, 9, 0), (7, 8, 0),
+    (8, 10, 4), (10, 11, 0), (11, 12, 0), (11, 14, 0), (12, 13, 5), (14, 15, 1), (15, 16, 0), (16, 17, 0), (17, 18, 3),
+    (18, 19, 0), (19, 20, 0), (20, 21, 2), (21, 22, 0),
 ];
-const PATROL: [usize; 16] = [0, 4, 5, 6, 9, 17, 16, 15, 14, 13, 12, 11, 10, 5, 4, 2];
+const PATROL: [usize; 18] = [19, 18, 17, 16, 15, 14, 11, 10, 8, 6, 9, 6, 5, 4, 0, 2, 3, 4];
 const AWAY: Vec3 = Vec3::new(0.0, -50.0, 0.0);
 
 pub struct MonsterAi {
@@ -95,11 +98,9 @@ fn nearest_node(p: Vec3) -> usize {
 
 fn door_open(s: &Story, door: u8) -> bool {
     match door {
-        1 => s.office_open,
-        2 => s.ledger_read,
-        3 => s.ring_open,
+        1 | 2 => s.office_open,
         4 => s.exit_open,
-        5 => s.ledger_read,
+        5 | 6 => s.talked_anna,
         _ => true,
     }
 }

@@ -1,0 +1,64 @@
+# Kvas — build and run with Dev Manager (https://github.com/Nopass0/dev_manager).
+#
+#   dm start                 the editor (release)
+#   dm build                 tests → editor → LAST SERVICE scene → packaged game (dist/)
+#   dm alias <name>          shortcuts below (dmx <name> for short)
+#
+# Third-party assets of LAST SERVICE are not in the repository: `dm alias ls-import` first.
+version: 1
+project_name: kvas
+
+services:
+  editor:
+    path: .
+    language: rust
+    run: "cargo run -p kvas_editor --release"
+    watch: false
+    restart_on_change: false
+    tests:
+      cmd: "cargo test -p kvas_engine"
+      on_change: false
+
+build:
+  output_dir: dist
+  clean: true
+  stages:
+    - name: "1. Engine tests"
+      source: .
+      command: "cargo test -p kvas_engine --lib --test core_api --test skeletal --test ragdoll_ik --test last_service 2>&1"
+      artifacts: []
+
+    - name: "2. Editor (release)"
+      source: .
+      command: "cargo build -p kvas_editor --release 2>&1"
+      artifacts: []
+      depends_on: ["1. Engine tests"]
+
+    - name: "3. LAST SERVICE scene"
+      source: .
+      command: "cargo run -q -p kvas_engine --example make_last_service 2>&1"
+      artifacts: []
+      depends_on: ["2. Editor (release)"]
+
+    - name: "4. LAST SERVICE game"
+      source: .
+      command: "target/release/kvas_editor --build games/last_service 2>&1"
+      artifacts:
+        - "games/last_service/build"
+      dest_subdir: "last_service"
+      depends_on: ["3. LAST SERVICE scene"]
+
+aliases:
+  # Editor and tests.
+  editor: "cargo run -p kvas_editor --release"
+  test: "cargo test --workspace"
+  test-engine: "cargo test -p kvas_engine --no-fail-fast"
+  docs: "npm --prefix docs run docs:dev"
+  # LAST SERVICE.
+  ls-import: "python tools/import_last_service.py && cargo run -q -p kvas_render --example make_item_icons"
+  ls-scene: "cargo run -q -p kvas_engine --example make_last_service"
+  ls-test: "cargo test -p kvas_engine --test last_service --test skeletal --test ragdoll_ik"
+  ls-build: "cargo run -q -p kvas_engine --example make_last_service && cargo run -p kvas_editor --release -- --build games/last_service"
+  ls-run: "dm lua scripts/ls_run.lua"
+  ls-smoke: "dm lua scripts/ls_smoke.lua"
+  ls: "dm alias ls-build && dm lua scripts/ls_run.lua"

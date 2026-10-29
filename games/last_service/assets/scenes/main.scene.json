@@ -685,22 +685,6 @@
               0.0
             ]
           }
-        },
-        {
-          "type": "Collider",
-          "data": {
-            "filter": 4294967295,
-            "friction": 0.6000000238418579,
-            "is_trigger": false,
-            "memberships": 4294967295,
-            "restitution": 0.10000000149011612,
-            "shape": "Mesh",
-            "size": [
-              1.0,
-              1.0,
-              1.0
-            ]
-          }
         }
       ]
     },
@@ -15409,7 +15393,7 @@
           "type": "Transform",
           "data": {
             "position": [
-              2.674999952316284,
+              2.640000104904175,
               1.5499999523162842,
               0.0
             ],
@@ -15419,7 +15403,7 @@
               0.0
             ],
             "scale": [
-              5.349999904632568,
+              5.28000020980835,
               3.0999999046325684,
               0.10000000149011612
             ]
@@ -15505,7 +15489,7 @@
           "type": "Transform",
           "data": {
             "position": [
-              6.0,
+              6.03000020980835,
               2.6500000953674316,
               0.0
             ],
@@ -15515,7 +15499,7 @@
               0.0
             ],
             "scale": [
-              1.3000001907348633,
+              1.5,
               0.8999998569488525,
               0.10000000149011612
             ]
@@ -15601,7 +15585,7 @@
           "type": "Transform",
           "data": {
             "position": [
-              9.324999809265137,
+              9.390000343322754,
               1.5499999523162842,
               0.0
             ],
@@ -15611,7 +15595,7 @@
               0.0
             ],
             "scale": [
-              5.349999904632568,
+              5.21999979019165,
               3.0999999046325684,
               0.10000000149011612
             ]
@@ -15699,7 +15683,7 @@
             "position": [
               12.0,
               1.5499999523162842,
-              -7.5
+              -0.45000001788139343
             ],
             "rotation": [
               -0.0,
@@ -15709,7 +15693,871 @@
             "scale": [
               0.10000000149011612,
               3.0999999046325684,
-              15.0
+              0.9000000357627869
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall east sill"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              12.0,
+              0.5,
+              -1.4500000476837158
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.10000000149011612,
+              1.0,
+              1.0999999046325684
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall east lintel"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              12.0,
+              2.549999952316284,
+              -1.4500000476837158
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.10000000149011612,
+              1.0999999046325684,
+              1.0999999046325684
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall east"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              12.0,
+              1.5499999523162842,
+              -2.0999999046325684
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.10000000149011612,
+              3.0999999046325684,
+              0.20000004768371582
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall east sill"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              12.0,
+              0.5,
+              -2.75
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.10000000149011612,
+              1.0,
+              1.0999999046325684
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall east lintel"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              12.0,
+              2.549999952316284,
+              -2.75
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.10000000149011612,
+              1.0999999046325684,
+              1.0999999046325684
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall east"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              12.0,
+              1.5499999523162842,
+              -3.75
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.10000000149011612,
+              3.0999999046325684,
+              0.8999998569488525
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall east sill"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              12.0,
+              0.5,
+              -4.75
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.10000000149011612,
+              1.0,
+              1.1000003814697266
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall east lintel"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              12.0,
+              2.549999952316284,
+              -4.75
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.10000000149011612,
+              1.0999999046325684,
+              1.1000003814697266
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall east"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              12.0,
+              1.5499999523162842,
+              -10.149999618530273
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.10000000149011612,
+              3.0999999046325684,
+              9.699999809265137
             ]
           }
         },
@@ -15795,7 +16643,7 @@
             "position": [
               0.0,
               1.5499999523162842,
-              -2.950000047683716
+              -2.9124999046325684
             ],
             "rotation": [
               -0.0,
@@ -15805,7 +16653,7 @@
             "scale": [
               0.10000000149011612,
               3.0999999046325684,
-              5.900000095367432
+              5.824999809265137
             ]
           }
         },
@@ -15901,7 +16749,7 @@
             "scale": [
               0.10000000149011612,
               0.8999998569488525,
-              1.1999998092651367
+              1.3500003814697266
             ]
           }
         },
@@ -15987,7 +16835,7 @@
             "position": [
               0.0,
               1.5499999523162842,
-              -7.550000190734863
+              -7.587500095367432
             ],
             "rotation": [
               -0.0,
@@ -15997,7 +16845,7 @@
             "scale": [
               0.10000000149011612,
               3.0999999046325684,
-              0.9000000953674316
+              0.8249998092651367
             ]
           }
         },
@@ -16083,7 +16931,7 @@
             "position": [
               0.0,
               1.5499999523162842,
-              -8.675000190734863
+              -8.637499809265137
             ],
             "rotation": [
               -0.0,
@@ -16093,7 +16941,7 @@
             "scale": [
               0.10000000149011612,
               3.0999999046325684,
-              1.350000023841858
+              1.274999976158142
             ]
           }
         },
@@ -16189,7 +17037,7 @@
             "scale": [
               0.10000000149011612,
               0.8999998569488525,
-              1.3000000715255737
+              1.4499999284744263
             ]
           }
         },
@@ -16275,7 +17123,7 @@
             "position": [
               0.0,
               1.5499999523162842,
-              -11.824999809265137
+              -11.862500190734863
             ],
             "rotation": [
               -0.0,
@@ -16285,7 +17133,295 @@
             "scale": [
               0.10000000149011612,
               3.0999999046325684,
-              2.3499999046325684
+              2.2750000953674316
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall west corridor"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              1.5499999523162842,
+              -13.0625
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.10000000149011612,
+              3.0999999046325684,
+              0.125
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall west corridor lintel"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              2.6500000953674316,
+              -14.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.10000000149011612,
+              0.8999998569488525,
+              1.75
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall west corridor"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              1.5499999523162842,
+              -14.9375
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.10000000149011612,
+              3.0999999046325684,
+              0.125
             ]
           }
         },
@@ -16372,6 +17508,102 @@
               3.5,
               1.5499999523162842,
               -13.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              7.0,
+              3.0999999046325684,
+              0.10000000149011612
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall north corridor"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              3.5,
+              1.5499999523162842,
+              -15.0
             ],
             "rotation": [
               -0.0,
@@ -16563,7 +17795,7 @@
             "position": [
               7.0,
               1.5499999523162842,
-              -14.0
+              -13.074999809265137
             ],
             "rotation": [
               -0.0,
@@ -16573,7 +17805,199 @@
             "scale": [
               0.10000000149011612,
               3.0999999046325684,
-              2.0
+              0.1499999761581421
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall storage west lintel"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              7.0,
+              2.6500000953674316,
+              -14.050000190734863
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.10000000149011612,
+              0.8999998569488525,
+              1.7999999523162842
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall storage west"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              7.0,
+              1.5499999523162842,
+              -14.975000381469727
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.10000000149011612,
+              3.0999999046325684,
+              0.05000007152557373
             ]
           }
         },
@@ -16657,7 +18081,7 @@
           "type": "Transform",
           "data": {
             "position": [
-              2.950000047683716,
+              0.3500000238418579,
               1.5499999523162842,
               -8.0
             ],
@@ -16667,7 +18091,295 @@
               0.0
             ],
             "scale": [
-              5.900000095367432,
+              0.7000000476837158,
+              3.0999999046325684,
+              0.10000000149011612
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall hall-kitchen sill"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              3.1999998092651367,
+              0.5249999761581421,
+              -8.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              5.0,
+              1.0499999523162842,
+              0.10000000149011612
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall hall-kitchen lintel"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              3.1999998092651367,
+              2.549999952316284,
+              -8.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              5.0,
+              1.0999999046325684,
+              0.10000000149011612
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              0.36000001430511475,
+              0.4300000071525574,
+              0.3499999940395355,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "primitive:cube",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.9200000166893005,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "type": "Shape",
+          "data": {
+            "height": 1.0,
+            "kind": "Cube",
+            "radius": 0.5,
+            "radius2": 0.5,
+            "rings": 16,
+            "seed": 1,
+            "segments": 32,
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 215,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Wall hall-kitchen"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              5.800000190734863,
+              1.5499999523162842,
+              -8.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              0.20000028610229492,
               3.0999999046325684,
               0.10000000149011612
             ]
@@ -16947,7 +18659,7 @@
             "position": [
               7.0,
               1.5499999523162842,
-              -8.274999618530273
+              -9.5
             ],
             "rotation": [
               -0.0,
@@ -16957,199 +18669,7 @@
             "scale": [
               0.10000000149011612,
               3.0999999046325684,
-              0.550000011920929
-            ]
-          }
-        },
-        {
-          "type": "MeshRenderer",
-          "data": {
-            "cast_shadows": true,
-            "color": [
-              0.36000001430511475,
-              0.4300000071525574,
-              0.3499999940395355,
-              1.0
-            ],
-            "emissive": 0.0,
-            "mesh": "primitive:cube",
-            "metallic": 0.0,
-            "normal_map": "",
-            "normal_strength": 1.0,
-            "orm_map": "",
-            "reflectivity": 0.0,
-            "roughness": 0.9200000166893005,
-            "shader": "",
-            "texture": "",
-            "tiling": 1.0,
-            "triplanar": 0.0,
-            "user": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        },
-        {
-          "type": "Shape",
-          "data": {
-            "height": 1.0,
-            "kind": "Cube",
-            "radius": 0.5,
-            "radius2": 0.5,
-            "rings": 16,
-            "seed": 1,
-            "segments": 32,
-            "size": [
-              1.0,
-              1.0,
-              1.0
-            ]
-          }
-        },
-        {
-          "type": "Collider",
-          "data": {
-            "filter": 4294967295,
-            "friction": 0.6000000238418579,
-            "is_trigger": false,
-            "memberships": 4294967295,
-            "restitution": 0.10000000149011612,
-            "shape": "Box",
-            "size": [
-              1.0,
-              1.0,
-              1.0
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "parent": 215,
-      "components": [
-        {
-          "type": "Name",
-          "data": "Wall kitchen-office lintel"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              7.0,
-              2.6500000953674316,
-              -9.100000381469727
-            ],
-            "rotation": [
-              -0.0,
-              0.0,
-              0.0
-            ],
-            "scale": [
-              0.10000000149011612,
-              0.8999998569488525,
-              1.1000001430511475
-            ]
-          }
-        },
-        {
-          "type": "MeshRenderer",
-          "data": {
-            "cast_shadows": true,
-            "color": [
-              0.36000001430511475,
-              0.4300000071525574,
-              0.3499999940395355,
-              1.0
-            ],
-            "emissive": 0.0,
-            "mesh": "primitive:cube",
-            "metallic": 0.0,
-            "normal_map": "",
-            "normal_strength": 1.0,
-            "orm_map": "",
-            "reflectivity": 0.0,
-            "roughness": 0.9200000166893005,
-            "shader": "",
-            "texture": "",
-            "tiling": 1.0,
-            "triplanar": 0.0,
-            "user": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        },
-        {
-          "type": "Shape",
-          "data": {
-            "height": 1.0,
-            "kind": "Cube",
-            "radius": 0.5,
-            "radius2": 0.5,
-            "rings": 16,
-            "seed": 1,
-            "segments": 32,
-            "size": [
-              1.0,
-              1.0,
-              1.0
-            ]
-          }
-        },
-        {
-          "type": "Collider",
-          "data": {
-            "filter": 4294967295,
-            "friction": 0.6000000238418579,
-            "is_trigger": false,
-            "memberships": 4294967295,
-            "restitution": 0.10000000149011612,
-            "shape": "Box",
-            "size": [
-              1.0,
-              1.0,
-              1.0
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "parent": 215,
-      "components": [
-        {
-          "type": "Name",
-          "data": "Wall kitchen-office"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              7.0,
-              1.5499999523162842,
-              -10.324999809265137
-            ],
-            "rotation": [
-              -0.0,
-              0.0,
-              0.0
-            ],
-            "scale": [
-              0.10000000149011612,
-              3.0999999046325684,
-              1.3499999046325684
+              3.0
             ]
           }
         },
@@ -17233,7 +18753,7 @@
           "type": "Transform",
           "data": {
             "position": [
-              7.724999904632568,
+              7.650000095367432,
               1.5499999523162842,
               -11.0
             ],
@@ -17243,7 +18763,7 @@
               0.0
             ],
             "scale": [
-              1.4500000476837158,
+              1.2999999523162842,
               3.0999999046325684,
               0.10000000149011612
             ]
@@ -17329,7 +18849,7 @@
           "type": "Transform",
           "data": {
             "position": [
-              9.0,
+              9.100000381469727,
               2.6500000953674316,
               -11.0
             ],
@@ -17339,7 +18859,7 @@
               0.0
             ],
             "scale": [
-              1.0999999046325684,
+              1.5999999046325684,
               0.8999998569488525,
               0.10000000149011612
             ]
@@ -17425,7 +18945,7 @@
           "type": "Transform",
           "data": {
             "position": [
-              10.774999618530273,
+              10.949999809265137,
               1.5499999523162842,
               -11.0
             ],
@@ -17435,7 +18955,7 @@
               0.0
             ],
             "scale": [
-              2.450000047683716,
+              2.1000001430511475,
               3.0999999046325684,
               0.10000000149011612
             ]
@@ -17523,7 +19043,7 @@
             "position": [
               7.0,
               1.5499999523162842,
-              -11.274999618530273
+              -12.0
             ],
             "rotation": [
               -0.0,
@@ -17533,199 +19053,7 @@
             "scale": [
               0.10000000149011612,
               3.0999999046325684,
-              0.550000011920929
-            ]
-          }
-        },
-        {
-          "type": "MeshRenderer",
-          "data": {
-            "cast_shadows": true,
-            "color": [
-              0.36000001430511475,
-              0.4300000071525574,
-              0.3499999940395355,
-              1.0
-            ],
-            "emissive": 0.0,
-            "mesh": "primitive:cube",
-            "metallic": 0.0,
-            "normal_map": "",
-            "normal_strength": 1.0,
-            "orm_map": "",
-            "reflectivity": 0.0,
-            "roughness": 0.9200000166893005,
-            "shader": "",
-            "texture": "",
-            "tiling": 1.0,
-            "triplanar": 0.0,
-            "user": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        },
-        {
-          "type": "Shape",
-          "data": {
-            "height": 1.0,
-            "kind": "Cube",
-            "radius": 0.5,
-            "radius2": 0.5,
-            "rings": 16,
-            "seed": 1,
-            "segments": 32,
-            "size": [
-              1.0,
-              1.0,
-              1.0
-            ]
-          }
-        },
-        {
-          "type": "Collider",
-          "data": {
-            "filter": 4294967295,
-            "friction": 0.6000000238418579,
-            "is_trigger": false,
-            "memberships": 4294967295,
-            "restitution": 0.10000000149011612,
-            "shape": "Box",
-            "size": [
-              1.0,
-              1.0,
-              1.0
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "parent": 215,
-      "components": [
-        {
-          "type": "Name",
-          "data": "Wall kitchen-storage lintel"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              7.0,
-              2.6500000953674316,
-              -12.100000381469727
-            ],
-            "rotation": [
-              -0.0,
-              0.0,
-              0.0
-            ],
-            "scale": [
-              0.10000000149011612,
-              0.8999998569488525,
-              1.1000001430511475
-            ]
-          }
-        },
-        {
-          "type": "MeshRenderer",
-          "data": {
-            "cast_shadows": true,
-            "color": [
-              0.36000001430511475,
-              0.4300000071525574,
-              0.3499999940395355,
-              1.0
-            ],
-            "emissive": 0.0,
-            "mesh": "primitive:cube",
-            "metallic": 0.0,
-            "normal_map": "",
-            "normal_strength": 1.0,
-            "orm_map": "",
-            "reflectivity": 0.0,
-            "roughness": 0.9200000166893005,
-            "shader": "",
-            "texture": "",
-            "tiling": 1.0,
-            "triplanar": 0.0,
-            "user": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        },
-        {
-          "type": "Shape",
-          "data": {
-            "height": 1.0,
-            "kind": "Cube",
-            "radius": 0.5,
-            "radius2": 0.5,
-            "rings": 16,
-            "seed": 1,
-            "segments": 32,
-            "size": [
-              1.0,
-              1.0,
-              1.0
-            ]
-          }
-        },
-        {
-          "type": "Collider",
-          "data": {
-            "filter": 4294967295,
-            "friction": 0.6000000238418579,
-            "is_trigger": false,
-            "memberships": 4294967295,
-            "restitution": 0.10000000149011612,
-            "shape": "Box",
-            "size": [
-              1.0,
-              1.0,
-              1.0
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "parent": 215,
-      "components": [
-        {
-          "type": "Name",
-          "data": "Wall kitchen-storage"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              7.0,
-              1.5499999523162842,
-              -12.824999809265137
-            ],
-            "rotation": [
-              -0.0,
-              0.0,
-              0.0
-            ],
-            "scale": [
-              0.10000000149011612,
-              3.0999999046325684,
-              0.34999990463256836
+              2.0
             ]
           }
         },
@@ -17828,7 +19156,7 @@
       ]
     },
     {
-      "parent": 242,
+      "parent": 256,
       "components": [
         {
           "type": "Name",
@@ -17838,7 +19166,7 @@
           "type": "Transform",
           "data": {
             "position": [
-              5.349999904632568,
+              5.305000305175781,
               0.0,
               0.0
             ],
@@ -17871,7 +19199,7 @@
       ]
     },
     {
-      "parent": 243,
+      "parent": 257,
       "components": [
         {
           "type": "Name",
@@ -17881,7 +19209,7 @@
           "type": "Transform",
           "data": {
             "position": [
-              0.6499999761581421,
+              0.7250000238418579,
               0.0,
               0.0
             ],
@@ -17891,7 +19219,7 @@
               0.0
             ],
             "scale": [
-              1.3541666269302368,
+              1.5104167461395264,
               1.0499999523162842,
               1.0
             ]
@@ -17934,7 +19262,7 @@
       ]
     },
     {
-      "parent": 243,
+      "parent": 257,
       "components": [
         {
           "type": "Name",
@@ -17944,7 +19272,7 @@
           "type": "Transform",
           "data": {
             "position": [
-              0.6499999761581421,
+              0.7250000238418579,
               1.100000023841858,
               0.029999999329447746
             ],
@@ -17970,7 +19298,7 @@
             "restitution": 0.10000000149011612,
             "shape": "Box",
             "size": [
-              1.2999999523162842,
+              1.4500000476837158,
               2.200000047683716,
               0.07999999821186066
             ]
@@ -17979,7 +19307,7 @@
       ]
     },
     {
-      "parent": 242,
+      "parent": 256,
       "components": [
         {
           "type": "Name",
@@ -17989,7 +19317,7 @@
           "type": "Transform",
           "data": {
             "position": [
-              5.900000095367432,
+              5.925000190734863,
               0.0,
               -8.0
             ],
@@ -18022,7 +19350,7 @@
       ]
     },
     {
-      "parent": 246,
+      "parent": 260,
       "components": [
         {
           "type": "Name",
@@ -18032,7 +19360,7 @@
           "type": "Transform",
           "data": {
             "position": [
-              0.6000000238418579,
+              0.574999988079071,
               0.0,
               0.0
             ],
@@ -18042,7 +19370,7 @@
               0.0
             ],
             "scale": [
-              1.2500001192092896,
+              1.1979166269302368,
               1.0499999523162842,
               1.0
             ]
@@ -18085,7 +19413,7 @@
       ]
     },
     {
-      "parent": 246,
+      "parent": 260,
       "components": [
         {
           "type": "Name",
@@ -18095,7 +19423,7 @@
           "type": "Transform",
           "data": {
             "position": [
-              0.6000000238418579,
+              0.574999988079071,
               1.100000023841858,
               0.029999999329447746
             ],
@@ -18121,7 +19449,7 @@
             "restitution": 0.10000000149011612,
             "shape": "Box",
             "size": [
-              1.2000000476837158,
+              1.149999976158142,
               2.200000047683716,
               0.07999999821186066
             ]
@@ -18130,7 +19458,7 @@
       ]
     },
     {
-      "parent": 242,
+      "parent": 256,
       "components": [
         {
           "type": "Name",
@@ -18140,311 +19468,9 @@
           "type": "Transform",
           "data": {
             "position": [
-              7.0,
-              0.0,
-              -8.550000190734863
-            ],
-            "rotation": [
-              -0.0,
-              89.99998474121094,
-              0.0
-            ],
-            "scale": [
-              0.9999999403953552,
-              1.0,
-              0.9999999403953552
-            ]
-          }
-        },
-        {
-          "type": "Scripts",
-          "data": [
-            {
-              "name": "Door",
-              "props": {
-                "angle": 95.0,
-                "locked": true,
-                "name_en": "office door",
-                "name_ru": "дверь конторки"
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "parent": 249,
-      "components": [
-        {
-          "type": "Name",
-          "data": "Door office leaf"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              0.550000011920929,
-              0.0,
-              0.0
-            ],
-            "rotation": [
               0.0,
               0.0,
-              0.0
-            ],
-            "scale": [
-              1.1458333730697632,
-              1.0499999523162842,
-              1.0
-            ]
-          }
-        },
-        {
-          "type": "MeshRenderer",
-          "data": {
-            "cast_shadows": true,
-            "color": [
-              1.0,
-              1.0,
-              1.0,
-              1.0
-            ],
-            "emissive": 0.0,
-            "mesh": "models/service_door_01.glb",
-            "metallic": 0.0,
-            "normal_map": "",
-            "normal_strength": 1.0,
-            "orm_map": "",
-            "reflectivity": 0.0,
-            "roughness": 0.800000011920929,
-            "shader": "",
-            "texture": "",
-            "tiling": 1.0,
-            "triplanar": 0.0,
-            "user": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "parent": 249,
-      "components": [
-        {
-          "type": "Name",
-          "data": "Door office collider"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              0.550000011920929,
-              1.100000023841858,
-              0.029999999329447746
-            ],
-            "rotation": [
-              0.0,
-              0.0,
-              0.0
-            ],
-            "scale": [
-              1.0,
-              1.0,
-              1.0
-            ]
-          }
-        },
-        {
-          "type": "Collider",
-          "data": {
-            "filter": 4294967295,
-            "friction": 0.6000000238418579,
-            "is_trigger": false,
-            "memberships": 4294967295,
-            "restitution": 0.10000000149011612,
-            "shape": "Box",
-            "size": [
-              1.100000023841858,
-              2.200000047683716,
-              0.07999999821186066
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "parent": 242,
-      "components": [
-        {
-          "type": "Name",
-          "data": "Door storage"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              8.449999809265137,
-              0.0,
-              -11.0
-            ],
-            "rotation": [
-              -0.0,
-              0.0,
-              0.0
-            ],
-            "scale": [
-              1.0,
-              1.0,
-              1.0
-            ]
-          }
-        },
-        {
-          "type": "Scripts",
-          "data": [
-            {
-              "name": "Door",
-              "props": {
-                "angle": -95.0,
-                "locked": true,
-                "name_en": "storage door",
-                "name_ru": "дверь кладовой"
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "parent": 252,
-      "components": [
-        {
-          "type": "Name",
-          "data": "Door storage leaf"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              0.550000011920929,
-              0.0,
-              0.0
-            ],
-            "rotation": [
-              0.0,
-              0.0,
-              0.0
-            ],
-            "scale": [
-              1.1458333730697632,
-              1.0499999523162842,
-              1.0
-            ]
-          }
-        },
-        {
-          "type": "MeshRenderer",
-          "data": {
-            "cast_shadows": true,
-            "color": [
-              1.0,
-              1.0,
-              1.0,
-              1.0
-            ],
-            "emissive": 0.0,
-            "mesh": "models/service_door_01.glb",
-            "metallic": 0.0,
-            "normal_map": "",
-            "normal_strength": 1.0,
-            "orm_map": "",
-            "reflectivity": 0.0,
-            "roughness": 0.800000011920929,
-            "shader": "",
-            "texture": "",
-            "tiling": 1.0,
-            "triplanar": 0.0,
-            "user": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "parent": 252,
-      "components": [
-        {
-          "type": "Name",
-          "data": "Door storage collider"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              0.550000011920929,
-              1.100000023841858,
-              0.029999999329447746
-            ],
-            "rotation": [
-              0.0,
-              0.0,
-              0.0
-            ],
-            "scale": [
-              1.0,
-              1.0,
-              1.0
-            ]
-          }
-        },
-        {
-          "type": "Collider",
-          "data": {
-            "filter": 4294967295,
-            "friction": 0.6000000238418579,
-            "is_trigger": false,
-            "memberships": 4294967295,
-            "restitution": 0.10000000149011612,
-            "shape": "Box",
-            "size": [
-              1.100000023841858,
-              2.200000047683716,
-              0.07999999821186066
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "parent": 242,
-      "components": [
-        {
-          "type": "Name",
-          "data": "Door ring"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              7.0,
-              0.0,
-              -11.550000190734863
+              -13.149999618530273
             ],
             "rotation": [
               -0.0,
@@ -18467,7 +19493,7 @@
                 "angle": 95.0,
                 "locked": true,
                 "name_en": "back door",
-                "name_ru": "заднюю дверь"
+                "name_ru": "дверь служебного входа"
               }
             }
           ]
@@ -18475,17 +19501,17 @@
       ]
     },
     {
-      "parent": 255,
+      "parent": 263,
       "components": [
         {
           "type": "Name",
-          "data": "Door ring leaf"
+          "data": "Door office leaf"
         },
         {
           "type": "Transform",
           "data": {
             "position": [
-              0.550000011920929,
+              0.8500000238418579,
               0.0,
               0.0
             ],
@@ -18495,7 +19521,7 @@
               0.0
             ],
             "scale": [
-              1.1458333730697632,
+              1.7708333730697632,
               1.0499999523162842,
               1.0
             ]
@@ -18538,17 +19564,17 @@
       ]
     },
     {
-      "parent": 255,
+      "parent": 263,
       "components": [
         {
           "type": "Name",
-          "data": "Door ring collider"
+          "data": "Door office collider"
         },
         {
           "type": "Transform",
           "data": {
             "position": [
-              0.550000011920929,
+              0.8500000238418579,
               1.100000023841858,
               0.029999999329447746
             ],
@@ -18574,7 +19600,7 @@
             "restitution": 0.10000000149011612,
             "shape": "Box",
             "size": [
-              1.100000023841858,
+              1.7000000476837158,
               2.200000047683716,
               0.07999999821186066
             ]
@@ -18583,7 +19609,309 @@
       ]
     },
     {
-      "parent": 242,
+      "parent": 256,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Door storage"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              8.325000762939453,
+              0.0,
+              -11.0
+            ],
+            "rotation": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Scripts",
+          "data": [
+            {
+              "name": "Door",
+              "props": {
+                "angle": 95.0,
+                "locked": true,
+                "name_en": "office door",
+                "name_ru": "дверь конторки"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "parent": 266,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Door storage leaf"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.7749999761581421,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.6145833730697632,
+              1.0499999523162842,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "models/service_door_01.glb",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.800000011920929,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 266,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Door storage collider"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.7749999761581421,
+              1.100000023841858,
+              0.029999999329447746
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.5499999523162842,
+              2.200000047683716,
+              0.07999999821186066
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 256,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Door ring"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              7.0,
+              0.0,
+              -13.175000190734863
+            ],
+            "rotation": [
+              -0.0,
+              89.99998474121094,
+              0.0
+            ],
+            "scale": [
+              0.9999999403953552,
+              1.0,
+              0.9999999403953552
+            ]
+          }
+        },
+        {
+          "type": "Scripts",
+          "data": [
+            {
+              "name": "Door",
+              "props": {
+                "angle": -95.0,
+                "locked": true,
+                "name_en": "storage door",
+                "name_ru": "дверь кладовой"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "parent": 269,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Door ring leaf"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.875,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.8229167461395264,
+              1.0499999523162842,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "models/service_door_01.glb",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.800000011920929,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 269,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Door ring collider"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.875,
+              1.100000023841858,
+              0.029999999329447746
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.75,
+              2.200000047683716,
+              0.07999999821186066
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 256,
       "components": [
         {
           "type": "Name",
@@ -18595,7 +19923,7 @@
             "position": [
               0.0,
               0.0,
-              -9.350000381469727
+              -9.300000190734863
             ],
             "rotation": [
               -0.0,
@@ -18626,11 +19954,162 @@
       ]
     },
     {
-      "parent": 258,
+      "parent": 272,
       "components": [
         {
           "type": "Name",
           "data": "Door emergency leaf"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.699999988079071,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.4583333730697632,
+              1.0499999523162842,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "MeshRenderer",
+          "data": {
+            "cast_shadows": true,
+            "color": [
+              1.0,
+              1.0,
+              1.0,
+              1.0
+            ],
+            "emissive": 0.0,
+            "mesh": "models/service_door_01.glb",
+            "metallic": 0.0,
+            "normal_map": "",
+            "normal_strength": 1.0,
+            "orm_map": "",
+            "reflectivity": 0.0,
+            "roughness": 0.800000011920929,
+            "shader": "",
+            "texture": "",
+            "tiling": 1.0,
+            "triplanar": 0.0,
+            "user": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 272,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Door emergency collider"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.699999988079071,
+              1.100000023841858,
+              0.029999999329447746
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        },
+        {
+          "type": "Collider",
+          "data": {
+            "filter": 4294967295,
+            "friction": 0.6000000238418579,
+            "is_trigger": false,
+            "memberships": 4294967295,
+            "restitution": 0.10000000149011612,
+            "shape": "Box",
+            "size": [
+              1.399999976158142,
+              2.200000047683716,
+              0.07999999821186066
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "parent": 256,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Door side yard"
+        },
+        {
+          "type": "Transform",
+          "data": {
+            "position": [
+              0.0,
+              0.0,
+              -5.849999904632568
+            ],
+            "rotation": [
+              -0.0,
+              89.99998474121094,
+              0.0
+            ],
+            "scale": [
+              0.9999999403953552,
+              1.0,
+              0.9999999403953552
+            ]
+          }
+        },
+        {
+          "type": "Scripts",
+          "data": [
+            {
+              "name": "Door",
+              "props": {
+                "angle": -95.0,
+                "locked": true,
+                "name_en": "yard door",
+                "name_ru": "дверь во двор"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "parent": 275,
+      "components": [
+        {
+          "type": "Name",
+          "data": "Door side yard leaf"
         },
         {
           "type": "Transform",
@@ -18689,11 +20168,11 @@
       ]
     },
     {
-      "parent": 258,
+      "parent": 275,
       "components": [
         {
           "type": "Name",
-          "data": "Door emergency collider"
+          "data": "Door side yard collider"
         },
         {
           "type": "Transform",
@@ -18726,157 +20205,6 @@
             "shape": "Box",
             "size": [
               1.2999999523162842,
-              2.200000047683716,
-              0.07999999821186066
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "parent": 242,
-      "components": [
-        {
-          "type": "Name",
-          "data": "Door side yard"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              0.0,
-              0.0,
-              -5.900000095367432
-            ],
-            "rotation": [
-              -0.0,
-              89.99998474121094,
-              0.0
-            ],
-            "scale": [
-              0.9999999403953552,
-              1.0,
-              0.9999999403953552
-            ]
-          }
-        },
-        {
-          "type": "Scripts",
-          "data": [
-            {
-              "name": "Door",
-              "props": {
-                "angle": -95.0,
-                "locked": true,
-                "name_en": "yard door",
-                "name_ru": "дверь во двор"
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "parent": 261,
-      "components": [
-        {
-          "type": "Name",
-          "data": "Door side yard leaf"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              0.6000000238418579,
-              0.0,
-              0.0
-            ],
-            "rotation": [
-              0.0,
-              0.0,
-              0.0
-            ],
-            "scale": [
-              1.2500001192092896,
-              1.0499999523162842,
-              1.0
-            ]
-          }
-        },
-        {
-          "type": "MeshRenderer",
-          "data": {
-            "cast_shadows": true,
-            "color": [
-              1.0,
-              1.0,
-              1.0,
-              1.0
-            ],
-            "emissive": 0.0,
-            "mesh": "models/service_door_01.glb",
-            "metallic": 0.0,
-            "normal_map": "",
-            "normal_strength": 1.0,
-            "orm_map": "",
-            "reflectivity": 0.0,
-            "roughness": 0.800000011920929,
-            "shader": "",
-            "texture": "",
-            "tiling": 1.0,
-            "triplanar": 0.0,
-            "user": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "parent": 261,
-      "components": [
-        {
-          "type": "Name",
-          "data": "Door side yard collider"
-        },
-        {
-          "type": "Transform",
-          "data": {
-            "position": [
-              0.6000000238418579,
-              1.100000023841858,
-              0.029999999329447746
-            ],
-            "rotation": [
-              0.0,
-              0.0,
-              0.0
-            ],
-            "scale": [
-              1.0,
-              1.0,
-              1.0
-            ]
-          }
-        },
-        {
-          "type": "Collider",
-          "data": {
-            "filter": 4294967295,
-            "friction": 0.6000000238418579,
-            "is_trigger": false,
-            "memberships": 4294967295,
-            "restitution": 0.10000000149011612,
-            "shape": "Box",
-            "size": [
-              1.2000000476837158,
               2.200000047683716,
               0.07999999821186066
             ]
@@ -18927,7 +20255,7 @@
       ]
     },
     {
-      "parent": 264,
+      "parent": 278,
       "components": [
         {
           "type": "Name",
@@ -19007,7 +20335,7 @@
       ]
     },
     {
-      "parent": 264,
+      "parent": 278,
       "components": [
         {
           "type": "Name",
@@ -19087,7 +20415,7 @@
       ]
     },
     {
-      "parent": 264,
+      "parent": 278,
       "components": [
         {
           "type": "Name",
@@ -19167,7 +20495,7 @@
       ]
     },
     {
-      "parent": 264,
+      "parent": 278,
       "components": [
         {
           "type": "Name",
@@ -19247,7 +20575,7 @@
       ]
     },
     {
-      "parent": 264,
+      "parent": 278,
       "components": [
         {
           "type": "Name",
@@ -19450,7 +20778,7 @@
       ]
     },
     {
-      "parent": 271,
+      "parent": 285,
       "components": [
         {
           "type": "Name",
@@ -19563,7 +20891,7 @@
       ]
     },
     {
-      "parent": 272,
+      "parent": 286,
       "components": [
         {
           "type": "Name",
@@ -20731,7 +22059,7 @@
       ]
     },
     {
-      "parent": 290,
+      "parent": 304,
       "components": [
         {
           "type": "Name",
@@ -20845,7 +22173,7 @@
       ]
     },
     {
-      "parent": 292,
+      "parent": 306,
       "components": [
         {
           "type": "Name",
@@ -20959,7 +22287,7 @@
       ]
     },
     {
-      "parent": 294,
+      "parent": 308,
       "components": [
         {
           "type": "Name",
@@ -21039,7 +22367,7 @@
       ]
     },
     {
-      "parent": 296,
+      "parent": 310,
       "components": [
         {
           "type": "Name",
@@ -21153,7 +22481,7 @@
       ]
     },
     {
-      "parent": 298,
+      "parent": 312,
       "components": [
         {
           "type": "Name",
@@ -21267,7 +22595,7 @@
       ]
     },
     {
-      "parent": 300,
+      "parent": 314,
       "components": [
         {
           "type": "Name",
@@ -21381,7 +22709,7 @@
       ]
     },
     {
-      "parent": 302,
+      "parent": 316,
       "components": [
         {
           "type": "Name",
@@ -21461,7 +22789,7 @@
       ]
     },
     {
-      "parent": 304,
+      "parent": 318,
       "components": [
         {
           "type": "Name",
@@ -21575,7 +22903,7 @@
       ]
     },
     {
-      "parent": 306,
+      "parent": 320,
       "components": [
         {
           "type": "Name",
@@ -21689,7 +23017,7 @@
       ]
     },
     {
-      "parent": 308,
+      "parent": 322,
       "components": [
         {
           "type": "Name",
@@ -21803,7 +23131,7 @@
       ]
     },
     {
-      "parent": 310,
+      "parent": 324,
       "components": [
         {
           "type": "Name",
@@ -21883,7 +23211,7 @@
       ]
     },
     {
-      "parent": 312,
+      "parent": 326,
       "components": [
         {
           "type": "Name",
@@ -21963,7 +23291,7 @@
       ]
     },
     {
-      "parent": 314,
+      "parent": 328,
       "components": [
         {
           "type": "Name",
@@ -22043,7 +23371,7 @@
       ]
     },
     {
-      "parent": 316,
+      "parent": 330,
       "components": [
         {
           "type": "Name",
@@ -22123,7 +23451,7 @@
       ]
     },
     {
-      "parent": 318,
+      "parent": 332,
       "components": [
         {
           "type": "Name",
@@ -22399,7 +23727,7 @@
       ]
     },
     {
-      "parent": 323,
+      "parent": 337,
       "components": [
         {
           "type": "Name",
@@ -22513,7 +23841,7 @@
       ]
     },
     {
-      "parent": 325,
+      "parent": 339,
       "components": [
         {
           "type": "Name",
@@ -22681,7 +24009,7 @@
       ]
     },
     {
-      "parent": 328,
+      "parent": 342,
       "components": [
         {
           "type": "Name",
@@ -22742,9 +24070,9 @@
           "type": "Transform",
           "data": {
             "position": [
-              6.880000114440918,
+              -0.11999999731779099,
               1.25,
-              -8.319999694824219
+              -12.75
             ],
             "rotation": [
               0.0,
@@ -22795,7 +24123,7 @@
       ]
     },
     {
-      "parent": 330,
+      "parent": 344,
       "components": [
         {
           "type": "Name",
@@ -22909,7 +24237,7 @@
       ]
     },
     {
-      "parent": 332,
+      "parent": 346,
       "components": [
         {
           "type": "Name",
@@ -23023,7 +24351,7 @@
       ]
     },
     {
-      "parent": 334,
+      "parent": 348,
       "components": [
         {
           "type": "Name",
@@ -23315,7 +24643,7 @@
       ]
     },
     {
-      "parent": 339,
+      "parent": 353,
       "components": [
         {
           "type": "Name",
@@ -23546,7 +24874,7 @@
       ]
     },
     {
-      "parent": 343,
+      "parent": 357,
       "components": [
         {
           "type": "Name",
@@ -23689,7 +25017,7 @@
       ]
     },
     {
-      "parent": 346,
+      "parent": 360,
       "components": [
         {
           "type": "Name",
@@ -23937,7 +25265,7 @@
       ]
     },
     {
-      "parent": 350,
+      "parent": 364,
       "components": [
         {
           "type": "Name",
@@ -24051,7 +25379,7 @@
       ]
     },
     {
-      "parent": 352,
+      "parent": 366,
       "components": [
         {
           "type": "Name",
@@ -24219,7 +25547,7 @@
       ]
     },
     {
-      "parent": 355,
+      "parent": 369,
       "components": [
         {
           "type": "Name",
@@ -24425,7 +25753,7 @@
       ]
     },
     {
-      "parent": 359,
+      "parent": 373,
       "components": [
         {
           "type": "Name",

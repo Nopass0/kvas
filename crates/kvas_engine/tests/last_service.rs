@@ -54,4 +54,34 @@ fn last_service_story_can_be_finished() {
     let text = log.join("\n");
     assert!(text.contains("AUTOTEST PASS"), "{text}");
     assert!(!text.contains("panicked"), "{text}");
+
+    // At the end every door is unlocked; opened, a doorway must be free to walk through (the
+    // production mesh had closed leaves in them that stood in the way as walls).
+    for e in rt.scene.world.entities() {
+        if let Some(s) = rt.scene.world.get_mut::<kvas_engine::components::Scripts>(e) {
+            if let Some(slot) = s.0.iter_mut().find(|s| s.name == "Door") {
+                slot.props.insert("locked".into(), false.into());
+                slot.props.insert("open".into(), true.into());
+            }
+        }
+    }
+    for _ in 0..120 {
+        rt.tick(1.0 / 30.0);
+    }
+    use glam::Vec3;
+    let mut blocked = Vec::new();
+    // (doorway, centre x, z, the wall runs along x)
+    for (name, x, z, along_x) in [("entrance", 6.0, 0.0, true), ("kitchen", 6.5, -8.0, true), ("office", 9.1, -11.0, true), ("storage", 7.0, -14.05, false), ("back", 0.0, -14.0, false), ("emergency", 0.0, -10.0, false), ("yard", 0.0, -6.5, false)] {
+        let across = if along_x { Vec3::Z } else { Vec3::X };
+        for h in [0.4f32, 1.2, 1.8] {
+            let from = Vec3::new(x, h, z) - across * 0.9;
+            let hit = rt.physics.raycast(from, across, 1.8);
+            let what = hit.map(|hit| (kvas_engine::hierarchy::name_of(&rt.scene.world, hit.entity).to_string(), hit.point));
+            if hit.is_some() {
+                blocked.push(format!("the {name} doorway is blocked at {h} m by {what:?}"));
+            }
+        }
+    }
+    assert!(blocked.is_empty(), "{}", blocked.join("
+"));
 }

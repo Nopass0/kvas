@@ -21,6 +21,25 @@ ZONES = [
     ('Yard', -9.0, -0.4, -20.0, 0.0),
     ('Road', -40.0, 60.0, 0.4, 14.0),
 ]
+# Doorways of the diner (engine x, z, width, along x?). The production mesh has closed door
+# leaves in them; the game has its own hinged doors there, so anything that lies wholly inside a
+# doorway (leaf, handle, glass pane) is cut out, or it would stand in the way as a wall.
+DOORWAYS = [
+    (6.03, 0.0, 1.5, True), (6.5, -8.0, 1.2, True), (9.1, -11.0, 1.6, True), (7.0, -14.05, 1.8, False),
+    (0.0, -14.0, 1.75, False), (0.0, -10.0, 1.45, False), (0.0, -6.5, 1.35, False),
+]
+
+
+def in_doorway(lo, hi):
+    for x, z, w, along_x in DOORWAYS:
+        # Low things right behind a doorway (a bin, a box) block it too.
+        half_w, half_d = w * 0.5 + 0.25, (0.75 if hi[1] < 1.3 else 0.4)
+        (hx, hz) = (half_w, half_d) if along_x else (half_d, half_w)
+        if lo[0] >= x - hx and hi[0] <= x + hx and lo[2] >= z - hz and hi[2] <= z + hz and hi[1] <= 2.6 and lo[1] >= -0.05:
+            return True
+    return False
+
+
 # Materials whose pieces are single movable objects (furniture).
 PIECES = {'chair', 'table.001'}
 # Leftovers from figures and duplicated props (see clean_world_glb.py).
@@ -214,6 +233,7 @@ def main():
     names = [m.get('name', '') for m in doc.get('materials', [])]
     writer = Writer(doc, binary)
     index = []
+    cut = [0]
     for mesh in doc['meshes']:
         for prim in mesh['primitives']:
             mat = prim.get('material')
@@ -246,6 +266,9 @@ def main():
                 continue
             by_zone = {}
             for piece, (lo, hi) in zip(pieces, boxes):
+                if in_doorway(lo, hi):
+                    cut[0] += 1
+                    continue
                 by_zone.setdefault(zone_of((lo + hi) / 2), []).extend(piece)
             for zone, group in by_zone.items():
                 sub = tris[group]
@@ -257,7 +280,7 @@ def main():
                 index.append({'file': f'world/parts/{file}', 'kind': 'zone', 'material': mat_name, 'zone': zone,
                               'position': [0, 0, 0], 'size': (p.max(axis=0) - p.min(axis=0)).tolist(), 'triangles': int(len(group))})
     json.dump(index, open(os.path.join(out_dir, 'index.json'), 'w'), indent=1)
-    print(f'{len(index)} parts -> {out_dir}')
+    print(f'{len(index)} parts -> {out_dir} ({cut[0]} pieces cut out of doorways)')
 
 
 if __name__ == '__main__':
