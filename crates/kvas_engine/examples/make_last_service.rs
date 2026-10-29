@@ -336,13 +336,20 @@ fn main() {
     s.scene.world.insert(moon, Light { color: [0.45, 0.6, 0.65, 1.0], intensity: 0.22, ..Default::default() });
 
     // ---------- people
-    let anna = s.model("Anna", "models/characters/female_secretary.fbx", b(2.6, 7.75), 0.0, 1.0);
+    // On the staff step behind the counter.
+    let anna = s.model("Anna", "models/characters/female_secretary.fbx", b(1.5, 7.72) + Vec3::Y * 0.12, 0.0, 1.0);
     s.scene.world.get_mut::<MeshRenderer>(anna).unwrap().texture = "models/characters/secretary_tex.png".into();
     let pavel = s.model("Pavel", "models/characters/male_casual.fbx", b(-4.0, 16.5), 0.0, 1.0);
     s.scene.world.get_mut::<MeshRenderer>(pavel).unwrap().texture = "models/characters/man_tex.png".into();
     let monster = s.model("Counter", "models/characters/MonsterPSX.fbx", Vec3::new(0.0, -50.0, 0.0), 0.0, 1.15);
     s.scene.world.get_mut::<MeshRenderer>(monster).unwrap().texture = "models/characters/MonsterPSX_Diffuse.png".into();
     s.scripts(monster, vec![script("MonsterAi", json!({}))]);
+    // Skinned and animated: the monster's own clips, procedural ones for Anna and Pavel.
+    s.scene.world.insert(monster, Animator { clip: "Idle_Watchful".into(), fade: 0.3, ..Default::default() });
+    s.scene.world.insert(anna, Animator { clip: "Wipe".into(), fade: 0.4, ..Default::default() });
+    s.scripts(anna, vec![script("Npc", json!({ "speaker": "Anna", "work_clip": "Wipe", "notice": 2.6 }))]);
+    s.scene.world.insert(pavel, Animator { clip: "Look".into(), fade: 0.4, ..Default::default() });
+    s.scripts(pavel, vec![script("Npc", json!({ "speaker": "Pavel", "work_clip": "Look", "notice": 4.0 }))]);
     let eye_glow = s.light("Counter glow", Vec3::new(0.0, -50.0, 0.0), [1.0, 0.25, 0.15, 1.0], 0.0, 3.5);
     s.scene.world.insert(eye_glow, tags("monster_light"));
 
@@ -354,7 +361,7 @@ fn main() {
     k(&mut s, e, Vec3::new(0.45, 0.3, 0.45));
     let e = s.prop("I_note_N02", "note", b(4.2, 8.45) + Vec3::Y * 1.0, -20.0, 1.4);
     k(&mut s, e, Vec3::new(0.45, 0.3, 0.45));
-    let e = s.model("I_anna", "", b(2.6, 7.75), 0.0, 1.0);
+    let e = s.model("I_anna", "", b(1.5, 7.72), 0.0, 1.0);
     s.scene.world.remove::<MeshRenderer>(e);
     k(&mut s, e, Vec3::new(1.0, 1.8, 1.0));
     for i in 0..3 {

@@ -244,4 +244,12 @@ pub const RU_V4: &[(&str, &str)] = &[
     ("antialias", "сглаживание (FXAA)"),
     ("Scene loaded", "Сцена загружена"),
     ("Built-in materials and shaders added to the project: {}", "Встроенные материалы и шейдеры добавлены в проект: {}"),
+    ("Animator", "Аниматор"),
+    ("The model has no skeleton (FBX or glTF with bones needed).", "У модели нет скелета (нужен FBX или glTF с костями)."),
+    ("(first clip)", "(первый клип)"),
+    ("Speed", "Скорость"),
+    ("Fade", "Переход"),
+    ("Loop", "Повтор"),
+    ("Playing", "Играет"),
+    ("Full documentation (F1)", "Полная справка (F1)"),
 ];

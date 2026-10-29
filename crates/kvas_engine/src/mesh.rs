@@ -509,7 +509,7 @@ fn merge_parts(parts: Vec<MeshPart>) -> Vec<MeshPart> {
 }
 
 /// The image of a glTF material: its base-colour texture (or a flat colour) times the colour factor.
-fn material_albedo(images: &[Option<std::sync::Arc<Albedo>>], pbr: &gltf::material::PbrMetallicRoughness) -> Option<std::sync::Arc<Albedo>> {
+pub(crate) fn material_albedo(images: &[Option<std::sync::Arc<Albedo>>], pbr: &gltf::material::PbrMetallicRoughness) -> Option<std::sync::Arc<Albedo>> {
     let factor = pbr.base_color_factor();
     let white = factor.iter().take(3).all(|v| (v - 1.0).abs() < 0.01);
     let texture = pbr.base_color_texture().and_then(|info| images.get(info.texture().source().index()).cloned().flatten());
@@ -895,11 +895,24 @@ fn decode_uri_path(uri: &str) -> Result<String, String> {
 
 /// glTF documents that reference files (`Textures/colormap.png`) cannot go through `import_slice`;
 /// those buffers and images are read through `Assets`, relative to the model's folder.
-struct ImportedGltf {
-    document: gltf::Document,
-    buffers: Vec<gltf::buffer::Data>,
-    images: Vec<Option<std::sync::Arc<Albedo>>>,
-    dependencies: Vec<String>,
+pub(crate) struct ImportedGltf {
+    pub(crate) document: gltf::Document,
+    pub(crate) buffers: Vec<gltf::buffer::Data>,
+    pub(crate) images: Vec<Option<std::sync::Arc<Albedo>>>,
+    pub(crate) dependencies: Vec<String>,
+}
+
+/// Parses a glTF/GLB with its buffers and images (embedded or next to the file).
+pub(crate) fn import_gltf(assets: &Assets, path: &str, bytes: &[u8]) -> Result<ImportedGltf, String> {
+    match gltf::import_slice(bytes) {
+        Ok((document, buffers, images)) => Ok(ImportedGltf {
+            document,
+            buffers,
+            images: images.iter().map(|i| to_albedo(i).map(std::sync::Arc::new)).collect(),
+            dependencies: Vec::new(),
+        }),
+        Err(_) => load_external(assets, path, bytes),
+    }
 }
 
 fn load_external(assets: &Assets, path: &str, bytes: &[u8]) -> Result<ImportedGltf, String> {

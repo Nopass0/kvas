@@ -159,6 +159,23 @@ impl MonsterAi {
         }
     }
 
+    /// Its body follows what it does: the clips of the model (`MonsterPSX.fbx`). Walking and
+    /// running play at the speed it really moves, so the feet do not slide.
+    fn animate(&mut self, ctx: &mut Ctx, moving: bool, speed: f32) {
+        let (clip, rate) = match self.state {
+            State::Glimpse => ("Scream", 1.0),
+            State::Chase if moving => ("Run_Frantic", (speed / 3.1).clamp(0.6, 1.6)),
+            State::Patrol | State::Search | State::Follow if moving => ("Walk_Nervous", (speed / 1.3).clamp(0.6, 2.0)),
+            _ => ("Idle_Watchful", 1.0),
+        };
+        let me = ctx.entity;
+        ctx.play_animation(me, clip);
+        if let Some(a) = ctx.get_mut::<Animator>() {
+            a.looping = true;
+            a.speed = rate;
+        }
+    }
+
     /// Places it as the story says (new game, load, story turns).
     fn reset(&mut self, ctx: &Ctx) {
         let s = story(ctx);
@@ -256,6 +273,7 @@ impl Script for MonsterAi {
             return;
         }
         if self.state == State::Glimpse {
+            self.animate(ctx, false, 0.0);
             self.timer -= dt;
             self.yaw += dt * 20.0;
             if self.timer <= 0.0 {
@@ -370,15 +388,8 @@ impl Script for MonsterAi {
             }
         }
         self.show(ctx);
-        // Lurching, a little out of step with itself.
-        let t = ctx.elapsed();
-        let twitch = if (t * 1.7).sin() > 0.97 { 6.0 } else { 0.0 };
-        {
-            let tr = ctx.transform_mut();
-            tr.rotation.x = (t * 2.3).sin() * 3.0 + twitch;
-            tr.rotation.z = (t * 1.6).sin() * 4.0;
-            tr.position.y = (t * 4.6).sin().abs() * 0.04;
-        }
+        let moving = !self.path.is_empty();
+        self.animate(ctx, moving, speed);
         let caught = dist < 1.05 && matches!(self.state, State::Chase | State::Follow) && !settings(ctx).no_chase;
         if caught {
             // Right in front of the eyes.
@@ -386,6 +397,12 @@ impl Script for MonsterAi {
             self.pos = (eye + look_dir(yaw, 0.0) * 0.75).with_y(0.0);
             self.yaw = yaw + 180.0;
             self.show(ctx);
+            let me = ctx.entity;
+            ctx.play_animation(me, "Attack_Lunge");
+            if let Some(a) = ctx.get_mut::<Animator>() {
+                a.looping = false;
+                a.speed = 1.0;
+            }
             let _ = ctx.emit("ls.caught", serde_json::Value::Null);
         }
     }

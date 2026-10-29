@@ -169,6 +169,8 @@ struct DynMesh {
     index_count: u32,
     version: u64,
     bounds: (Vec3, Vec3),
+    /// The geometry's own image (a skinned character's texture) and its material group.
+    albedo: Option<(std::sync::Arc<kvas_engine::mesh::Albedo>, wgpu::BindGroup)>,
 }
 
 struct Targets {
@@ -1406,8 +1408,25 @@ impl Renderer {
                     index_count: 0,
                     version: 0,
                     bounds: (Vec3::ZERO, Vec3::ZERO),
+                    albedo: None,
                 },
             );
+        }
+        // Skinned characters carry their model's texture; upload it once, not every frame.
+        let image = data.albedo.clone();
+        let stale = match (&image, self.dynamic.get(key).and_then(|d| d.albedo.as_ref())) {
+            (Some(a), Some((b, _))) => !std::sync::Arc::ptr_eq(a, b),
+            (Some(_), None) => true,
+            _ => false,
+        };
+        if stale {
+            if let Some(a) = image {
+                let view = make_view(&self.device, &self.queue, a.width, a.height, &a.rgba, true);
+                let group = material_group(&self.device, &self.texture_layout, &self.sampler, &view, &self.defaults.volume, &self.defaults.normal, &self.defaults.orm);
+                if let Some(d) = self.dynamic.get_mut(key) {
+                    d.albedo = Some((a, group));
+                }
+            }
         }
         let d = self.dynamic.get_mut(key).unwrap();
         self.queue.write_buffer(&d.vertices, 0, vbytes);
@@ -2283,7 +2302,7 @@ impl Renderer {
                     } else {
                         self.textures.get(&it.texture)
                     };
-                    let embedded = self.meshes.get(&it.mesh).and_then(|m| m.albedo.as_ref());
+                    let embedded = self.meshes.get(&it.mesh).and_then(|m| m.albedo.as_ref()).or_else(|| self.dynamic.get(&it.mesh).and_then(|d| d.albedo.as_ref().map(|a| &a.1)));
                     pass.set_bind_group(2, own.or(embedded).unwrap_or(&self.white), &[]);
                 }
                 if current.is_none_or(|c| c.mesh != key.1) {

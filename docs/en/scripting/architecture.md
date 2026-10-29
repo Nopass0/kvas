@@ -81,7 +81,8 @@ Rule for shared state: **each key has one writer**. Only the director writes the
 | every door | `Door` | hinge, lock, animation, sound |
 | lamps | `FlickerLight` | flicker, power from the switch panel |
 | kitchen fan | `Spinner` | turning blades |
-| Counter (monster) | `MonsterAi` | patrol, sight, hearing, chase |
+| Counter (monster) | `MonsterAi` | patrol, sight, hearing, chase, animation clips |
+| Anna, Pavel | `Npc` | work, turning to the player, talking (`Animator` clips) |
 | Game | `GameDirector` | story, door locks, saves, music |
 | UI | `GameUI` | menus, options, pause, journal, panel, HUD |
 

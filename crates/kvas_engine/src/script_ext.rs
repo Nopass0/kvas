@@ -208,6 +208,39 @@ impl Ctx<'_> {
         self.scene.world.get::<crate::gameplay::Tags>(entity).map(|t| t.value.split_whitespace().map(str::to_string).collect()).unwrap_or_default()
     }
 
+    /// Plays an animation clip on an object (cross-fading from the current one); adds an
+    /// [`crate::skeletal::Animator`] when the object has none. The model must have a skeleton:
+    /// clips from its file, or the procedural humanoid ones (`Idle`, `Walk`, `Run`, `Talk`,
+    /// `Wave`, `Sit`, `Wipe`, `Look`). Returns false for a stale entity.
+    pub fn play_animation(&mut self, entity: Entity, clip: &str) -> bool {
+        if !self.is_alive(entity) {
+            return false;
+        }
+        match self.scene.world.get_mut::<crate::skeletal::Animator>(entity) {
+            Some(a) => {
+                if a.clip != clip {
+                    a.clip = clip.to_string();
+                }
+                a.playing = true;
+            }
+            None => self.scene.world.insert(entity, crate::skeletal::Animator { clip: clip.to_string(), ..Default::default() }),
+        }
+        true
+    }
+
+    /// Playback speed of an object's animation (1 = as authored). Use it to match a walk cycle
+    /// to the speed the object really moves at.
+    pub fn set_animation_speed(&mut self, entity: Entity, speed: f32) {
+        if let Some(a) = self.scene.world.get_mut::<crate::skeletal::Animator>(entity) {
+            a.speed = speed.max(0.0);
+        }
+    }
+
+    /// The clips an animated object's model offers (empty until its first frame was skinned).
+    pub fn animation_clips(&self, entity: Entity) -> Vec<String> {
+        self.scene.world.get::<crate::skeletal::Animator>(entity).map(|a| a.clips.clone()).unwrap_or_default()
+    }
+
     /// Stores a value that every script can read with [`Ctx::global`]. Lives until the game stops.
     pub fn set_global(&mut self, key: &str, value: serde_json::Value) {
         self.scene.globals.insert(key.to_string(), value);

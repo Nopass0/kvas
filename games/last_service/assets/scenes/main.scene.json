@@ -20329,9 +20329,9 @@
           "type": "Transform",
           "data": {
             "position": [
-              2.5999999046325684,
-              0.0,
-              -7.75
+              1.5,
+              0.11999999731779099,
+              -7.71999979019165
             ],
             "rotation": [
               0.0,
@@ -20377,6 +20377,29 @@
               0.0,
               0.0
             ]
+          }
+        },
+        {
+          "type": "Scripts",
+          "data": [
+            {
+              "name": "Npc",
+              "props": {
+                "notice": 2.6,
+                "speaker": "Anna",
+                "work_clip": "Wipe"
+              }
+            }
+          ]
+        },
+        {
+          "type": "Animator",
+          "data": {
+            "clip": "Wipe",
+            "fade": 0.4000000059604645,
+            "looping": true,
+            "playing": true,
+            "speed": 1.0
           }
         }
       ]
@@ -20440,6 +20463,29 @@
               0.0,
               0.0
             ]
+          }
+        },
+        {
+          "type": "Scripts",
+          "data": [
+            {
+              "name": "Npc",
+              "props": {
+                "notice": 4.0,
+                "speaker": "Pavel",
+                "work_clip": "Look"
+              }
+            }
+          ]
+        },
+        {
+          "type": "Animator",
+          "data": {
+            "clip": "Look",
+            "fade": 0.4000000059604645,
+            "looping": true,
+            "playing": true,
+            "speed": 1.0
           }
         }
       ]
@@ -20513,6 +20559,16 @@
               "props": {}
             }
           ]
+        },
+        {
+          "type": "Animator",
+          "data": {
+            "clip": "Idle_Watchful",
+            "fade": 0.30000001192092896,
+            "looping": true,
+            "playing": true,
+            "speed": 1.0
+          }
         }
       ]
     },
@@ -20921,9 +20977,9 @@
           "type": "Transform",
           "data": {
             "position": [
-              2.5999999046325684,
+              1.5,
               0.0,
-              -7.75
+              -7.71999979019165
             ],
             "rotation": [
               0.0,

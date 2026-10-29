@@ -794,6 +794,7 @@ pub use crate::interaction::{Slider, Switch};
 pub use crate::meshmod::{MeshModifiers, ModifierStateCell};
 pub use crate::paint::TexturePaint;
 pub use crate::particles::ParticleEmitter;
+pub use crate::skeletal::{Animator, AnimatorState};
 pub use crate::modifiers::{Bob, ColorCycle, Pulse, Spin, Wobble};
 pub use crate::tween::MoveTween;
 pub use crate::voxel::{VoxelClouds, VoxelSmoke};
@@ -805,6 +806,8 @@ name_components!(
     NeuralAgent,
     TransformAnimation,
     ParticleEmitter,
+    Animator,
+    AnimatorState,
     TexturePaint,
     MeshModifiers,
     ModifierStateCell,

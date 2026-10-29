@@ -112,6 +112,31 @@ fn camera_ui(ui: &mut egui::Ui, c: &mut Camera, id: u32) {
     ui.weak(t("Depth of field, bars and exposure show in the Game view."));
 }
 
+/// The Animator: a list of the model's clips to pick from (it plays in the Scene view too),
+/// speed, looping, cross-fade and where the clip is.
+fn animator_ui(ui: &mut egui::Ui, a: &mut kvas_engine::skeletal::Animator, id: u32) {
+    if a.clips.is_empty() {
+        ui.weak(t("The model has no skeleton (FBX or glTF with bones needed)."));
+    }
+    egui::ComboBox::from_id_salt(("anim-clip", id)).selected_text(if a.clip.is_empty() { t("(first clip)").to_string() } else { a.clip.clone() }).width(200.0).show_ui(ui, |ui| {
+        for c in a.clips.clone() {
+            ui.selectable_value(&mut a.clip, c.clone(), c);
+        }
+    });
+    ui.horizontal(|ui| {
+        ui.label(t("Speed"));
+        ui.add(egui::DragValue::new(&mut a.speed).speed(0.02).range(0.0..=5.0));
+        ui.label(t("Fade"));
+        ui.add(egui::DragValue::new(&mut a.fade).speed(0.01).range(0.0..=3.0).suffix(" s"));
+    });
+    ui.horizontal(|ui| {
+        ui.checkbox(&mut a.looping, t("Loop"));
+        ui.checkbox(&mut a.playing, t("Playing"));
+        ui.weak(format!("{:.2} s", a.time));
+    });
+    ui.weak(t("Scripts: ctx.play_animation(entity, \"Walk\")"));
+}
+
 /// Icon shown in a component's header.
 fn component_icon(name: &str) -> Option<Icon> {
     Some(match name {
@@ -119,6 +144,7 @@ fn component_icon(name: &str) -> Option<Icon> {
         "MeshRenderer" => Icon::Box,
         "Shape" => Icon::Shapes,
         "Camera" => Icon::Camera,
+        "Animator" => Icon::Play,
         "Light" => Icon::Lightbulb,
         "RigidBody" => Icon::Package,
         "Collider" => Icon::Scan,
@@ -653,6 +679,11 @@ impl Editor {
                     let label = if looking { t("Stop looking through") } else { t("Look through this camera") };
                     if ui.button(label).on_hover_text(t("Shows the scene from this camera, with its shaders")).clicked() {
                         self.look_through = if looking { None } else { Some(e) };
+                    }
+                } else if info.name == "Animator" {
+                    let world = world_of(&mut self.play, &mut self.scene);
+                    if let Some(anim) = world.get_mut::<kvas_engine::skeletal::Animator>(e) {
+                        animator_ui(ui, anim, e.index());
                     }
                 } else {
                     let id = format!("{}-{}", info.name, e.index());

@@ -109,6 +109,7 @@ impl Default for Registry {
                 info::<MeshModifiers>(),
                 info::<TexturePaint>(),
                 info::<ParticleEmitter>(),
+                info::<Animator>(),
             ],
         }
     }

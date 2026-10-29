@@ -250,10 +250,16 @@ impl GameDirector {
         let anna_here = !s.all_names() || s.corrected;
         self.show(ctx, "Anna", anna_here && !s.finished);
         self.set_use(ctx, "I_anna", anna_here && !s.finished);
-        if s.corrected {
-            self.place(ctx, "Anna", b(8.3, 3.55, 0.0));
-            if let Some(t) = self.e("Anna").and_then(|a| ctx.get_mut_of::<Transform>(a)) {
-                t.rotation.y = 0.0;
+        if let Some(anna) = self.e("Anna") {
+            if s.corrected {
+                // At the fourth place, facing the table, sitting.
+                self.place(ctx, "Anna", b(8.3, 3.55, -0.4));
+                if let Some(t) = ctx.get_mut_of::<Transform>(anna) {
+                    t.rotation.y = 180.0;
+                }
+                ctx.set_var(anna, "Npc", "work_clip", "Sit".into());
+            } else {
+                ctx.set_var(anna, "Npc", "work_clip", "Wipe".into());
             }
         }
         self.show(ctx, "Pavel", s.ledger_read && !s.key);
